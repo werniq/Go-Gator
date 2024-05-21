@@ -6,6 +6,7 @@ import (
 	"newsAggr/cmd/types"
 	"newsAggr/cmd/utils"
 	"newsAggr/logger"
+	"reflect"
 	"strings"
 )
 
@@ -15,7 +16,7 @@ type HtmlParser struct {
 // Parse function is required for HtmlParser struct, in order to implement NewsParser interface, for data formatted in html
 func (hp HtmlParser) Parse(params ParsingParams) []types.News {
 	var news []types.News
-	filenames := []string{}
+	filenames := []string{"usa-today.html"}
 
 	if params.Sources != nil {
 		sourceToFile := map[string]string{
@@ -28,11 +29,10 @@ func (hp HtmlParser) Parse(params ParsingParams) []types.News {
 			}
 		}
 
-		if filenames == nil {
+		if reflect.DeepEqual(filenames, []string{"usa-today.html"}) {
 			return nil
 		}
 	}
-	filenames = append(filenames, "usa-today.html")
 
 	for _, filename := range filenames {
 		data := utils.ExtractFileData(filename)

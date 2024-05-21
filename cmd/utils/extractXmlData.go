@@ -23,7 +23,7 @@ func ExtractFileData(filename string) []byte {
 
 	data, err := io.ReadAll(file)
 	if err != nil {
-		logger.ErrorLogger.Fatalf("Error reading XML data: %v\n", err)
+		logger.ErrorLogger.Fatalf("Error reading data from file %s: %v\n", filename, err)
 	}
 
 	return data

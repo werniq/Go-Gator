@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"newsAggr/cmd/types"
 	"newsAggr/logger"
@@ -37,21 +38,23 @@ var fetchNews = &cobra.Command{
 			EndingTimestamp:   endingTimestamp,
 			Sources:           sources,
 		}
+
 		g := GoGatorParsingFactory{}
 
-		//jsonParser := g.CreateJsonParser()
-		//xmlParser := g.CreateXmlParser()
+		jsonParser := g.CreateJsonParser()
+		xmlParser := g.CreateXmlParser()
 		htmlParser := g.CreateHtmlParser()
 
 		var news []types.News
 		news = append(news, htmlParser.Parse(parsingParams)...)
-		//news = append(news, jsonParser.Parse(parsingParams)...)
-		//news = append(news, xmlParser.Parse(parsingParams)...)
+		news = append(news, jsonParser.Parse(parsingParams)...)
+		news = append(news, xmlParser.Parse(parsingParams)...)
 
 		for _, article := range news {
 			logger.InfoLogger.Println(article.Title)
 			logger.InfoLogger.Println(article.Description)
 			logger.InfoLogger.Println(article.PubDate)
+			fmt.Println("")
 		}
 	},
 }

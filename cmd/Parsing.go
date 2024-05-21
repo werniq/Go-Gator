@@ -91,7 +91,9 @@ func ApplyParams(articles []types.News, params ParsingParams, factory ParsingIns
 				continue
 			}
 			if publicationDate.After(startingTime) {
-				// continue
+				if params.EndingTimestamp == "" {
+					filteredArticles = append(filteredArticles, article)
+				}
 			} else {
 				continue
 			}
@@ -111,13 +113,11 @@ func ApplyParams(articles []types.News, params ParsingParams, factory ParsingIns
 			}
 
 			if publicationDate.Before(endingTime) {
-				// ok
+				filteredArticles = append(filteredArticles, article)
 			} else {
-				fmt.Println("asdasd")
 				continue
 			}
 		}
-		filteredArticles = append(filteredArticles, article)
 	}
 
 	return filteredArticles

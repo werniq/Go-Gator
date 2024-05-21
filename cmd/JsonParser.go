@@ -21,6 +21,10 @@ func (jp JSONParser) Parse(params ParsingParams) []types.News {
 
 	filenames := []string{"nbc-news.json"}
 
+	if !utils.ArrayIncludes(params.Sources, filenames[0]) {
+		return nil
+	}
+
 	for _, filename := range filenames {
 		var dummy types.Json
 

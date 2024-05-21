@@ -6,13 +6,13 @@ import (
 )
 
 func TestJSONParser_Parse(t *testing.T) {
-
 	params := ParsingParams{
 		Keywords: "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena",
 	}
 
 	parser := JSONParser{}
 	news := parser.Parse(params)
+
 	assert.Len(t, news, 1)
 	assert.Equal(t, "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena", news[0].Title)
 	assert.Equal(t, "The Vatican has issued new rules radically reforming its process for evaluating faith-based supernatural phenomena like visions of the Virgin Mary or stigmata.", news[0].Description)

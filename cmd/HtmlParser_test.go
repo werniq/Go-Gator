@@ -1,19 +1,25 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
 func TestHtmlParser_Parse(t *testing.T) {
 	params := ParsingParams{
-		Keywords: "Israeli and Hamas leaders are suspected of committing war crimes during the continuing war in Gaza",
+		Keywords: "Zoo in China criticized for dyeing dogs for 'panda dog' exhibit",
 	}
 	parser := HtmlParser{}
 	news := parser.Parse(params)
 
-	assert.Len(t, news, 1)
-	assert.Equal(t, "Israeli and Hamas leaders are suspected of committing war crimes during the continuing war in Gaza", news[0].Description)
-	assert.Equal(t, "What ICC arrest warrants mean for Israel and Hamas", news[0].Title)
-	assert.Equal(t, "2 hrs ago", news[0].PubDate)
+	assert.Len(t, news, 1, "Expected 1 news item")
+
+	ok := strings.Contains(news[0].Description, "Zoo in China criticized for dyeing dogs for 'panda dog' exhibit")
+	fmt.Println(news[0].Title)
+	assert.Equal(t, true, ok)
+
+	ok = strings.Contains(news[0].Title, "The Taizhou Zoo in Jiangsu, China dyed two chow chow dogs and advertised them as \"panda dogs\" in the exhibit that opened on May 1..")
+	assert.Equal(t, true, ok)
 }

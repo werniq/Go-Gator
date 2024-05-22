@@ -1,13 +1,14 @@
-package cmd
+package parsers
 
 import (
 	"github.com/stretchr/testify/assert"
+	"newsAggr/cmd/types"
 	"strings"
 	"testing"
 )
 
 func TestXMLParser_Parse(t *testing.T) {
-	params := ParsingParams{
+	params := &types.ParsingParams{
 		Keywords: "Ukraine and Russia exchange drone attacks while Russia continues its push in the east",
 	}
 	parser := XMLParser{}

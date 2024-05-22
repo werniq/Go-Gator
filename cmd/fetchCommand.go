@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"newsAggr/cmd/parsers"
 	"newsAggr/cmd/types"
 	"newsAggr/logger"
 	"strings"
@@ -12,7 +13,7 @@ type FetchNewsInstruction struct {
 	*cobra.Command
 }
 
-func (i FetchNewsInstruction) Execute(params ParsingParams, parser Parsers) []types.News {
+func (i FetchNewsInstruction) Execute(params *types.ParsingParams, parser parsers.Parsers) []types.News {
 	return parser.Parse(params)
 }
 
@@ -39,14 +40,14 @@ var fetchNews = &cobra.Command{
 		// TODO: implement CommandsFactory
 
 		// initializing parsing parameters
-		parsingParams := ParsingParams{
+		parsingParams := &types.ParsingParams{
 			Keywords:          keywordsFlag,
 			StartingTimestamp: startingTimestamp,
 			EndingTimestamp:   endingTimestamp,
 			Sources:           sources,
 		}
 
-		g := GoGatorParsingFactory{}
+		g := parsers.GoGatorParsingFactory{}
 
 		jsonParser := g.CreateJsonParser()
 		xmlParser := g.CreateXmlParser()
@@ -63,6 +64,7 @@ var fetchNews = &cobra.Command{
 			logger.InfoLogger.Println(article.PubDate)
 			fmt.Println("----")
 		}
+		fmt.Println(len(news))
 	},
 }
 

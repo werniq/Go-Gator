@@ -1,8 +1,9 @@
-package cmd
+package parsers
 
 import (
 	"bytes"
 	"github.com/PuerkitoBio/goquery"
+	"newsAggr/cmd/parsingInstructions"
 	"newsAggr/cmd/types"
 	"newsAggr/cmd/utils"
 	"newsAggr/logger"
@@ -14,11 +15,11 @@ type HtmlParser struct {
 }
 
 // Parse function is required for HtmlParser struct, in order to implement NewsParser interface, for data formatted in html
-func (hp HtmlParser) Parse(params ParsingParams) []types.News {
+func (hp HtmlParser) Parse(params *types.ParsingParams) []types.News {
 	var news []types.News
-	filenames := []string{"usa-today.html"}
 
-	if params.Sources != nil {
+	var filenames []string
+	if !reflect.DeepEqual(params.Sources, nil) {
 		sourceToFile := map[string]string{
 			"usatoday": "usa-today.html",
 		}
@@ -29,9 +30,11 @@ func (hp HtmlParser) Parse(params ParsingParams) []types.News {
 			}
 		}
 
-		if reflect.DeepEqual(filenames, []string{"usa-today.html"}) {
+		if len(filenames) == 0 {
 			return nil
 		}
+	} else {
+		filenames = []string{"usa-today.html"}
 	}
 
 	for _, filename := range filenames {
@@ -43,10 +46,7 @@ func (hp HtmlParser) Parse(params ParsingParams) []types.News {
 		}
 
 		doc.Find("div.gnt_m_flm a").Each(func(i int, selection *goquery.Selection) {
-			title, ok := selection.Attr("data-c-br")
-			if !ok {
-				return
-			}
+			title, _ := selection.Attr("data-c-br")
 			title = strings.TrimSpace(title)
 			description := strings.TrimSpace(selection.Text())
 			pubDate := strings.TrimSpace(selection.Find("div.gnt_m_flm_sbt").AttrOr("data-c-dt", ""))
@@ -59,7 +59,7 @@ func (hp HtmlParser) Parse(params ParsingParams) []types.News {
 		})
 	}
 
-	factory := GoGatorInstructionFactory{}
+	factory := parsingInstructions.GoGatorInstructionFactory{}
 
 	news = ApplyParams(news, params, factory)
 

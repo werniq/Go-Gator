@@ -1,14 +1,15 @@
-package cmd
+package parsers
 
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"newsAggr/cmd/types"
 	"strings"
 	"testing"
 )
 
 func TestHtmlParser_Parse(t *testing.T) {
-	params := ParsingParams{
+	params := &types.ParsingParams{
 		Keywords: "Zoo in China criticized for dyeing dogs for 'panda dog' exhibit",
 	}
 	parser := HtmlParser{}

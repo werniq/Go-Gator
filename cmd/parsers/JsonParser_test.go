@@ -1,16 +1,17 @@
-package cmd
+package parsers
 
 import (
 	"github.com/stretchr/testify/assert"
+	"newsAggr/cmd/types"
 	"testing"
 )
 
 func TestJSONParser_Parse(t *testing.T) {
-	params := ParsingParams{
+	params := &types.ParsingParams{
 		Keywords: "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena",
 	}
 
-	parser := JSONParser{}
+	parser := JsonParser{}
 	news := parser.Parse(params)
 
 	assert.Len(t, news, 1)

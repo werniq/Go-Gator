@@ -21,8 +21,9 @@ func (jp JsonParser) Parse(params *types.ParsingParams) []types.News {
 		"nbc": "nbc-news.json",
 	}
 
-	filenames := []string{}
-	if !reflect.DeepEqual(params.Sources, nil) {
+	var filenames []string
+
+	if !reflect.DeepEqual(params.Sources, filenames) {
 		for _, val := range params.Sources {
 			if filename, ok := sourceToFile[val]; ok {
 				fmt.Println(filename)

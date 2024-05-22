@@ -19,7 +19,8 @@ func (hp HtmlParser) Parse(params *types.ParsingParams) []types.News {
 	var news []types.News
 
 	var filenames []string
-	if !reflect.DeepEqual(params.Sources, nil) {
+
+	if !reflect.DeepEqual(params.Sources, filenames) {
 		sourceToFile := map[string]string{
 			"usatoday": "usa-today.html",
 		}

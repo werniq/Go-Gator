@@ -13,7 +13,7 @@ var rootCmd = &cobra.Command{
 	Version: "0.0.1",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.InfoLogger.Println("Example of first command")
+		logger.InfoLogger.Println("[Go Gator]")
 	},
 }
 

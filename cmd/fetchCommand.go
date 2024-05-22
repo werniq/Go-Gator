@@ -5,8 +5,8 @@ import (
 	"github.com/spf13/cobra"
 	"newsAggr/cmd/parsers"
 	"newsAggr/cmd/types"
+	"newsAggr/cmd/utils"
 	"newsAggr/logger"
-	"strings"
 )
 
 type FetchNewsInstruction struct {
@@ -30,14 +30,7 @@ var fetchNews = &cobra.Command{
 		endingTimestamp, _ := cmd.Flags().GetString("ts-to")
 		sourcesFlag, _ := cmd.Flags().GetString("sources")
 
-		sources := strings.Split(sourcesFlag, ",")
-
-		// TODO: repair filtering posts with multiple parameters (e.g. keywords + --ts-from)
-		// TODO: repair filtering by sources
-		// TODO: add readme & instructions, add comments to functions and packages
-		// TODO: add instructions as functions for filtering
-		// TODO: add more tests
-		// TODO: implement CommandsFactory
+		sources := utils.Split(sourcesFlag, ",")
 
 		// initializing parsing parameters
 		parsingParams := &types.ParsingParams{
@@ -64,7 +57,7 @@ var fetchNews = &cobra.Command{
 			logger.InfoLogger.Println(article.PubDate)
 			fmt.Println("----")
 		}
-		fmt.Println(len(news))
+		fmt.Println("Articles retrieved: ", len(news))
 	},
 }
 

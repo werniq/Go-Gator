@@ -5,10 +5,6 @@ import (
 	"newsAggr/cmd/types"
 )
 
-type Parsers interface {
-	Parse(params *types.ParsingParams) []types.News
-}
-
 // ApplyParams filters news by provided ParsingParams
 func ApplyParams(articles []types.News, params *types.ParsingParams, factory parsingInstructions.InstructionsFactory) []types.News {
 	var filteredArticles []types.News

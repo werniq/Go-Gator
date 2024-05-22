@@ -22,7 +22,8 @@ func (xp XMLParser) Parse(params *types.ParsingParams) []types.News {
 	b := &bytes.Buffer{}
 
 	var filenames []string
-	if !reflect.DeepEqual(params.Sources, nil) {
+
+	if !reflect.DeepEqual(params.Sources, filenames) {
 		sourceToFile := map[string]string{
 			"abc":             "abcnews.xml",
 			"bbc":             "bbc.xml",

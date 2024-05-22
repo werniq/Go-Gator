@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"fmt"
 	"newsAggr/cmd/types"
-	"strings"
 	"time"
 )
 
@@ -37,77 +35,18 @@ func ApplyParams(articles []types.News, params ParsingParams, factory ParsingIns
 		return nil
 	}
 
-	keywords := strings.Split(params.Keywords, ",")
-
 	var filteredArticles []types.News
 
-	timeFormats := []string{
-		time.Layout,
-		time.ANSIC,
-		time.UnixDate,
-		time.RubyDate,
-		time.RFC822,
-		time.RFC822Z,
-		time.RFC850,
-		time.RFC1123,
-		time.RFC1123Z,
-		time.RFC3339,
-		time.RFC3339Nano,
-		time.Kitchen,
-		time.Stamp,
-		time.StampMilli,
-		time.StampMicro,
-		time.StampNano,
-		time.DateTime,
-		time.DateOnly,
-		time.TimeOnly,
-	}
+	keywordInstruction := factory.CreateApplyKeywordInstruction()
+	dateRangeInstruction := factory.CreateApplyDataRangeInstruction()
 
 	for _, article := range articles {
-		keywordOk := false
-		for _, keyword := range keywords {
-			if strings.Contains(article.Title, keyword) || strings.Contains(article.Description, keyword) {
-				keywordOk = true
-				break
-			}
-		}
-		if !keywordOk {
+		if !keywordInstruction.Apply(article, params) {
 			continue
 		}
-
-		var publicationDate time.Time
-		var err error
-
-		if article.PubDate != "" {
-			publicationDate, err = parseDateWithFormats(article.PubDate, timeFormats)
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
+		if !dateRangeInstruction.Apply(article, params) {
+			continue
 		}
-
-		if params.StartingTimestamp != "" {
-			startingTime, err := parseDateWithFormats(params.StartingTimestamp, timeFormats)
-			if err != nil {
-				continue
-			}
-
-			if publicationDate.Before(startingTime) {
-				continue
-			}
-		}
-
-		if params.EndingTimestamp != "" {
-			endingTime, err := parseDateWithFormats(params.EndingTimestamp, timeFormats)
-			if err != nil {
-				continue
-			}
-
-			if publicationDate.After(endingTime) {
-				continue
-			}
-		}
-
 		filteredArticles = append(filteredArticles, article)
 	}
 

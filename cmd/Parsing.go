@@ -64,60 +64,51 @@ func ApplyParams(articles []types.News, params ParsingParams, factory ParsingIns
 	}
 
 	for _, article := range articles {
+		keywordOk := false
 		for _, keyword := range keywords {
 			if strings.Contains(article.Title, keyword) || strings.Contains(article.Description, keyword) {
-				filteredArticles = append(filteredArticles, article)
+				keywordOk = true
 				break
 			}
+		}
+		if !keywordOk {
+			continue
 		}
 
 		var publicationDate time.Time
 		var err error
 
-		if params.StartingTimestamp != "" {
-			if article.PubDate == "" {
-				fmt.Println(article.Title)
-				continue
-			}
-
+		if article.PubDate != "" {
 			publicationDate, err = parseDateWithFormats(article.PubDate, timeFormats)
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
+		}
 
+		if params.StartingTimestamp != "" {
 			startingTime, err := parseDateWithFormats(params.StartingTimestamp, timeFormats)
 			if err != nil {
 				continue
 			}
-			if publicationDate.After(startingTime) {
-				if params.EndingTimestamp == "" {
-					filteredArticles = append(filteredArticles, article)
-				}
-			} else {
+
+			if publicationDate.Before(startingTime) {
 				continue
 			}
 		}
 
 		if params.EndingTimestamp != "" {
-			publicationDate, err = parseDateWithFormats(article.PubDate, timeFormats)
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-
 			endingTime, err := parseDateWithFormats(params.EndingTimestamp, timeFormats)
 			if err != nil {
-				fmt.Println(err)
 				continue
 			}
 
-			if publicationDate.Before(endingTime) {
-				filteredArticles = append(filteredArticles, article)
-			} else {
+			if publicationDate.After(endingTime) {
 				continue
 			}
 		}
+
+		filteredArticles = append(filteredArticles, article)
 	}
 
 	return filteredArticles

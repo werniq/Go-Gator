@@ -31,6 +31,13 @@ var fetchNews = &cobra.Command{
 
 		sources := strings.Split(sourcesFlag, ",")
 
+		// TODO: repair filtering posts with multiple parameters (e.g. keywords + --ts-from)
+		// TODO: repair filtering by sources
+		// TODO: add readme & instructions, add comments to functions and packages
+		// TODO: add instructions as functions for filtering
+		// TODO: add more tests
+		// TODO: implement CommandsFactory
+
 		// initializing parsing parameters
 		parsingParams := ParsingParams{
 			Keywords:          keywordsFlag,
@@ -54,7 +61,7 @@ var fetchNews = &cobra.Command{
 			logger.InfoLogger.Println(article.Title)
 			logger.InfoLogger.Println(article.Description)
 			logger.InfoLogger.Println(article.PubDate)
-			fmt.Println("")
+			fmt.Println("----")
 		}
 	},
 }

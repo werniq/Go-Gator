@@ -79,7 +79,7 @@
         a.load();
         document.fonts.add(a)
     }
-    ;
+
     {
         const b = window, e = document, f = navigator, n = f.userAgent, v = Date.now(), C = Math.random(), x = {};
         b.gnt = {
@@ -94,7 +94,7 @@
         };
         x.c = !!b.chrome;
         (x.t = (x.ip = x.i = 1 < f.maxTouchPoints && n.includes("c OS X") && !n.includes("(iP")) || (x.tn = (x.a = n.includes("; And")) || (x.in = x.i = n.includes("(iP")))) || (x.f = n.includes("Firefox"));
-        ;b.g$ = {
+        b.g$ = {
         run: [],
         w: b,
         d: e,
@@ -179,7 +179,7 @@
         g$.kc = Object.keys(g$.ic).length;
         g$.ks = e.length
     })();
-    ;
+
     {
         const b = g$, e = .01, f = .0001, n = matchMedia, v = n("(display-mode:fullscreen)"),
             C = n("(display-mode:standalone)"), x = n("(display-mode:minimal-ui)"), E = n("(display-mode:browser)"),
@@ -269,7 +269,7 @@
             k.persisted ? gnt.bfcr = !0 : b.ca && b.b.c && (k = performance.getEntriesByType("navigation")[0]?.notRestoredReasons) && b.ca("bfc", "h8h3", k, 0, 5)
         })
     }
-    ;
+
     {
         const b = g$, e = b.d, f = "adoptedStyleSheets" in e && !b.hp["gnt-d-cs"];
         b.el.appendCss = function (n, v) {
@@ -281,7 +281,7 @@
         };
         b.iou = b.io && !b.hp["gnt-d-iou"]
     }
-    ;
+
     if (g$.b.t && !g$.hp["gnt-disable-vu"]) {
         let b;
         const e = g$.vv, f = function (n) {
@@ -296,7 +296,7 @@
             })
         } else (1024 > screen.width || 1024 > screen.height) && f(1024)
     }
-    ;
+
     {
         const b = window.requestIdleCallback;
         g$.ric = b && !g$.hp["gnt-d-ric"] ? function (e, f) {
@@ -314,13 +314,13 @@
             g$.sc(b.name + "=" + b.value + (f ? ";max-age=" + f : "") + ((f = b.domain) ? ";domain=" + f : "") + ((f = b.path) ? ";path=" + f : "") + ";secure;samesite=" + b.sameSite + ((f = b.priority) ? ";priority=" + f : ""))
         })
     };
-    ;
+
     gnt.luxEnabled = performance.mark && (.015 > g$.mr || g$.hp["gnt-enable-lux"]) && !g$.hp["gnt-disable-lux"] && !g$.ic.gnt_bot && !g$.hp["gnt-u-bt"] && 1.5;
     (g$.ut = performance.mark && (gnt.luxEnabled || g$.hp["gnt-perf"]) ? b => {
         performance.mark(b)
     } : () => {
     })("gnt head");
-    ;
+
     {
         const b = g$, {hp: e, ic: f, jp: n, nv: v, dc: C, de: x} = b, {
             "gnt-user-cookiesMissing": E,
@@ -329,7 +329,7 @@
             a ? b.cc(a, "h9e" + c, l, h, p) : b.cc("no cookie", "h9e" + c)
         }, d = gnt, g = d.u;
         let w, J = "", K = "", U = f.gnt_i, H = e["gnt-t-gc"], Y = e["gnt-t-gs"], Z, fa, la;
-        ;g.ip = (g.ld = function () {
+        g.ip = (g.ld = function () {
         const c = fetch("https://user.usatoday.com/USAT-GUP/user/", {
             credentials: "include",
             cache: b.b.f ? "default" : "no-store"
@@ -340,7 +340,7 @@
         });
         return c
     })();
-        ;
+
         if (k) try {
             const c = C(k);
             w = g.lng = n('"' === c[0] ? c.slice(1, -1) : c)
@@ -366,8 +366,8 @@
             d.bt = ia, u(6, c, ia)
         } else v.webdriver && (
             d.bt = "cl.webdriver", b.cc("cl.w", "h9e19", 0, 0, 7));
-        ;d.abv = e["gnt-u-abv"];
-        ;
+        d.abv = e["gnt-u-abv"];
+
         if (!U) {
             const c = performance.getEntriesByType("navigation")[0]?.serverTiming;
             if (c?.length) for (const a of c) "gnt_i" === a.name && (U = a.description);
@@ -387,7 +387,7 @@
         } else u(8);
         H && (d.geo = {c: H, y: Z, z: fa, s: Y});
         d.ssm = la = "US" === H || "CA" === H || "PR" === H || "GU" === H || "MP" === H || "AS" === H || "VI" === H || "UM" === H || !H || "AOL" === Y;
-        ;g.lpf = e["gnt-u-lpf"] || w.lpf;
+        g.lpf = e["gnt-u-lpf"] || w.lpf;
         if (!(g.ced = ("2" == (g.ce = e["gnt-u-ce"] || w.ce) || "1" == g.ce || g.lpf) && (!f.gnt_cec || e["gnt-disable-cefc"])) && !ba) {
             let c, a = f.gnt_CA, l = w.CA_ts, h;
             if (!g.ced && (a || l) && (!f.gnt_cac || e["gnt-disable-cafc"])) {
@@ -400,7 +400,7 @@
                 l && (!h || l > h) && w.CA_pid && (h = l, c = w);
                 h + 2592E6 > d.now && (g.ca = c)
             }
-            ;
+
             if (!(!la || g.ced || g.ca || d.bn && d.bn.id && !d.bn.h || f.gnt_gc && !e["gnt-d-gc"] || e["gnt-d-ao"] || b.qsp.usatai)) {
                 let {r: p, o: r, s: G} = {
                     "r": {
@@ -461,18 +461,18 @@
                     const I = r[D[y]], M = e["gnt-t-aoid"] || G[I.d];
                     if (!f["gnt_au_" + M]) {
                         g.ao = I;
-                        ;
+
                         g.aogc = 300;
-                        ;g.aoid = M;
+                        g.aoid = M;
                         g.aos = G;
                         break
                     }
                 }
             }
         }
-        ;
+
         if (ma) d.hnb = !0, Q.add("gnt__hx", "gnt__hnb"); else if (ba || !la || g.rs || d.bn && d.bn.id && !d.bn.h) Q.add("gnt__hnb"), d.hnb = !0;
-        ;
+
         if (d.hnb) K += ".gnt_nb{display:none}"; else {
             let c = g.nb = {
                 "u": "https://cm.usatoday.com/nanobar/051424_MemorialDay#",
@@ -502,7 +502,7 @@
             }
             K += ((g.nb.s = c).b ? ".gnt_nb{background-color:" + c.b + "}" : "") + ".gnt__mo .gnt_nb{width:calc(100% - var(--gnt-sw,0px));margin-right:var(--gnt-sw,0)}.gnt_nb_if{width:100%;height:80px;border:0}"
         }
-        ;g.s = aa ? ba ? "sub" : "reg" : "anon";
+        g.s = aa ? ba ? "sub" : "reg" : "anon";
         aa && (xa && (J += "--gnt-uwn:'" + xa.replace(/([\t\n\r'\\])/g, c => ({
             "\t": "\\9 ",
             "\n": "\\A ",
@@ -510,12 +510,12 @@
             "'": "\\27 ",
             "\\": "\\5C "
         })[c]) + "';", x.setAttribute("data-u-n", "")), x.setAttribute("data-u-s", g.s));
-        ;
+
         if (!e["gnt-d-wt"]) {
             let c = f.gnt_w, a = e["gnt-t-wtt"], l = e["gnt-t-wtc"], h = e["gnt-t-wtf"], p = 0;
             if (c) try {
                 const r = C(c).split("~");
-                ;"f" === r[0] && (g.wb = ++p);
+                "f" === r[0] && (g.wb = ++p);
                 a = a || r[p++];
                 h = h || r[p++];
                 l = l || r[p];
@@ -524,7 +524,7 @@
             }
             if (g.wt = a) g.wc = l, K += `.gnt_n_wt::before{content:'${a}\u00b0F';width:40px}` + ((g.wf = h) ? `.gnt_n_wt::after{content:'';flex:none;width:28px;margin:0 0 0 4px;background:url('/tangstatic/svg/weather/${h}.svg')no-repeat}.gnt_n_wt:hover::after{opacity:.848}` : "")
         }
-        ;
+
         if (!e["gnt-disable-ms"]) {
             const c = N && N.toLowerCase();
             let a = c;
@@ -542,10 +542,10 @@
                     "formerprint": {"m": "$1 per Week", "h": "$1 per Week", "a": "SUBSCRIBE AGAIN"}
                 }[a];
                 if (l) {
-                    ;l.m && (J += "--gnt-sm-mm:'" + l.m + "';", g.mm = l.h);
-                    ;l.a && (J += "--gnt-sm-mt:'" + l.a + "';");
-                    ;l.p && (K += ".gnt_n_sm_a{display:flex!important;visibility:visible!important}");
-                    ;
+                    l.m && (J += "--gnt-sm-mm:'" + l.m + "';", g.mm = l.h);
+                    l.a && (J += "--gnt-sm-mt:'" + l.a + "';");
+                    l.p && (K += ".gnt_n_sm_a{display:flex!important;visibility:visible!important}");
+
                     break
                 }
                 if ("control" === a || "control" === (a = a.substr(0, a.lastIndexOf(":")))) break; else if (!a) {
@@ -554,7 +554,7 @@
                 }
             }
         }
-        ;
+
         if (!e["gnt-d-sbo"]) {
             const c = N && N.toLowerCase();
             let a = c;
@@ -571,7 +571,7 @@
                 if (l) {
                     d.sbto = l.u;
                     J += "--gnt-sbtx:'" + l.t + "';";
-                    ;
+
                     break
                 }
                 if ("control" === a || "control" ===
@@ -582,7 +582,7 @@
             }
             ba && !d.sbto && (J += "--gnt-sbvi:hidden;")
         }
-        ;K && b.el.appendCss(K);
+        K && b.el.appendCss(K);
         J && (x.style.cssText += ";" + J);
         (function () {
             if (!e["gnt-d-gpp"]) {
@@ -903,16 +903,16 @@
         g$.cc(b, "h6q1")
     }
     (window._taboola || (window._taboola = [])).push({category: "auto"});
-    ;g$.de.classList.remove("gnt__njs");
-    ;
-    ;
-    ;
+    g$.de.classList.remove("gnt__njs");
+
+
+
     if (gnt.lr = !g$.hp["gnt-d-lr"]) try {
         Object.defineProperty(window, "ats", {value: {}})
     } catch (b) {
         g$.cc(b, "h7u1")
     }
-    ;</script>
+    </script>
     <style>@font-face {
         font-family: 'Unify Sans';
         src: local('☺︎')
@@ -2013,11 +2013,10 @@
                                                      fetchpriority=high/
                                                      src="/gcdn/authoring/authoring-images/2024/05/18/USAT/73747902007-gty-2152832705.jpg?crop=5099,2868,x0,y510&width=660&height=370&format=pjpg&auto=webp" srcset="/gcdn/authoring/authoring-images/2024/05/18/USAT/73747902007-gty-2152832705.jpg?crop=5099,2868,x0,y510&width=1320&height=740&format=pjpg&auto=webp 2x"> Israel pounds Gaza as top
         official gives Netanyahu postwar ultimatum
-        <div class="gnt_sbt gnt_sbt__ms gnt_sbt__ts gnt_sbt__mg" data-c-dt="2024-05-19"
+        <div class="gnt_sbt gnt_sbt__ms gnt_sbt__ts gnt_sbt__mg" data-c-dt="1:03 p.m. ET May 19"
              data-c-ms="ISRAEL-HAMAS WAR" style=--gnt-bc:#0A32A0></div>
         </a>
-        <div class="gnt_m gnt_m_flm" data-g-r="lazy lazy_p" data-gl-type=img>
-            <a
+        <div class="gnt_m gnt_m_flm" data-g-r="lazy lazy_p" data-gl-type=img><a
                 data-c-br="Iran's official news agency said the helicopter was carrying President Ebrahim Raisi, Foreign Minister Hossein Amirabdollahian and local officials."
                 data-t-l=:list|o|c|1
                 href=/story/news/world/2024/05/19/iran-president-raisi-helicopter-rough-landing/73760337007/ class=gnt_m_flm_a><img
@@ -2026,17 +2025,16 @@
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/19/USAT/73760648007-2153165994.jpg?crop=1334,1333,x500,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/19/USAT/73760648007-2153165994.jpg?crop=1334,1333,x500,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> <span class="gnt_m_flm_s__lc gnt_lbl_lc"></span> Helicopter carrying Iran's
             president crashes in mountains
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-19" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 19, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
-        </a>
-            <a data-c-br="In recent days, Russia's forces have seized territory near Kharkiv in Ukraine. Is Ukraine losing the war with Russia?"
+        </a><a data-c-br="In recent days, Russia's forces have seized territory near Kharkiv in Ukraine. Is Ukraine losing the war with Russia?"
                data-t-l=:list|o|c|2
                href=/story/news/world/2024/05/19/ukraine-losing-war-with-russia/73730454007/ class=gnt_m_flm_a><img
                 alt="" class=gnt_m_flm_i
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/17/USAT/73731932007-20240513-t-224931-z-565509019-rc-2-yp-7-a-2-exaf-rtrmadp-3-ukrainecrisiskharkiv.JPG?crop=2849,2849,x374,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/17/USAT/73731932007-20240513-t-224931-z-565509019-rc-2-yp-7-a-2-exaf-rtrmadp-3-ukrainecrisiskharkiv.JPG?crop=2849,2849,x374,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> A Russian escalation. A new front. Is Ukraine losing the war with Russia?
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-19" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 19, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="The Israeli military said Saturday its forces recovered the body of Ron Binyamin, who was among 252 people seized by Hamas-led Palestinian gunmen."
                data-t-l=:list|o|c|3
@@ -2045,7 +2043,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/18/USAT/73747900007-2152927492.jpg?crop=2332,2331,x875,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/18/USAT/73747900007-2152927492.jpg?crop=2332,2331,x875,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Israeli forces recover body of hostage Ron Binyamin
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-19" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 19, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a class="gnt_x__nft gnt_m_flm_a" data-g-r=base_nft data-t-l=":list|o|c|branded content tile"
                data-x-bc=%3Cimg%20class%3D%22gnt_m_flm_i%22%20src%3D%22%7Bis%7D%22%20alt%20decoding%3D%22async%22%20loading%3D%22lazy%22%20crossorigin%3E%7Bti%7D%3Cdiv%20class%3D%22gnt_m_flm_sbt%20gnt_sbt%20gnt_sbt__ms%22%20data-c-ms%3D%22%7Blb%7D%22%20style%3D%22--gnt-bc%3A%23626262%22%3E%3C%2Fdiv%3E
@@ -2060,7 +2058,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/17/USAT/73737737007-getty-images-1479484799.jpg?crop=672,671,x153,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/17/USAT/73737737007-getty-images-1479484799.jpg?crop=672,671,x153,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Teen says he faced $580 fine at McDonald's drive-thru for using app
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-17" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 17, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="Video shows a woman being attacked while on the beach in Los Cabos, Mexico. The tourist was seen giving the bull food."
                data-t-l=:list|o|c|6
@@ -2069,7 +2067,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/17/USAT/73733089007-microsoft-teamsimage-13.png?crop=1078,1078,x420,y1&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/17/USAT/73733089007-microsoft-teamsimage-13.png?crop=1078,1078,x420,y1&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Video shows bull attack tourist who was feeding the animal on Mexico beach
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-17" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 17, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="A U.S.-built floating pier is &#34;in place&#34; to deliver aid to Gaza in coming days, according to the White House."
                data-t-l=:list|o|c|7
@@ -2082,7 +2080,7 @@
                 <use xlink:href=#gnt_svg_play/>
             </svg>
             White House: Pier is 'in place' for Gaza aid
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-17"
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 17, 2024"
                  data-c-ms="ISRAEL-HAMAS WAR" style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="The Vatican has issued new guidelines for investigating reported supernatural events."
                data-t-l=:list|o|c|8
@@ -2095,7 +2093,7 @@
                 <use xlink:href=#gnt_svg_play/>
             </svg>
             Vatican updates guidelines for vetting supernatural claims
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-17" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 17, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="Defense Minister Yoav Gallant, backed by two centrist members of the cabinet, said Israel's army will not control Gaza after the war."
                data-t-l=:list|o|c|9
@@ -2104,7 +2102,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/17/USAT/73731311007-20240516-t-200914-z-1376477609-rc-2-ir-7-agx-0-r-4-rtrmadp-3-israelpalestiniansgaza.JPG?crop=3666,3666,x1833,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/17/USAT/73731311007-20240516-t-200914-z-1376477609-rc-2-ir-7-agx-0-r-4-rtrmadp-3-israelpalestiniansgaza.JPG?crop=3666,3666,x1833,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Gaza war splits Israel's cabinet as defense minister defies Netanyahu
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-17" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 17, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="It's about to become rare for the Vatican to endorse supernatural claims of weeping statues of the Virgin Mary and divine apparitions."
                data-t-l=:list|o|c|10
@@ -2113,7 +2111,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/17/USAT/73729475007-vatican.jpg?crop=1632,1631,x734,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/17/USAT/73729475007-vatican.jpg?crop=1632,1631,x734,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Vatican revamps policy on supernatural claims for first time since 1978
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-17" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 17, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="The leader of the cartel's operations in Spain was among the five people arrested. Officials also seized cash, abundant documentation, a detonating weapon and five vehicles."
                data-t-l=:list|o|c|11
@@ -2122,7 +2120,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/16/USAT/73721656007-getty-images-175424918.jpg?crop=2333,2332,x175,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/16/USAT/73721656007-getty-images-175424918.jpg?crop=2333,2332,x175,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Spanish police uncover 1.8 tons of crystal meth from Sinaloa Cartel
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-17" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 16, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="The Vatican is set to discuss apparitions and other supernatural phenomena in a press conference scheduled for Friday."
                data-t-l=:list|o|c|12
@@ -2131,7 +2129,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2023/12/29/USAT/72060729007-1874496815.jpg?crop=4724,4724,x0,y2362&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2023/12/29/USAT/72060729007-1874496815.jpg?crop=4724,4724,x0,y2362&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Vatican to offer new guidance on supernatural phenomena, apparitions on Friday
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-17" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 17, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="The Biden administration is preparing to send a billion-dollar shipment of weapons and ammunition to Israel. The deal will likely include $700 million in tank ammunition and $500 million in tactical vehicles."
                data-t-l=:list|o|c|13
@@ -2144,7 +2142,7 @@
                 <use xlink:href=#gnt_svg_play/>
             </svg>
             Biden to send arms to Israel
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-17" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 16, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="Israeli officials have denied genocide claims, say they have stepped up efforts to provide humanitarian aid in Gaza."
                data-t-l=:list|o|c|14
@@ -2153,7 +2151,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/16/USAT/73713373007-2152622621.jpg?crop=3523,3522,x880,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/16/USAT/73713373007-2152622621.jpg?crop=3523,3522,x880,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Israel accused in world court of trying to 'destroy Palestinian life'
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-17"
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 16, 2024"
                  data-c-ms="ISRAEL-HAMAS WAR" style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="A new bill, aimed at stifling dissent, has sparked the biggest protests in the Eastern European country of Georgia since its independence from the Soviet Union."
                data-t-l=:list|o|c|15
@@ -2162,7 +2160,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/14/USAT/73683811007-20240512-t-232949-z-178574587-rc-2-bp-7-a-4-o-8-wm-rtrmadp-3-georgiapoliticsprotests.JPG?crop=3262,3262,x1637,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/14/USAT/73683811007-20240512-t-232949-z-178574587-rc-2-bp-7-a-4-o-8-wm-rtrmadp-3-georgiapoliticsprotests.JPG?crop=3262,3262,x1637,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Georgia defies West and 'returns to past' with Russian-style law
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-16" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 16, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="Despite the rise in evangelicalism and its crossover into politics, religion in the United States is actually on the decline."
                data-t-l=:list|o|c|16
@@ -2175,31 +2173,25 @@
                 <use xlink:href=#gnt_svg_play/>
             </svg>
             Despite religion being on the decline in the U.S. atheism isn’t having the meteoric rise one might expect
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-15" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 15, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
-        </a>
-            <a data-c-br="A curator at the American Museum of Natural History was arrested, then released, on suspicions of smuggling valuable poisonous spiders and scorpions."
+        </a><a data-c-br="A curator at the American Museum of Natural History was arrested, then released, on suspicions of smuggling valuable poisonous spiders and scorpions."
                data-t-l=:list|o|c|17
-               href=/story/news/world/2024/05/15/museum-curator-istanbul-airport-scorpions-spiders/73698371007/ class=gnt_m_flm_a>
-                <img
+               href=/story/news/world/2024/05/15/museum-curator-istanbul-airport-scorpions-spiders/73698371007/ class=gnt_m_flm_a><img
                 alt="" class=gnt_m_flm_i
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/15/USAT/73699633007-451570720.jpg?crop=1986,1982,x688,y4&width=120&height=120&format=pjpg&auto=webp"
-                data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/15/USAT/73699633007-451570720.jpg?crop=1986,1982,x688,y4&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/>
-                US museum curator detained in Turkey airport with 1,500 scorpions, spiders
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-15" data-c-ms=WORLD
-                 style=--gnt-bc:#0A32A0>
-            </div>
-            </a>
-
-            <a data-c-br="Slovakia's Prime Minister Robert Fico was shot in an apparent assassination attempt as he made an appearance outside a community center, local media reported."
+                data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/15/USAT/73699633007-451570720.jpg?crop=1986,1982,x688,y4&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> US museum curator detained in Turkey airport with 1,500 scorpions, spiders
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 15, 2024" data-c-ms=WORLD
+                 style=--gnt-bc:#0A32A0></div>
+        </a><a data-c-br="Slovakia's Prime Minister Robert Fico was shot in an apparent assassination attempt as he made an appearance outside a community center, local media reported."
                data-t-l=:list|o|c|18
                href=/story/news/world/2024/05/15/slovakias-prime-minister-robert-fico-shooting/73698394007/ class=gnt_m_flm_a><img
                 alt="" class=gnt_m_flm_i
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/15/USAT/73698458007-20240513-t-112056-z-1806440171-rc-2-io-5-a-3-pgzc-rtrmadp-3-slovakianuclearpower.JPG?crop=3662,3662,x1267,y5&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/15/USAT/73698458007-20240513-t-112056-z-1806440171-rc-2-io-5-a-3-pgzc-rtrmadp-3-slovakianuclearpower.JPG?crop=3662,3662,x1267,y5&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Slovakia's pro-Russia prime minister shot in apparent assassination attempt
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-16" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 16, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="Israel is &#34;fulfilling our obligation to (Rafah's) humanitarian needs,&#34; Prime Minister Benjamin Netanyahu says."
                data-t-l=:list|o|c|19
@@ -2208,7 +2200,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/15/USAT/73698277007-2153050898.jpg?crop=4868,4867,x0,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/15/USAT/73698277007-2153050898.jpg?crop=4868,4867,x0,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> There's 'no humanitarian catastrophe' in Rafah, Netanyahu insists
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-16"
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 16, 2024"
                  data-c-ms="ISRAEL-HAMAS WAR" style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="Two passengers were rescued after their boat was attacked by orcas. The killer whales sank the boat."
                data-t-l=:list|o|c|20
@@ -2217,7 +2209,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/03/13/USAT/72954674007-joe-6566.JPG?crop=3713,3711,x927,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/03/13/USAT/72954674007-joe-6566.JPG?crop=3713,3711,x927,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Orcas sink boat with two passengers on board in Strait of Gibraltar
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-15" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 15, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="Oftentimes when astronomers discover new exoplanets they’re molten hot hellscapes or solid frozen spheres of ice. However, WASP-193b which resides 1,232 light-years is a little different."
                data-t-l=:list|o|c|21
@@ -2230,7 +2222,7 @@
                 <use xlink:href=#gnt_svg_play/>
             </svg>
             Astronomers discover an enormous planet made of something as light as cotton candy
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-15" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 15, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="Zelenskyy's cancellation of all foreign trips may indicate that Ukraine is struggling to contain Russia's offensive. The US said it is 'rushing' more weapons."
                data-t-l=:list|o|c|22
@@ -2239,7 +2231,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/15/USAT/73697305007-20240510-t-124803-z-1288836690-rc-2-mn-7-ajom-2-a-rtrmadp-3-ukrainecrisiskharkivassaultzelenskiy.JPG?crop=1747,1747,x423,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/15/USAT/73697305007-20240510-t-124803-z-1288836690-rc-2-mn-7-ajom-2-a-rtrmadp-3-ukrainecrisiskharkivassaultzelenskiy.JPG?crop=1747,1747,x423,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Ukraine's Zelenskyy cancels all foreign trips as Russian offensive intensifies
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-15" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 15, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="The portrait painted by artist Jonathan Yeo depicts King Charles III wearing the uniform of the Welsh Guards military unit, against a red background."
                data-t-l=:list|o|c|23
@@ -2252,7 +2244,7 @@
                 <use xlink:href=#gnt_svg_play/>
             </svg>
             King Charles unveils first official portrait
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-14" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 14, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="Food aid trucks headed to Gaza from Jordan were attacked by Israeli protesters, preventing them from reaching Gaza."
                data-t-l=:list|o|c|24
@@ -2265,7 +2257,7 @@
                 <use xlink:href=#gnt_svg_play/>
             </svg>
             Gaza-bound aid trucks attacked by Israelis
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-14" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 14, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="Israeli troops drove deeper into the southern Gaza city of Rafah on Tuesday as fighting flared again in the north."
                data-t-l=:list|o|c|25
@@ -2274,7 +2266,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/14/USAT/73682799007-2152351277.jpg?crop=4001,3999,x999,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/14/USAT/73682799007-2152351277.jpg?crop=4001,3999,x999,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Egypt rips Israel's 'desperate attempts' to deflect blame for Gaza crisis
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-15"
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 15, 2024"
                  data-c-ms="ISRAEL-HAMAS WAR" style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="President Joe Biden's pause of an arms shipment and a State Department report on Israel's conduct in Gaza are a turning point for the Democrat."
                data-t-l=:list|o|c|26
@@ -2283,7 +2275,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/13/USAT/73676137007-afp-2151840268-biden-may-2024.jpg?crop=2984,2983,x1344,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/13/USAT/73676137007-afp-2151840268-biden-may-2024.jpg?crop=2984,2983,x1344,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Biden reaches a turning point on Israel. His next move could be big
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-14" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 14, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="The State Department said Antony Blinken would get &#34;battlefield updates&#34; from Ukraine's leadership and discuss the impact of new U.S. security assistance."
                data-t-l=:list|o|c|27
@@ -2292,7 +2284,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/14/USAT/73681692007-20240514-t-031310-z-87333437-rc-23-q-7-aqlp-40-rtrmadp-3-ukrainecrisisusablinken.JPG?crop=3998,3998,x1088,y2&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/14/USAT/73681692007-20240514-t-031310-z-87333437-rc-23-q-7-aqlp-40-rtrmadp-3-ukrainecrisisusablinken.JPG?crop=3998,3998,x1088,y2&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Blinken visits Ukraine as Russia ramps up military offensive
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-14" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 14, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="Palestinians packed cars, trucks and carts to flee the violence in Rafah. Aid groups warned the humanitarian crisis could grow more grave."
                data-t-l=:list|o|c|28
@@ -2301,7 +2293,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/13/USAT/73669346007-2152214288.jpg?crop=4000,3999,x1200,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/13/USAT/73669346007-2152214288.jpg?crop=4000,3999,x1200,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Over 300,000 forced to flee Rafah as fighting intensifies across Gaza
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-14"
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 14, 2024"
                  data-c-ms="ISRAEL-HAMAS WAR" style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="Russian President Vladimir Putin has proposed a surprise new defense minister, nominating civilian Andrei Belousov, a former deputy prime minister who specializes in economics, for the job more than two years into the Ukraine war, the Kremlin said."
                data-t-l=:list|o|c|29
@@ -2310,7 +2302,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/07/USAT/73597868007-20240507-t-133631-z-861068528-rc-2-ll-7-at-83-zt-rtrmadp-3-russiapoliticsputin.JPG?crop=4068,4067,x1404,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/07/USAT/73597868007-20240507-t-133631-z-861068528-rc-2-ll-7-at-83-zt-rtrmadp-3-russiapoliticsputin.JPG?crop=4068,4067,x1404,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Vladimir Putin proposes moving Russian defense chief in surprise reshuffle
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-12" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 12, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="A 6.4 magnitude earthquake struck early Sunday near the border of Mexico and Guatemala."
                data-t-l=:list|o|c|30
@@ -2319,7 +2311,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/04/28/USAT/73491871007-getty-images-1461043009.jpg?crop=3493,3492,x1860,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/04/28/USAT/73491871007-getty-images-1461043009.jpg?crop=3493,3492,x1860,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> 6.4 magnitude earthquake strikes off the coast of Mexico, Guatemala
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-12" data-c-ms=WORLD
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 12, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="Secretary of State Antony Blinken made his first public comments on the Biden administration's report on Israel's treatment of civilians in Gaza."
                data-t-l=:list|o|c|31
@@ -2328,7 +2320,7 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/12/USAT/73662767007-2150461984.jpg?crop=4001,3999,x999,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/12/USAT/73662767007-2150461984.jpg?crop=4001,3999,x999,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Secretary of state says US review of Israeli actions in Gaza ongoing
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-12"
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 12, 2024"
                  data-c-ms="ISRAEL-HAMAS WAR" style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="More than 1 million displaced people have sought refuge in the southern city in the Gaza Strip during the seven-month-old war."
                data-t-l=:list|o|c|32
@@ -2337,8 +2329,8 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/10/USAT/73644725007-afp-2151746427.jpg?crop=3648,3647,x547,y0&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/10/USAT/73644725007-afp-2151746427.jpg?crop=3648,3647,x547,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Israeli military orders Palestinians to evacuate more areas in Rafah
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-12"
-                 data-c-ms=WORLD style=--gnt-bc:#0A32A0></div>
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 19, 2024" data-c-ms=WORLD
+                 style=--gnt-bc:#0A32A0></div>
         </a><a data-c-br="Dozens of protesters clashed with police while attempting to storm a Tesla factory in Germany."
                data-t-l=:list|o|c|33
                href=/videos/news/world/2024/05/10/protesters-clash-with-police-outside-tesla-factory/73648078007/ class=gnt_m_flm_a><img
@@ -2346,28 +2338,27 @@
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/10/USAT/73648095007-tesla-protest.jpg?crop=1080,1078,x496,y2&width=120&height=120&format=pjpg&auto=webp"
                 data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/10/USAT/73648095007-tesla-protest.jpg?crop=1080,1078,x496,y2&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/>
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-12"
-                 data-c-ms=WORLD style=--gnt-bc:#0A32A0></div>
+            <svg class=gnt_m_flm_svg>
+                <use xlink:href=#gnt_svg_play/>
             </svg>
             Tesla protesters try to break into German factory
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms" data-c-ms=WORLD style=--gnt-bc:#0A32A0></div>
-            </a>
-            <a data-c-br="The Taizhou Zoo in Jiangsu, China dyed two chow chow dogs and advertised them as &#34;panda dogs&#34; in the exhibit that opened on May 1.." data-t-l=:list|o|c|34
-               href=/story/news/world/2024/05/10/china-panda-dogs/73645792007/ class=gnt_m_flm_a>
-                <img
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 19, 2024" data-c-ms=WORLD
+                 style=--gnt-bc:#0A32A0></div>
+        </a><a data-c-br="The Taizhou Zoo in Jiangsu, China dyed two chow chow dogs and advertised them as &#34;panda dogs&#34; in the exhibit that opened on May 1.." data-t-l=:list|o|c|34
+               href=/story/news/world/2024/05/10/china-panda-dogs/73645792007/ class=gnt_m_flm_a><img
                 alt="" class=gnt_m_flm_i
                 data-g-r=lazy_c
                 data-gl-src="/gcdn/authoring/authoring-images/2024/05/10/USAT/73645982007-microsoft-teamsimage-6.png?crop=1079,1079,x840,y0&width=120&height=120&format=pjpg&auto=webp"
-                data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/10/USAT/73645982007-microsoft-teamsimage-6.png?crop=1079,1079,x840,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/>
-                Zoo in China criticized for dyeing dogs for 'panda dog' exhibit
-            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="2024-05-12" data-c-ms=WORLD
+                data-gl-srcset="/gcdn/authoring/authoring-images/2024/05/10/USAT/73645982007-microsoft-teamsimage-6.png?crop=1079,1079,x840,y0&width=240&height=240&format=pjpg&auto=webp 2x" decoding=async/> Zoo in China criticized for dyeing dogs for 'panda dog' exhibit
+            <div class="gnt_m_flm_sbt gnt_sbt gnt_sbt__ms gnt_sbt__ts" data-c-dt="May 12, 2024" data-c-ms=WORLD
                  style=--gnt-bc:#0A32A0></div>
-            </a>
-        </div>
+        </a></div>
         <div class="gnt_tb gnt_tbb">
             <div id=gnt_tbw_1></div>
         </div>
     </div>
+
+
     <div class=gnt_rr>
         <div class=gnt_rr_xpst>
             <aside aria-label=advertisement class="gnt_m gnt_x gnt_x__lbl gnt_x__pf">
@@ -2408,6 +2399,8 @@
         </aside>
     </div>
 </main>
+
+
 <footer class=gnt_ft data-g-r="lazy lazy_p" data-gl-method=shbd data-gl-type=method>
     <aside aria-label=advertisement class="gnt_m gnt_x gnt_x__lbl gnt_x__lb">
         <div class=gnt_x_lb id=ad-slot-7103-usatoday-leaderboard_btf-news-world-main-6></div>
@@ -2569,7 +2562,7 @@ if (g$.cd) {
     })).observe(e.d, {subtree: !0, childList: !0})
 }
 g$.btau = e => btoa(e).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
-;gnt.data = {
+gnt.data = {
     "adAamProps": "tangent-desktop|desktop|section front",
     "adBuild": "tangent-desktop",
     "adPageType": "subsection-front",
@@ -2689,7 +2682,7 @@ g$.nv.userAgent.includes("GannettNativeWebView") && (gnt.data.adBuild = "native-
         return L
     }
 })();
-;
+
 {
     const e = g$, n = !e.b.i;
     e.pre = function (c, k, f) {
@@ -2717,7 +2710,7 @@ g$.nv.userAgent.includes("GannettNativeWebView") && (gnt.data.adBuild = "native-
 if (!g$.hp["gnt-d-urlupdate"]) {
     let e, n, g, c;
     const k = g$, f = k.l;
-    ;
+
     if (k.hp["gnt-rf"] || k.hp["gnt-rtk"] || 0 < f.hash.indexOf("itm_")) c = k.sQS(k.hp, {
         "gnt-rf": 1,
         "gnt-rtk": 1,
@@ -2729,11 +2722,11 @@ if (!g$.hp["gnt-d-urlupdate"]) {
     }), c !== f.hash.substr(1) && (n = 1, f.oh = f.href, c = c ? "#" + c : c);
     if (e || n) {
         const l = new URL(f.href);
-        ;n && (l.hash = c);
+        n && (l.hash = c);
         history.replaceState(null, "", l)
     }
 }
-;
+
 {
     const e = g$.hp["gnt-dfp-xlabel"] || g$.qsp.usatl;
     gnt.x = {
@@ -3256,13 +3249,13 @@ if (!g$.hp["gnt-d-urlupdate"]) {
             p ? b.p.catch(u => {
             }) : ua?.(b);
             h && ua?.(b, 1)
-        };
+        }
         Ia || a(M, "h4s11");
         Ja || a(O, "h4s12");
         Ka || a(D, "h4s13");
-        ;La && a(S, "h4s28");
-        ;
-        ;
+        La && a(S, "h4s28");
+
+
         if (!r["gnt-disable-gpt"]) {
             Z++;
             d(ca);
@@ -3283,7 +3276,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
                 h.apply(b, p)
             };
             da("https://securepubads.g.doubleclick.net/tag/js/gpt.js", () => {
-                ;
+
                 !U.googletag || googletag.apiReady ? e() : (I("gnt gptLoaded"), Y?.());
             }, p => {
                 v((p.m = "script load failure", p), "h4s18", "https://securepubads.g.doubleclick.net/tag/js/gpt.js");
@@ -3292,7 +3285,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
                 e()
             })
         }
-        ;Ia || (++Z, d(M, pa.length), da('/tangstatic/js/pbjsandwich-q1a2z325180a85.min.js', 0, b => {
+        Ia || (++Z, d(M, pa.length), da('/tangstatic/js/pbjsandwich-q1a2z325180a85.min.js', 0, b => {
             v((b.m = "script load failure", b), "h4s19", '/tangstatic/js/pbjsandwich-q1a2z325180a85.min.js');
             M.fail = 1;
             M.p.r();
@@ -3308,7 +3301,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
             e()
         }));
         Ka || (++Z, d(D), da("https://static.adsafeprotected.com/iasPET.1.js", () => {
-            ;U.__iasPET?.VERSION ? Y?.() : e();
+            U.__iasPET?.VERSION ? Y?.() : e();
         }, b => {
             v((b.m = "script load failure", b), "h4s21", "https://static.adsafeprotected.com/iasPET.1.js");
             D.fail = 1;
@@ -3322,7 +3315,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
             v((b.m = "script load failure", b), "h4s22", "https://cdn.confiant-integrations.net/r5TdgVvkbv-PeaJCKaQfCh5Xsto/gpt_and_prebid/config.js");
             e()
         }));
-        ;La && (++Z, d(S), da("https://cdn.brandmetrics.com/tag/f5e47f5ae82e4c48bbc1a7f9281ed95b/gannett_net.js", () => {
+        La && (++Z, d(S), da("https://cdn.brandmetrics.com/tag/f5e47f5ae82e4c48bbc1a7f9281ed95b/gannett_net.js", () => {
             Y?.();
             I("gnt bmReady");
             S.timeout &&
@@ -3336,7 +3329,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
             S.dp.r();
             e()
         }));
-        ;
+
         m.xreqp = n()
     }
 
@@ -3377,8 +3370,8 @@ if (!g$.hp["gnt-d-urlupdate"]) {
         m.cdl =
             a
     });
-    ;const Ga = w.now / 1E5, Fa = (r["gnt-x-vb"] || w.now) % 1E3;
-    ;ta = f(0, [{"n": "pb-to-900", "b": 4, "e": 5, "t": 900}, {
+    const Ga = w.now / 1E5, Fa = (r["gnt-x-vb"] || w.now) % 1E3;
+    ta = f(0, [{"n": "pb-to-900", "b": 4, "e": 5, "t": 900}, {
         "n": "pb-to-1000",
         "b": 5,
         "e": 6,
@@ -3394,8 +3387,8 @@ if (!g$.hp["gnt-d-urlupdate"]) {
         "e": 10,
         "t": 1400
     }, {"n": "pb-to-1500", "b": 10, "e": 11, "t": 1500}, {"n": "pb-to-control", "b": 11, "e": 12, "c": 16487712}]);
-    ;m.up = (L.itm_source || L.utm_source || "") + "|" + (L.itm_medium || L.utm_medium || "") + "|" + (L.itm_campaign || L.utm_campaign || "");
-    ;let F, aa, Qa, Ra;
+    m.up = (L.itm_source || L.utm_source || "") + "|" + (L.itm_medium || L.utm_medium || "") + "|" + (L.itm_campaign || L.utm_campaign || "");
+    let F, aa, Qa, Ra;
     const sa = m.idh = function () {
         if (aa) return aa;
         if (!F && !Ra) {
@@ -3411,7 +3404,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
         }
         return aa
     };
-    ;let ya, oa, za, Aa;
+    let ya, oa, za, Aa;
     w.lr && (za = function () {
         ya = !0;
         const a = sa(), d = F?.d && !(0 < F.d - w.now);
@@ -3448,7 +3441,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
         }
         return Promise.resolve(d)
     }));
-    ;m.apat = function (a) {
+    m.apat = function (a) {
         a && !ia && fetch("https://tk.amazon-adsystem.com/envelope",
             {
                 method: "POST",
@@ -3478,7 +3471,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
             v(d, "h4s15")
         })
     };
-    ;
+
     if (Na && !r["gnt-d-gpp"]) {
         let a =
             0;
@@ -3500,10 +3493,10 @@ if (!g$.hp["gnt-d-urlupdate"]) {
             }
         }, !1)
     }
-    ;r["gnt-d-adm"] || (m.abnf = [], Y = m.dnsf = function () {
+    r["gnt-d-adm"] || (m.abnf = [], Y = m.dnsf = function () {
         ++ab === Z && (bb(m.abnf), cb(m.abnf))
     });
-    ;U.googletag = {
+    U.googletag = {
         cmd: [function () {
             I("gnt gptReady");
             const a = googletag, d = a.pubads(), b = {childDirectedTreatment: !1};
@@ -3511,17 +3504,17 @@ if (!g$.hp["gnt-d-urlupdate"]) {
             d.disableInitialLoad();
             d.enableSingleRequest();
             d.setPrivacySettings(b);
-            ;
+
             if (w.lr && ma) {
                 const h = sa();
                 h && a.secureSignalProviders.push({id: "liveramp.com", collectorFunction: () => Promise.resolve(h)})
             }
-            ;a.enableServices();
+            a.enableServices();
             ca.ready = !0;
             ca.p.r()
         }]
     };
-    ;U.__iasPET = {
+    U.__iasPET = {
         queue: [() => {
             I("gnt iasReady");
             D.timeout && (D.timedOut = ja(D.timeout));
@@ -3549,23 +3542,23 @@ if (!g$.hp["gnt-d-urlupdate"]) {
             m.ccb.apply(m, a)
         }
     };
-    ;ua = function (a, d) {
+    ua = function (a, d) {
         a[d ? "vdp" : "dp"] = n()
     };
-    ;m.bmc = function (a) {
+    m.bmc = function (a) {
         I("gnt bmDataReady");
         S.dataRet = a;
         S.dp.r()
     };
-    ;m.xFetch = function (a, d) {
-        ;
+    m.xFetch = function (a, d) {
+
         if (d?.gntOvr) {
             var b = "", h = ba.referrer;
-            ;a = a.replace("cust_params=", "cust_params=" + ha("utm_props=" + m.up + "&navigationtype=" + (L.navigationtype || -1 < h.indexOf($a) ? "internal" : h ? "external" : "direct") + b + "&"));
+            a = a.replace("cust_params=", "cust_params=" + ha("utm_props=" + m.up + "&navigationtype=" + (L.navigationtype || -1 < h.indexOf($a) ? "internal" : h ? "external" : "direct") + b + "&"));
             h = r["gnt-dfp-xlabel"] || L.usatl;
             if (na || h || fa) na && (a = a.replace(wa, na)), fa && (a = a.replace(qa, fa)), h && (a = a.replace("cust_params=", "cust_params=" + ha("adlabel=" + h + "&")))
         }
-        ;
+
         return fetch(a, d).then(p => {
             if (p.ok) return p.text();
             throw Error("xFetch returned status: ", p.status);
@@ -3587,14 +3580,14 @@ if (!g$.hp["gnt-d-urlupdate"]) {
             }
         }
     };
-    ;
-    ;
-    ;
+
+
+
     if (!gnt.bt) {
         let X = 0, Y, Z, P;
         const h = g$, I = gnt.x, Q = h.l, aa = Q.hostname, E = h.ec, R = Image, S = fetch, wa = h.as, B = h.jp,
             z = h.cc, C = I.egFb = function (c, b) {
-                ;b || (b = "https://www.gannett-cdn.com/presto/2023/07/07/USAT/215ba713-4e96-4806-bd6a-f5d49527bcfe-GettyImages_1484969074_1.jpeg", c.innerHTML = ba(c, b + '?fit=crop&width=120&height=120&format=pjpg&auto=webp" srcset="' + b + '?fit=crop&width=240&height=240&format=pjpg&auto=webp 2x',
+                b || (b = "https://www.gannett-cdn.com/presto/2023/07/07/USAT/215ba713-4e96-4806-bd6a-f5d49527bcfe-GettyImages_1484969074_1.jpeg", c.innerHTML = ba(c, b + '?fit=crop&width=120&height=120&format=pjpg&auto=webp" srcset="' + b + '?fit=crop&width=240&height=240&format=pjpg&auto=webp 2x',
                     "How to simplify the home buying process", "Story from Rocket Mortgage®").replace("#626262", "#404040"), c.href = "https://www.usatoday.com/interactives/sponsor-story/rocket-mortgage/the-ultimate-guide-to-home-buying/", c.setAttribute("data-c-br", "Rocket Mortgage can help buyers navigate the market on their own terms."), "");
             }, ba = function (c, b, f, n, d) {
                 return (d || decodeURIComponent(c.getAttribute("data-x-bc"))).replace("{is}", b).replace("{ti}", f).replace("{lb}", n)
@@ -3732,14 +3725,14 @@ if (!g$.hp["gnt-d-urlupdate"]) {
                         q = new URL(q.destUrl);
                         const sa = !t && K + T + ka + "&pag2=" + (A ? ja : ia) + (e && g ? "&pepf=" + (g.collection || "") + "&pepfs=" + (g.id || "") + "&pepfo=" + ("curated" === oa ? "c" : "even-distribution" === oa ? "r" : "") : "") + "&pecy=" + (la || "") + "&c=" + m + "&pacexp=" + (a && a.guid || "") + "&pacexm=" +
                             (G && Object.keys(G)[0] || "") + (A ? p() : "") + "&par=s&t=";
-                        ;d.setAttribute("data-c-br", pa);
-                        ;q.search += (q.search ? "&" : "") + "mvt=i&mvn=" + m + "&mvp=NA-USAT-11238597&mvl=" + ha + "&utm_campaign=" + k.id + "&utm_source=polar&utm_medium=cpc";
-                        ;d.href = f.click + E(q.href);
+                        d.setAttribute("data-c-br", pa);
+                        q.search += (q.search ? "&" : "") + "mvt=i&mvn=" + m + "&mvp=NA-USAT-11238597&mvl=" + ha + "&utm_campaign=" + k.id + "&utm_source=polar&utm_medium=cpc";
+                        d.href = f.click + E(q.href);
                         d.rel = "sponsored noopener";
                         d.target = "blank";
                         d.setAttribute("aria-label", V + " - " + l);
                         d.innerHTML = ba(d, "https://polarcdn-terrax.com" + U + '&h=120&w=120&autocrop=1" srcset="https://polarcdn-terrax.com' + U + '&h=240&w=240&autocrop=1 2x', V, l);
-                        ;clearTimeout(b.to);
+                        clearTimeout(b.to);
                         t || (h.run.push(() => {
                             h.mods.base.handlers.click["nft" + (X || "")] = function () {
                                 for (let H = 1, M = b.track.click; H < M.length; H++) (new R).src = M[H];
@@ -3755,7 +3748,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
             })
         }
     }
-    ;
+
 
     gnt.x.sxu = function (e) {
         const b = gnt.data;
@@ -3765,14 +3758,14 @@ if (!g$.hp["gnt-d-urlupdate"]) {
         const d = gnt.abv;
         return e + g$.ec("&aam_props=" + b.adAamProps + "&build=" + b.adBuild + (c ? "&gnt_sb=" + c : "") + (a ? "&gnt_ub=" + a : "") + (d ? "&variant=" + d : "")) + (gnt.u.co ? "&rdp=1" : "") + "&tfcd=0&c=" + Math.floor(1E15 * Math.random())
     };
-    ;
+
     {
         const d = gnt, c = d.x, {hp: f, d: k, el: g} = g$, h = function (a) {
             const b = a.getAttribute("data-x-em");
             b && c[b] && c[b](a)
         };
         g.lsx = function (a) {
-            ;c.xFetch(c.sxu(a.getAttribute("data-x-src")), {
+            c.xFetch(c.sxu(a.getAttribute("data-x-src")), {
                 cache: "no-store",
                 credentials: "include",
                 gntOvr: !0
@@ -3790,7 +3783,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
             d.bt && a.hasAttribute("data-x-btb") || (d.u.adfree ? "native-front_tile" === b && h(a) : g.lsx(a))
         }
     }
-    ;
+
     !g$.d.browsingTopics || gnt.u.adfree || g$.hp["gnt-disable-x"] || (gnt.tapi = g$.d.browsingTopics().catch(a => {
         g$.cc(a, "h1q1")
     })).then(a => {
@@ -3831,22 +3824,22 @@ if (!g$.hp["gnt-d-urlupdate"]) {
                 "/partner/scripts/tapi/", "gannett", "tapi-g")
         }, 3E3)
     }
-    ;
-    ;
-    ;
+
+
+
     if (!r["gnt-disable-x"] && !X.adfree) {
         var Ta = m.slots = {}, db = m.initSlots = [], da = t.as, Ua = r["gnt-d-xsize"]?.split?.("|");
-        ;var La = ma && t.nv.cookieEnabled && !r["gnt-d-bm"];
-        ;var Va = [], Wa = [], pa = [], Ha = [], Sa = [], Ia = r["gnt-disable-pbjs"] || w.gppf,
+        var La = ma && t.nv.cookieEnabled && !r["gnt-d-bm"];
+        var Va = [], Wa = [], pa = [], Ha = [], Sa = [], Ia = r["gnt-disable-pbjs"] || w.gppf,
             Ja = r["gnt-disable-a9"], Ka = r["gnt-disable-ias"], Ma = r["gnt-d-dv"], Ba = r["gnt-only-pb"],
             Ca = r["gnt-disable-pb"]?.split?.(",");
-        ;var Da = {}, Ea = [];
-        ;
-        ;t.gspd && t.run.push(() => {
+        var Da = {}, Ea = [];
+
+        t.gspd && t.run.push(() => {
             t.cs({name: "user_gsp", value: "", ma: 0, path: "/", priority: "high"});
             t.cc("gspd", "h4s41")
         });
-        ;
+
         if (fa) for (var ra of ba.querySelectorAll('[id*="ad-slot-"]')) ra.id = ra.id.replace(qa, fa);
         ra = m.setupSrvX = function (a) {
             if (Ua && !a.cfg.isVid) {
@@ -3864,21 +3857,21 @@ if (!g$.hp["gnt-d-urlupdate"]) {
                     }
                 }
             }
-            ;const {cfg: u, placement: z, sizes: A, cnt: H, pbSlot: q, id: P} = a;
+            const {cfg: u, placement: z, sizes: A, cnt: H, pbSlot: q, id: P} = a;
             ({isVid: d} = u);
             var C = a.isPS = "poster_scroll" === z || "poster_scroll_front" === z;
             let Q;
             p = 0;
-            ;
+
             if (!t.iou && "high_impact" === z) for (b = 0; b < A.length; b++) 2560 === A[b][0] && A.splice(b--, 1);
-            ;d && !Oa[z] &&
+            d && !Oa[z] &&
             (Oa[z] = a);
-            ;
+
             if (Ba || Ca) b = q.bids, q.bids = Ba && g(b, Ba) || Ca && g(b, Ca, !0);
-            ;const W = w.geo && w.geo.c;
+            const W = w.geo && w.geo.c;
             W && "US" !== W && (q.bids = q.bids.filter(K => !K.g || K.g.includes(W)));
-            ;d || (fa && (a.unit = a.unit.replace(qa, fa)), na && (a.unit = a.unit.replace(wa, na)));
-            ;q.bids = f(q.bids, [{
+            d || (fa && (a.unit = a.unit.replace(qa, fa)), na && (a.unit = a.unit.replace(wa, na)));
+            q.bids = f(q.bids, [{
                 "n": "disableappnexus",
                 "b": 100,
                 "e": 101,
@@ -3921,7 +3914,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
                 "v": ["yieldmo"],
                 "r": true
             }, {"n": "disablecontrol", "b": 118, "e": 119}]);
-            ;
+
             for (let K = 0, R; K < H; K++) {
                 if (d) Pa++; else if (!a.cfg.gal) {
                     xa++;
@@ -3940,7 +3933,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
             q.act = h;
             (q.init = h) && p.nolazy && !p.gal && "leaderboard_btf" !== u && (!m.phi || "high_impact" !== u && "poster" !== u && "poster_front" !== u) && (q.it = 1);
             p.gal && m.gx.push(q);
-            ;
+
             if (H) {
                 H = q ? "/" + q.unit + "/" + b : a;
                 var P = Object.assign({}, d.a9Slot);
@@ -3950,13 +3943,13 @@ if (!g$.hp["gnt-d-urlupdate"]) {
                 q.a9Slot = P;
                 h && Ha.push(P);
                 Q.bids?.length && (q.pbSlot = Q, h && ((A && Za ? pa : Wa).push(a), q.pbs = 1, Va.push(Q)));
-                ;
+
                 h = 1 < d.cnt && [];
-                ;
+
                 for (var C of Q.bids) {
-                    ;C.userId = Da;
+                    C.userId = Da;
                     C.userIdAsEids = Ea;
-                    ;
+
                     if ("taboola" === C.bidder) if (h) {
                         P = Object.create(C);
                         let W = Object.create(C.params);
@@ -3965,21 +3958,21 @@ if (!g$.hp["gnt-d-urlupdate"]) {
                         h.push(P)
                     } else C.params.tagId = H; else h && h.push(C);
                 }
-                ;h && (Q.bids = h);
-                ;Q.ortb2Imp = {ext: {data: {adserver: {adslot: H, name: "gam"}, pbadslot: H}, gpid: H}};
+                h && (Q.bids = h);
+                Q.ortb2Imp = {ext: {data: {adserver: {adslot: H, name: "gam"}, pbadslot: H}, gpid: H}};
                 if (z) return q
             }
             q.iasSlot =
                 {adSlotId: a, size: d.sizes[0], adUnitPath: q.unit};
             Sa.push(q.iasSlot);
             q.lastBidTarg = [];
-            ;"high_impact" === u && (m.hiSlot = q, q.isHi = !0);
-            ;q.adCount = b;
+            "high_impact" === u && (m.hiSlot = q, q.isHi = !0);
+            q.adCount = b;
             (m.sa || (m.sa = [])).push(q);
             return q
         };
         for (const a of Ya) ra(a);
-        ;U.pbjs = {
+        U.pbjs = {
             que: [function () {
                 I("gnt pbReady");
                 Y?.();
@@ -4052,7 +4045,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
                         }, regs: {}
                     }
                 };
-                ;d.s2sConfig = {
+                d.s2sConfig = {
                     accountId: "gannett",
                     bidders: ['appnexus', 'appnexusAst', 'colossusssp', 'ix', 'trustx', 'openx', 'pubmatic', 'pulsepoint', 'rubicon', 'sonobi', 'triplelift', 'undertone', 'yieldmo', 'yahoossp'],
                     extPrebid: {aliases: {appnexusAst: "appnexus", colossusssp: "colossus", yahoossp: "yahooAds"}},
@@ -4061,13 +4054,13 @@ if (!g$.hp["gnt-d-urlupdate"]) {
                     endpoint: "/pbd/openrtb2/auction",
                     timeout: 1000
                 };
-                ;w.lr && ma && !ia && (oa || !ya && (oa = m.lrEnv = za())) && Ea.push({
+                w.lr && ma && !ia && (oa || !ya && (oa = m.lrEnv = za())) && Ea.push({
                     source: "liveramp.com",
                     uids: [{id: Da.idl_env = Aa(oa), atype: 3}]
                 });
-                ;Da.sharedid = {id: X.ai};
+                Da.sharedid = {id: X.ai};
                 Ea.push({source: "pubcid.org", uids: [{id: X.ai, atype: 1}]});
-                ;
+
                 if (va) {
                     const b = va();
                     d.consentManagement = {
@@ -4089,37 +4082,37 @@ if (!g$.hp["gnt-d-urlupdate"]) {
                 ja(M.timeout);
                 M.timedOut = !1;
                 a.aliasBidder("appnexusAst", "appnexus");
-                ;a.setConfig(d);
+                a.setConfig(d);
                 a.addAdUnits(Va);
                 m.initXCall && a.requestBids({
                     bidsBackHandler: fb,
                     adUnitCodes: Wa
                 });
-                ;pa.length && (d = {
+                pa.length && (d = {
                     bidsBackHandler: gb,
                     adUnitCodes: pa,
                     ortb2: m.vbo = {ext: {prebid: {cache: {vastXml: {returnCreative: !1}}}}}
                 }, a.requestBids(d));
             }]
         };
-        ;pbjs.bidderSettings = {taboola: {storageAllowed: !0}};
-        ;var gb = c.bind(null, 1), fb = c.bind(null, 0);
-        ;
-        ;
-        ;
+        pbjs.bidderSettings = {taboola: {storageAllowed: !0}};
+        var gb = c.bind(null, 1), fb = c.bind(null, 0);
+
+
+
         r["gnt-delay-x"] ? la(y, 1E3) : y()
     }
 })();
-;
+
 ;(gnt.v.tb = [{
     "container": "gnt_tbw_1",
     "mode": "thumbnails-g",
     "placement": "Section Front Feed - Feed Redesign"
 }]).o = g$.hp["gnt-enable-tbo"];
-;gnt.v.tb.bd = 1;
-;
-;
-;
+gnt.v.tb.bd = 1;
+
+
+
 {
     const e = gnt.u;
     e.getUser();
@@ -4144,7 +4137,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
 
     }
 }
-;
+
 {
     const e = g$, n = e.vv, g = function (c) {
         let k = -250, f;
@@ -4170,7 +4163,7 @@ if (!g$.hp["gnt-d-urlupdate"]) {
 screen?.orientation?.addEventListener("change", e => {
     g$.cc("ori", "h9o3", e.target.angle, {b: e.target.type}, 7)
 });
-;
+
 g$.hp["gnt-disable-pagerefresh"] || setTimeout(function () {
     function e() {
         c = !1;
@@ -4207,15 +4200,15 @@ g$.hp["gnt-disable-pagerefresh"] || setTimeout(function () {
     }, 6E4);
     f || n()
 }, 36E4);
-;
-;gnt.v.ua = {
+
+gnt.v.ua = {
     c: {
         "appKey": "RZEjXgPqRKagwt5Ac-2-iw",
         "token": "MTpSWkVqWGdQcVJLYWd3dDVBYy0yLWl3OnpDOGxJVmZwWGVwNklFNEZOTFFzWlU4Sjltajg3djByakQwVmw3NHFzd2c",
         "vapidPublicKey": "BNvJR_SUE9hR-4Bretw3No2z4y_EVNWl2LSkuTmjzkEnkFa-xWk1xdM0xOQyJdG7KdNZ0job9tVy_TAl_E7phO0="
     }, p: 2
 };
-;g$.fcn = function (a) {
+g$.fcn = function (a) {
     a = a[0].toUpperCase() + ("o" === a[0] && " " === a[1] ? "'" + a[2].toUpperCase() + a.substr(3) : a.substr(1));
     let b = a.indexOf(" ");
     if (0 < b) for (; b < a.length; ++b) if (" " === a[b - 1]) {
@@ -4226,7 +4219,7 @@ g$.hp["gnt-disable-pagerefresh"] || setTimeout(function () {
 };
 if (gnt.u.wt) {
     const b = g$.d.querySelector(".gnt_n_wt");
-    ;
+
     if (b) {
         const {geo: a, u: c} = gnt,
             d = b.title + (a && !c.wb ? a.y ? " in " + g$.fcn(a.y) + (a.s ? ", " + a.s : "") + (a.z ? " (" + a.z + ")" : "") : a.z ? " in " + a.z : "" : "") + ": " + c.wt + "\u00b0F" + (c.wc ? " " + c.wc : "");
@@ -4234,12 +4227,12 @@ if (gnt.u.wt) {
         b.setAttribute("aria-label", d)
     }
 }
-;
+
 if (gnt.sbto && !g$.hp["gnt-d-sbo"]) {
     const a = g$.d.querySelector(".gnt_n_us_sb"), b = gnt.sbto;
     a && (a.setAttribute("aria-label", b), a.setAttribute("data-t-l", ":n|p|c|" + b))
 }
-;
+
 gnt.tmpl = {
     navgd: {
         url: "/global-q1a2z3WxUWTV0+F03b1JMQ+P6gajEp14.min.json",
@@ -4265,9 +4258,9 @@ if (!gnt.hnb) {
         a.scrolling = "no";
         a.title = "Special offer";
         a.frameBorder = a.marginWidth = a.marginHeight = 0;
-        ;const c = b.u.nb;
+        const c = b.u.nb;
         a.src = `${c.s.u || c.u}o=${d.l.origin}&p=1-800-872-0001&n=USA%20TODAY&u=${d.ec(b.u.im && ("i" !== c.s.i && (c.s.i || c.s.o) || c.i || c.o) || c.s.o || c.o || "")}`;
-        ;f.appendChild(a);
+        f.appendChild(a);
         d.ut("gnt atomsNanobarCreate");
         b.knbq = [];
         b.knb = function (e) {
@@ -4287,7 +4280,7 @@ if (!gnt.hnb) {
         }
     }
 }
-;
+
 gnt.u.ced && (gnt.ceocss = `.gnt_ceo_oy{overscroll-behavior:contain;overflow:auto;contain:strict;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;position:fixed;z-index:2147483647;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);pointer-events:auto}.gnt_ceo_xb{position:absolute;z-index:1;top:20px;right:10px;width:44px;height:44px;margin:0;border:1px solid #c2c2c2;border-radius:50%;background:#fff;color:#303030;touch-action:manipulation;cursor:pointer}.gnt_ceo_xb::before{content:'';position:absolute;top:20px;left:12px;transform:rotate(45deg);width:18px;height:2px;background:currentColor}.gnt_ceo_xb::after{content:'';position:absolute;top:20px;left:12px;transform:rotate(-45deg);width:18px;height:2px;background:currentColor}.gnt_ceo_xb:hover{border-color:#000;color:#000}.gnt_ceo{contain:layout;position:relative;width:800px;background:#fff;color:#303030;text-align:center}.gnt_ceo::after,.gnt_ceo::before{content:'';display:block;height:12px;background:linear-gradient(to right,#0098fe 0,#0a32a0 100%)}.gnt_ceo_lg{width:89.141px;height:30px;margin:76px auto 0}.gnt_ceo_hd{margin:10px 0 25px;padding:0 calc(13px + (100% - 300px)/ 5);font:700 34px/38px 'Unify Sans','Helvetica Neue','Arial Nova',Helvetica,Arial,sans-serif}.gnt_ceo_tx{margin:0 0 33px;padding:0 calc(13px + (100% - 300px)/ 5);font-size:18px;line-height:20px}.gnt_ceo_a{display:block;width:260px;margin:0 auto 24px;background:#1665cf;color:#fff;font:700 16px/48px 'Unify Sans','Helvetica Neue','Arial Nova',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-decoration:none;text-align:center}.gnt_ceo_a:hover{background:#0a32a0}.gnt_ceo_dc{display:inline-block;max-width:539px;margin:0 0 73px;color:#626262;font:14px/17px 'Unify Sans','Helvetica Neue','Arial Nova',Helvetica,Arial,sans-serif}`);
 gnt.u.ca && (gnt.cacss = `.gnt_ca_oy{overscroll-behavior:contain;overflow:auto;contain:strict;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;position:fixed;z-index:2147483647;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);pointer-events:auto}.gnt_ca_xb{position:absolute;z-index:1;top:20px;right:10px;width:44px;height:44px;margin:0;border:1px solid #c2c2c2;border-radius:50%;background:#fff;color:#303030;touch-action:manipulation;cursor:pointer}.gnt_ca_xb::before{content:'';position:absolute;top:20px;left:12px;transform:rotate(45deg);width:18px;height:2px;background:currentColor}.gnt_ca_xb::after{content:'';position:absolute;top:20px;left:12px;transform:rotate(-45deg);width:18px;height:2px;background:currentColor}.gnt_ca_xb:hover{border-color:#000;color:#000}.gnt_ca{contain:layout;position:relative;width:800px;background:#fff;color:#626262;font:14px/18px 'Unify Sans','Helvetica Neue','Arial Nova',Helvetica,Arial,sans-serif;text-align:center}.gnt_ca::after,.gnt_ca::before{content:'';display:block;height:12px;background:linear-gradient(to right,#0098fe 0,#0a32a0 100%)}.gnt_ca_hd{margin:72px 0 0;color:#303030;font-weight:700;font-size:34px;line-height:38px}.gnt_ca_hd::before{content:'WHOOPS!';display:block;margin:0 0 9px;color:#1665cf;font-size:21px;line-height:24px}.gnt_ca_rtm{margin:25px 0 0;color:#303030;font-size:18px;line-height:26px}.gnt_ca_rtm_pp{font-weight:700}.gnt_ca_a{display:block;width:254px;margin:30px auto 21px;background:#1665cf;color:#fff;font:700 16px/48px 'Unify Sans','Helvetica Neue','Arial Nova',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-decoration:none;text-align:center}.gnt_ca_a:hover{background:#0a32a0}.gnt_ca_ac_sl{padding:3px;border:0;color:#303030;font:inherit;font-weight:700;text-decoration:underline;text-decoration-color:#0098FE;text-decoration-skip-ink:none;text-decoration-thickness:2px;text-underline-offset:2px}.gnt_ca_ac_sl:hover{color:#000}.gnt_ca_tx{margin:12px 30px 72px}.gnt_ca_tx_pn{white-space:nowrap}`);
 gnt.u.aod = 1;
@@ -4308,7 +4301,7 @@ if (gnt.luxEnabled) {
         g$.cc(a, "h3e2")
     }
 }
-;
+
 gnt.data.sfPath = "/tangstatic/html/usat/sf-q1a2z330306dc3.min.html";
 {
     let c = g$.ic.gnt_tp;
@@ -4329,8 +4322,8 @@ gnt.data.sfPath = "/tangstatic/html/usat/sf-q1a2z330306dc3.min.html";
         })
     }) : c && g$.cs({name: "gnt_tp", value: "", ma: -9, path: "/", priority: "high"})
 }
-;
-;g$.ut("gnt bodyendDone");</script>
+
+g$.ut("gnt bodyendDone");</script>
 <script async onerror="document.querySelectorAll('.gnt__hbd').forEach(e=>e.classList.remove('gnt__hbd'))"
         src=/tangstatic/js/main-q1a2z3be96f0e9.min.js></script>
 <script data-tmpl-key=navgdp type="gnt/tmpl">

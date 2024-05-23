@@ -24,7 +24,7 @@ Files from where data is retrieved are located in this folder
 ### 3. Logger
 Better logging functionality. I saw it on one project, and from that moment always use this practice.
 
-### Usage
+### 4. Usage
 GoGator has only root and fetch commands. Root just prints simple message, and fetch performs actual
 news retrieval and filtering.
 
@@ -42,7 +42,7 @@ Available parameters: <br/>
 > `--sources bbc,washingtontimes` News will be retrieved ONLY from mentioned sources (separated by ',') <br/> 
 > `--keywords Ukraine,Chine` News will be filtered by existence of keywords in title or description <br/>
 
-## Examples:
+## 5. Examples:
 `.\bin\go-gator.exe fetch --ts-from 2024-05-18 --keywords Ukraine --ts-to 2024-05-20 --sources bbc`
 
 ![img.png](./Images/example_1.png)

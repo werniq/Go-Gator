@@ -5,10 +5,6 @@ import (
 	"newsAggr/logger"
 )
 
-func init() {
-
-}
-
 func main() {
 	rootCmd := cmd.InitRootCmd()
 	err := rootCmd.Execute()

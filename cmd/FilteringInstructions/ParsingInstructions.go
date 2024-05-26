@@ -1,15 +1,14 @@
-package parsingInstructions
+package FilteringInstructions
 
 import (
 	"newsAggr/cmd/types"
-	"newsAggr/cmd/utils"
 	"strings"
 	"time"
 )
 
 type ApplyKeywordsInstruction struct{}
 
-func (a ApplyKeywordsInstruction) Apply(article types.News, params *types.ParsingParams) bool {
+func (a ApplyKeywordsInstruction) Apply(article types.News, params *types.FilteringParams) bool {
 	keywords := strings.Split(params.Keywords, ",")
 	for _, keyword := range keywords {
 		if strings.Contains(article.Title, keyword) || strings.Contains(article.Description, keyword) {
@@ -21,7 +20,7 @@ func (a ApplyKeywordsInstruction) Apply(article types.News, params *types.Parsin
 
 type ApplyDateRangeInstruction struct{}
 
-func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.ParsingParams) bool {
+func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.FilteringParams) bool {
 	timeFormats := []string{
 		time.Layout, time.ANSIC, time.UnixDate, time.RubyDate, time.RFC822, time.RFC822Z,
 		time.RFC850, time.RFC1123, time.RFC1123Z, time.RFC3339, time.RFC3339Nano,
@@ -33,14 +32,14 @@ func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.Parsi
 	var err error
 
 	if article.PubDate != "" {
-		publicationDate, err = utils.ParseDateWithFormats(article.PubDate, timeFormats)
+		publicationDate, err = ParseDateWithFormats(article.PubDate, timeFormats)
 		if err != nil {
 			return false
 		}
 	}
 
 	if params.StartingTimestamp != "" {
-		startingTime, err := utils.ParseDateWithFormats(params.StartingTimestamp, timeFormats)
+		startingTime, err := ParseDateWithFormats(params.StartingTimestamp, timeFormats)
 		if err != nil {
 			return false
 		}
@@ -50,7 +49,7 @@ func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.Parsi
 	}
 
 	if params.EndingTimestamp != "" {
-		endingTime, err := utils.ParseDateWithFormats(params.EndingTimestamp, timeFormats)
+		endingTime, err := ParseDateWithFormats(params.EndingTimestamp, timeFormats)
 		if err != nil {
 			return false
 		}
@@ -60,4 +59,17 @@ func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.Parsi
 	}
 
 	return true
+}
+
+func ParseDateWithFormats(dateStr string, formats []string) (time.Time, error) {
+	var err error
+	var date time.Time
+
+	for _, format := range formats {
+		date, err = time.Parse(format, dateStr)
+		if err == nil {
+			return date, nil
+		}
+	}
+	return time.Time{}, err
 }

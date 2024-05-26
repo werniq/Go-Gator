@@ -1,4 +1,4 @@
-package parsingInstructions
+package FilteringInstructions
 
 import (
 	"newsAggr/cmd/types"
@@ -10,7 +10,7 @@ type InstructionsFactory interface {
 }
 
 type ParsingInstruction interface {
-	Apply(article types.News, params *types.ParsingParams) bool
+	Apply(article types.News, params *types.FilteringParams) bool
 }
 
 type GoGatorInstructionFactory struct{}

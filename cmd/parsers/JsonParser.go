@@ -3,9 +3,8 @@ package parsers
 import (
 	"encoding/json"
 	"fmt"
-	"newsAggr/cmd/parsingInstructions"
+	"newsAggr/cmd/FilteringInstructions"
 	"newsAggr/cmd/types"
-	"newsAggr/cmd/utils"
 	"newsAggr/logger"
 	"reflect"
 )
@@ -14,7 +13,7 @@ type JsonParser struct {
 }
 
 // Parse function is required for JsonParser struct, in order to implement NewsParser interface, for data formatted in json
-func (jp JsonParser) Parse(params *types.ParsingParams) []types.News {
+func (jp JsonParser) Parse(params *types.FilteringParams) []types.News {
 	var news []types.News
 
 	sourceToFile := map[string]string{
@@ -39,7 +38,7 @@ func (jp JsonParser) Parse(params *types.ParsingParams) []types.News {
 	}
 
 	for _, filename := range filenames {
-		data := utils.ExtractFileData(filename)
+		data := ExtractFileData(filename)
 		if data == nil {
 			logger.ErrorLogger.Fatalf("Error extracting file data: %v\n", filename)
 		}
@@ -53,7 +52,7 @@ func (jp JsonParser) Parse(params *types.ParsingParams) []types.News {
 		news = append(news, types.JsonNewsToNews(dummy.Articles)...)
 	}
 
-	factory := parsingInstructions.GoGatorInstructionFactory{}
+	factory := FilteringInstructions.GoGatorInstructionFactory{}
 
 	return ApplyParams(news, params, factory)
 }

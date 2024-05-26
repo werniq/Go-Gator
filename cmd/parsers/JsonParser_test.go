@@ -7,7 +7,7 @@ import (
 )
 
 func TestJSONParser_Parse(t *testing.T) {
-	params := &types.ParsingParams{
+	params := &types.FilteringParams{
 		Keywords: "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena",
 	}
 

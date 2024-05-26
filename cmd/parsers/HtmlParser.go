@@ -3,9 +3,8 @@ package parsers
 import (
 	"bytes"
 	"github.com/PuerkitoBio/goquery"
-	"newsAggr/cmd/parsingInstructions"
+	"newsAggr/cmd/FilteringInstructions"
 	"newsAggr/cmd/types"
-	"newsAggr/cmd/utils"
 	"newsAggr/logger"
 	"reflect"
 	"strings"
@@ -15,7 +14,7 @@ type HtmlParser struct {
 }
 
 // Parse function is required for HtmlParser struct, in order to implement NewsParser interface, for data formatted in html
-func (hp HtmlParser) Parse(params *types.ParsingParams) []types.News {
+func (hp HtmlParser) Parse(params *types.FilteringParams) []types.News {
 	var news []types.News
 
 	var filenames []string
@@ -39,7 +38,7 @@ func (hp HtmlParser) Parse(params *types.ParsingParams) []types.News {
 	}
 
 	for _, filename := range filenames {
-		data := utils.ExtractFileData(filename)
+		data := ExtractFileData(filename)
 
 		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(data))
 		if err != nil {
@@ -60,7 +59,7 @@ func (hp HtmlParser) Parse(params *types.ParsingParams) []types.News {
 		})
 	}
 
-	factory := parsingInstructions.GoGatorInstructionFactory{}
+	factory := FilteringInstructions.GoGatorInstructionFactory{}
 
 	news = ApplyParams(news, params, factory)
 

@@ -1,4 +1,4 @@
-package utils
+package FilteringInstructions
 
 // Split splits strings with separator sep
 // because strings.Split returns a slice with length 1 if s is empty string,

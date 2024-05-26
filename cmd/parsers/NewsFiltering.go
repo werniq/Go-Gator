@@ -1,12 +1,12 @@
 package parsers
 
 import (
-	"newsAggr/cmd/parsingInstructions"
+	"newsAggr/cmd/FilteringInstructions"
 	"newsAggr/cmd/types"
 )
 
-// ApplyParams filters news by provided ParsingParams
-func ApplyParams(articles []types.News, params *types.ParsingParams, factory parsingInstructions.InstructionsFactory) []types.News {
+// ApplyParams filters news by provided FilteringParams
+func ApplyParams(articles []types.News, params *types.FilteringParams, factory FilteringInstructions.InstructionsFactory) []types.News {
 	var filteredArticles []types.News
 
 	keywordInstruction := factory.CreateApplyKeywordInstruction()

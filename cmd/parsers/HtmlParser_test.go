@@ -8,7 +8,7 @@ import (
 )
 
 func TestHtmlParser_Parse(t *testing.T) {
-	params := &types.ParsingParams{
+	params := &types.FilteringParams{
 		Keywords: "Zoo in China criticized for dyeing dogs for 'panda dog' exhibit",
 	}
 	parser := HtmlParser{}

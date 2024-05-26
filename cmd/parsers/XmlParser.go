@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"encoding/xml"
 	"io"
-	"newsAggr/cmd/parsingInstructions"
+	"newsAggr/cmd/FilteringInstructions"
 	"newsAggr/cmd/types"
-	"newsAggr/cmd/utils"
 	"newsAggr/logger"
 	"reflect"
 )
@@ -15,7 +14,7 @@ type XMLParser struct {
 }
 
 // Parse function is required for XMLParser struct, in order to implement NewsParser interface, for data formatted in xml
-func (xp XMLParser) Parse(params *types.ParsingParams) []types.News {
+func (xp XMLParser) Parse(params *types.FilteringParams) []types.News {
 	var data []byte
 	var err error
 	var news []types.News
@@ -51,7 +50,7 @@ func (xp XMLParser) Parse(params *types.ParsingParams) []types.News {
 		var dummy []types.RSS
 
 		b = bytes.NewBuffer([]byte{})
-		b.Write(utils.ExtractFileData(filename))
+		b.Write(ExtractFileData(filename))
 
 		data, err = io.ReadAll(b)
 		if err != nil {
@@ -65,7 +64,7 @@ func (xp XMLParser) Parse(params *types.ParsingParams) []types.News {
 		news = append(news, dummy[0].Channel.Items...)
 	}
 
-	factory := parsingInstructions.GoGatorInstructionFactory{}
+	factory := FilteringInstructions.GoGatorInstructionFactory{}
 
 	return ApplyParams(news, params, factory)
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func TestXMLParser_Parse(t *testing.T) {
-	params := &types.ParsingParams{
+	params := &types.FilteringParams{
 		Keywords: "Ukraine and Russia exchange drone attacks while Russia continues its push in the east",
 	}
 	parser := XMLParser{}

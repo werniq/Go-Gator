@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"newsAggr/cmd/FilteringInstructions"
 	"newsAggr/cmd/parsers"
 	"newsAggr/cmd/types"
-	"newsAggr/cmd/utils"
 	"newsAggr/logger"
 )
 
@@ -13,7 +13,7 @@ type FetchNewsInstruction struct {
 	*cobra.Command
 }
 
-func (i FetchNewsInstruction) Execute(params *types.ParsingParams, parser parsers.Parsers) []types.News {
+func (i FetchNewsInstruction) Execute(params *types.FilteringParams, parser parsers.Parsers) []types.News {
 	return parser.Parse(params)
 }
 
@@ -30,10 +30,10 @@ var fetchNews = &cobra.Command{
 		endingTimestamp, _ := cmd.Flags().GetString("ts-to")
 		sourcesFlag, _ := cmd.Flags().GetString("sources")
 
-		sources := utils.Split(sourcesFlag, ",")
+		sources := FilteringInstructions.Split(sourcesFlag, ",")
 
 		// initializing parsing parameters
-		parsingParams := &types.ParsingParams{
+		parsingParams := &types.FilteringParams{
 			Keywords:          keywordsFlag,
 			StartingTimestamp: startingTimestamp,
 			EndingTimestamp:   endingTimestamp,
@@ -42,14 +42,18 @@ var fetchNews = &cobra.Command{
 
 		g := parsers.GoGatorParsingFactory{}
 
-		jsonParser := g.CreateJsonParser()
-		xmlParser := g.CreateXmlParser()
-		htmlParser := g.CreateHtmlParser()
+		parsers := []parsers.Parsers{
+			g.CreateJsonParser(),
+			g.CreateXmlParser(),
+			g.CreateHtmlParser(),
+		}
 
 		var news []types.News
-		news = append(news, htmlParser.Parse(parsingParams)...)
-		news = append(news, jsonParser.Parse(parsingParams)...)
-		news = append(news, xmlParser.Parse(parsingParams)...)
+
+		for _, parser := range parsers {
+			parsedNews := parser.Parse(parsingParams)
+			news = append(news, parsedNews...)
+		}
 
 		for _, article := range news {
 			logger.InfoLogger.Println(article.Title)
@@ -65,7 +69,7 @@ func addFetchNewsCmd() *cobra.Command {
 	fetchNews.Flags().String("keywords", "", "Topic on which news will be fetched (if empty, all news will be fetched, regardless of the theme). Separate them with ',' ")
 	fetchNews.Flags().String("ts-from", "", "News starting timestamp")
 	fetchNews.Flags().String("ts-to", "", "News ending timestamp")
-	fetchNews.Flags().String("sources", "", "News source")
+	fetchNews.Flags().String("sources", "", "Supported sources: [abcnews, bbc, nbc, usatoday, washingtontimes]")
 
 	return fetchNews
 }

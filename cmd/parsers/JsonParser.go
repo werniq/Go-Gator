@@ -38,7 +38,7 @@ func (jp JsonParser) Parse(params *types.FilteringParams) []types.News {
 	}
 
 	for _, filename := range filenames {
-		data := ExtractFileData(filename)
+		data := extractFileData(filename)
 		if data == nil {
 			logger.ErrorLogger.Fatalf("Error extracting file data: %v\n", filename)
 		}

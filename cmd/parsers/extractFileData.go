@@ -6,8 +6,8 @@ import (
 	"os"
 )
 
-// ExtractFileData reads data from file $filename and returns its content
-func ExtractFileData(filename string) []byte {
+// extractFileData reads data from file $filename and returns its content
+func extractFileData(filename string) []byte {
 	cwd, err := os.Getwd()
 	if err != nil {
 		logger.ErrorLogger.Fatalf("Error getting current working directory: %v\n", err)

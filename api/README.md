@@ -13,8 +13,9 @@ Explain APIs you want to introduce.
 
 ### Workflow
 
-API for news aggregator will use already existing modules for parsing XML/HTML/JSON data. It will either
-make GET/POST requests (or extract data from files), in order to get a list of bytes, that will be decoded into news object.
+API for news aggregator will use already existing modules for parsing XML/HTML/JSON data. 
+It will either make GET/POST requests, or extract data from files, 
+in order to get a list of bytes, that will be decoded into news object.
 
 ### Arguments
 

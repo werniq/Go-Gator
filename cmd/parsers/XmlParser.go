@@ -50,7 +50,7 @@ func (xp XMLParser) Parse(params *types.FilteringParams) []types.News {
 		var dummy []types.RSS
 
 		b = bytes.NewBuffer([]byte{})
-		b.Write(ExtractFileData(filename))
+		b.Write(extractFileData(filename))
 
 		data, err = io.ReadAll(b)
 		if err != nil {

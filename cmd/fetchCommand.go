@@ -32,8 +32,8 @@ var fetchNews = &cobra.Command{
 
 		sources := FilteringInstructions.Split(sourcesFlag, ",")
 
-		// initializing parsing parameters
-		parsingParams := &types.FilteringParams{
+		// initializing filtering parameters
+		filteringParams := &types.FilteringParams{
 			Keywords:          keywordsFlag,
 			StartingTimestamp: startingTimestamp,
 			EndingTimestamp:   endingTimestamp,
@@ -42,18 +42,9 @@ var fetchNews = &cobra.Command{
 
 		g := parsers.GoGatorParsingFactory{}
 
-		parsers := []parsers.Parsers{
-			g.CreateJsonParser(),
-			g.CreateXmlParser(),
-			g.CreateHtmlParser(),
-		}
-
-		var news []types.News
-
-		for _, parser := range parsers {
-			parsedNews := parser.Parse(parsingParams)
-			news = append(news, parsedNews...)
-		}
+		news := parsers.Parse("json", filteringParams, g)
+		news = append(news, parsers.Parse("xml", filteringParams, g)...)
+		news = append(news, parsers.Parse("html", filteringParams, g)...)
 
 		for _, article := range news {
 			logger.InfoLogger.Println(article.Title)
@@ -67,8 +58,8 @@ var fetchNews = &cobra.Command{
 
 func addFetchNewsCmd() *cobra.Command {
 	fetchNews.Flags().String("keywords", "", "Topic on which news will be fetched (if empty, all news will be fetched, regardless of the theme). Separate them with ',' ")
-	fetchNews.Flags().String("ts-from", "", "News starting timestamp")
-	fetchNews.Flags().String("ts-to", "", "News ending timestamp")
+	fetchNews.Flags().String("ts-from", "", "Retrieve news based on their published date")
+	fetchNews.Flags().String("ts-to", "", "Retrieve news, where published date is not more then this value")
 	fetchNews.Flags().String("sources", "", "Supported sources: [abcnews, bbc, nbc, usatoday, washingtontimes]")
 
 	return fetchNews

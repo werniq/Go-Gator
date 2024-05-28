@@ -38,7 +38,7 @@ func (hp HtmlParser) Parse(params *types.FilteringParams) []types.News {
 	}
 
 	for _, filename := range filenames {
-		data := ExtractFileData(filename)
+		data := extractFileData(filename)
 
 		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(data))
 		if err != nil {

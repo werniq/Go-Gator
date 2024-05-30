@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"newsAggr/cmd/FilteringInstructions"
+	"newsAggr/cmd/filters"
 	"newsAggr/cmd/parsers"
 	"newsAggr/cmd/types"
 	"newsAggr/logger"
@@ -13,7 +13,7 @@ type FetchNewsInstruction struct {
 	*cobra.Command
 }
 
-func (i FetchNewsInstruction) Execute(params *types.FilteringParams, parser parsers.Parsers) []types.News {
+func (i FetchNewsInstruction) Execute(params *types.FilteringParams, parser parsers.Parser) []types.News {
 	return parser.Parse(params)
 }
 
@@ -30,21 +30,15 @@ var fetchNews = &cobra.Command{
 		endingTimestamp, _ := cmd.Flags().GetString("ts-to")
 		sourcesFlag, _ := cmd.Flags().GetString("sources")
 
-		sources := FilteringInstructions.Split(sourcesFlag, ",")
+		sources := filters.SplitString(sourcesFlag, ",")
 
-		// initializing filtering parameters
-		filteringParams := &types.FilteringParams{
-			Keywords:          keywordsFlag,
-			StartingTimestamp: startingTimestamp,
-			EndingTimestamp:   endingTimestamp,
-			Sources:           sources,
-		}
+		filteringParams := types.NewParams(keywordsFlag, startingTimestamp, endingTimestamp, sources)
 
 		g := parsers.GoGatorParsingFactory{}
 
-		news := parsers.Parse("json", filteringParams, g)
-		news = append(news, parsers.Parse("xml", filteringParams, g)...)
-		news = append(news, parsers.Parse("html", filteringParams, g)...)
+		news := parsers.ParseWithParams("json", filteringParams, g)
+		news = append(news, parsers.ParseWithParams("xml", filteringParams, g)...)
+		news = append(news, parsers.ParseWithParams("html", filteringParams, g)...)
 
 		for _, article := range news {
 			logger.InfoLogger.Println(article.Title)

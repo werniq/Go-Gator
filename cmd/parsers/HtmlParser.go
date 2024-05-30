@@ -3,7 +3,7 @@ package parsers
 import (
 	"bytes"
 	"github.com/PuerkitoBio/goquery"
-	"newsAggr/cmd/FilteringInstructions"
+	"newsAggr/cmd/filters"
 	"newsAggr/cmd/types"
 	"newsAggr/logger"
 	"reflect"
@@ -59,7 +59,7 @@ func (hp HtmlParser) Parse(params *types.FilteringParams) []types.News {
 		})
 	}
 
-	factory := FilteringInstructions.GoGatorInstructionFactory{}
+	factory := filters.GoGatorInstructionFactory{}
 
 	news = ApplyParams(news, params, factory)
 

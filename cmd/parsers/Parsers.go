@@ -2,20 +2,26 @@ package parsers
 
 import "newsAggr/cmd/types"
 
-type Parsers interface {
+type Parser interface {
 	Parse(params *types.FilteringParams) []types.News
 }
 
-func Parse(format string, params *types.FilteringParams, g GoGatorParsingFactory) []types.News {
-	var p Parsers
-	switch format {
-	case "json":
-		p = g.CreateJsonParser()
-	case "xml":
-		p = g.CreateXmlParser()
-	case "html":
-		p = g.CreateHtmlParser()
+func ParseWithParams(format string, params *types.FilteringParams, g GoGatorParsingFactory) []types.News {
+	formatToParser := map[string]Parser{
+		"json": g.CreateJsonParser(),
+		"xml":  g.CreateXmlParser(),
+		"html": g.CreateHtmlParser(),
 	}
 
-	return p.Parse(params)
+	return formatToParser[format].Parse(params)
+}
+
+func Parse(format string, g GoGatorParsingFactory) []types.News {
+	formatToParser := map[string]Parser{
+		"json": g.CreateJsonParser(),
+		"xml":  g.CreateXmlParser(),
+		"html": g.CreateHtmlParser(),
+	}
+
+	return formatToParser[format].Parse(nil)
 }

@@ -3,7 +3,7 @@ package parsers
 import (
 	"encoding/json"
 	"fmt"
-	"newsAggr/cmd/FilteringInstructions"
+	"newsAggr/cmd/filters"
 	"newsAggr/cmd/types"
 	"newsAggr/logger"
 	"reflect"
@@ -52,7 +52,7 @@ func (jp JsonParser) Parse(params *types.FilteringParams) []types.News {
 		news = append(news, types.JsonNewsToNews(dummy.Articles)...)
 	}
 
-	factory := FilteringInstructions.GoGatorInstructionFactory{}
+	factory := filters.GoGatorInstructionFactory{}
 
 	return ApplyParams(news, params, factory)
 }

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"io"
-	"newsAggr/cmd/FilteringInstructions"
+	"newsAggr/cmd/filters"
 	"newsAggr/cmd/types"
 	"newsAggr/logger"
 	"reflect"
@@ -64,7 +64,7 @@ func (xp XMLParser) Parse(params *types.FilteringParams) []types.News {
 		news = append(news, dummy[0].Channel.Items...)
 	}
 
-	factory := FilteringInstructions.GoGatorInstructionFactory{}
+	factory := filters.GoGatorInstructionFactory{}
 
 	return ApplyParams(news, params, factory)
 }

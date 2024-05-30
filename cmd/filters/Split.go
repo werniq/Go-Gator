@@ -1,9 +1,9 @@
-package FilteringInstructions
+package filters
 
-// Split splits strings with separator sep
+// SplitString splits strings with separator sep
 // because strings.Split returns a slice with length 1 if s is empty string,
 // I decided to write my own split function which will return empty array in that case
-func Split(s, sep string) []string {
+func SplitString(s, sep string) []string {
 	var result []string
 
 	if len(s) == 0 {

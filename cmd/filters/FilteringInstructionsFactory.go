@@ -1,4 +1,4 @@
-package FilteringInstructions
+package filters
 
 import (
 	"newsAggr/cmd/types"

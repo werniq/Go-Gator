@@ -13,7 +13,13 @@ func ParseWithParams(format string, params *types.FilteringParams, g GoGatorPars
 		"html": g.CreateHtmlParser(),
 	}
 
-	return formatToParser[format].Parse(params)
+	if p, exists := formatToParser[format]; exists {
+		return p.Parse(params)
+	} else {
+		panic("data format " + format + " is not supported")
+	}
+
+	return nil
 }
 
 func Parse(format string, g GoGatorParsingFactory) []types.News {
@@ -23,5 +29,9 @@ func Parse(format string, g GoGatorParsingFactory) []types.News {
 		"html": g.CreateHtmlParser(),
 	}
 
-	return formatToParser[format].Parse(nil)
+	if p, exists := formatToParser[format]; exists {
+		return p.Parse(nil)
+	}
+
+	return nil
 }

@@ -9,7 +9,7 @@ This project is created in order to simplify the process of gathering news from 
 
 Goals for this project is to simplify life for journalists, by making a centralized 
 solution for gathering news from different sources.
-In addition, while implementing this service, I am improving my Cloud & Golang skills.
+In addition, while implementing this service, I will improve my Cloud & Golang skills.
 
 ## API Design
 
@@ -21,6 +21,33 @@ This API will work in following way:
 2. Then program is parsing that data into an array of news
 3. Afterward, if user have provided arguments for filtering - news are filtered by that parameters
 4. Returns filtered array of news
+
+### API Endpoints
+
+1. Get Filtered News
+
+- Endpoint: /api/news
+- Request Method: GET
+- Parameters: 
+  - keywords (optional): Comma-separated keywords to filter articles
+  - startDate (optional): Start date to filter articles (format: YYYY-MM-DD)
+  - endDate (optional): End date to filter articles (format: YYYY-MM-DD)
+  - sources (optional): Comma-separated list of news sources
+
+- Response: 
+```json
+{
+    "articles": [
+        {
+            "title": "Article Title",
+            "description": "Article Description",
+            "publishedDate": "2024-05-30T14:00:00Z",
+            "source": "Source"
+        }
+    ]
+}
+```
+
 
 ## Step-By-Step Workflow
 

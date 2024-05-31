@@ -7,7 +7,7 @@ type FilteringParams struct {
 	Sources           []string `json:"sources" xml:"sources"`
 }
 
-func NewParams(keywords, start, end string, sources []string) *FilteringParams {
+func NetParams(keywords, start, end string, sources []string) *FilteringParams {
 	return &FilteringParams{
 		Keywords:          keywords,
 		StartingTimestamp: start,

@@ -32,7 +32,7 @@ var fetchNews = &cobra.Command{
 
 		sources := filters.SplitString(sourcesFlag, ",")
 
-		filteringParams := types.NewParams(keywordsFlag, startingTimestamp, endingTimestamp, sources)
+		filteringParams := types.NetParams(keywordsFlag, startingTimestamp, endingTimestamp, sources)
 
 		g := parsers.GoGatorParsingFactory{}
 

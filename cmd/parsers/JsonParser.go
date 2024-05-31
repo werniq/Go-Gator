@@ -2,7 +2,6 @@ package parsers
 
 import (
 	"encoding/json"
-	"fmt"
 	"newsAggr/cmd/filters"
 	"newsAggr/cmd/types"
 	"newsAggr/logger"
@@ -25,7 +24,6 @@ func (jp JsonParser) Parse(params *types.FilteringParams) []types.News {
 	if !reflect.DeepEqual(params.Sources, filenames) {
 		for _, val := range params.Sources {
 			if filename, ok := sourceToFile[val]; ok {
-				fmt.Println(filename)
 				filenames = append(filenames, filename)
 			}
 		}

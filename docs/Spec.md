@@ -65,7 +65,7 @@ that passed validation.
 ### Step 4:
 Display resulting array in the terminal.
 
-#### External APIs
+### External APIs
 We will use external APIs in order to retrieve latest news.
 
 <hr />

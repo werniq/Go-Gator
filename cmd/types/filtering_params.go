@@ -7,6 +7,7 @@ type FilteringParams struct {
 	Sources           []string `json:"sources" xml:"sources"`
 }
 
+// NewParams creates an instance of FilteringParams
 func NewParams(keywords, start, end string, sources []string) *FilteringParams {
 	return &FilteringParams{
 		Keywords:          keywords,

@@ -8,6 +8,7 @@ import (
 
 type ApplyKeywordsInstruction struct{}
 
+// Apply is a method in ApplyKeywordsInstruction which is used to filter articles by keyword
 func (a ApplyKeywordsInstruction) Apply(article types.News, params *types.FilteringParams) bool {
 	keywords := strings.Split(params.Keywords, ",")
 	for _, keyword := range keywords {
@@ -20,6 +21,7 @@ func (a ApplyKeywordsInstruction) Apply(article types.News, params *types.Filter
 
 type ApplyDateRangeInstruction struct{}
 
+// Apply in ApplyDateRangeInstruction is a method which is used to filter articles by data range
 func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.FilteringParams) bool {
 	timeFormats := []string{
 		time.Layout, time.ANSIC, time.UnixDate, time.RubyDate, time.RFC822, time.RFC822Z,
@@ -32,14 +34,14 @@ func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.Filte
 	var err error
 
 	if article.PubDate != "" {
-		publicationDate, err = ParseDateWithFormats(article.PubDate, timeFormats)
+		publicationDate, err = parseDate(article.PubDate, timeFormats)
 		if err != nil {
 			return false
 		}
 	}
 
 	if params.StartingTimestamp != "" {
-		startingTime, err := ParseDateWithFormats(params.StartingTimestamp, timeFormats)
+		startingTime, err := parseDate(params.StartingTimestamp, timeFormats)
 		if err != nil {
 			return false
 		}
@@ -49,7 +51,7 @@ func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.Filte
 	}
 
 	if params.EndingTimestamp != "" {
-		endingTime, err := ParseDateWithFormats(params.EndingTimestamp, timeFormats)
+		endingTime, err := parseDate(params.EndingTimestamp, timeFormats)
 		if err != nil {
 			return false
 		}
@@ -61,7 +63,8 @@ func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.Filte
 	return true
 }
 
-func ParseDateWithFormats(dateStr string, formats []string) (time.Time, error) {
+// parseDate is utility function which parses date to time.Time object
+func parseDate(dateStr string, formats []string) (time.Time, error) {
 	var err error
 	var date time.Time
 

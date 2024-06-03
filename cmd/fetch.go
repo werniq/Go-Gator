@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"log"
 	"newsAggr/cmd/filters"
 	"newsAggr/cmd/parsers"
 	"newsAggr/cmd/types"
@@ -30,8 +31,21 @@ var fetchNews = &cobra.Command{
 		endingTimestamp, _ := cmd.Flags().GetString("ts-to")
 		sourcesFlag, _ := cmd.Flags().GetString("sources")
 
+		if err := validateDate(startingTimestamp); err != nil {
+			log.Fatalln(err)
+		}
+		if err := validateDate(endingTimestamp); err != nil {
+			log.Fatalln(err)
+		}
+
+		// Split and validate sources
+		sources := filters.SplitString(sourcesFlag, ",")
+		if err := validateSources(sources); err != nil {
+			log.Fatalln(err)
+		}
+
 		// Todo: add documentation
-		filteringParams := types.NewParams(keywordsFlag, startingTimestamp, endingTimestamp, filters.SplitString(sourcesFlag, ","))
+		filteringParams := types.NewParams(keywordsFlag, startingTimestamp, endingTimestamp, sources)
 
 		news := parsers.ParseWithParams("json", filteringParams)
 		news = append(news, parsers.ParseWithParams("xml", filteringParams)...)
@@ -52,7 +66,7 @@ func addFetchNewsCmd() *cobra.Command {
 	fetchNews.Flags().String("keywords", "", "Topic on which news will be fetched (if empty, all news will be fetched, regardless of the theme). Separate them with ',' ")
 	fetchNews.Flags().String("ts-from", "", "Retrieve news based on their published date | Format 2024-05-24")
 	fetchNews.Flags().String("ts-to", "", "Retrieve news, where published date is not more then this value | Format 2024-05-24")
-	fetchNews.Flags().String("sources", "", "Supported sources: [abcnews, bbc, nbc, usatoday, washingtontimes]")
+	fetchNews.Flags().String("sources", "", "Supported sources: [abc, bbc, nbc, usatoday, washingtontimes]")
 
 	return fetchNews
 }

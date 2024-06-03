@@ -4,7 +4,7 @@ build:
 
 run: build
 	@echo "[!] RUNNING GO-GATOR"
-	./bin/go-gator.exe fetch --keywords Ukraine
+	./bin/go-gator.exe fetch --sources abc
 
 test:
 	@echo "[!] RUNNING GO-GATOR TESTS"

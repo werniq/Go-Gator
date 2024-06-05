@@ -22,17 +22,3 @@ func ParseWithParams(format string, params *types.FilteringParams) []types.News 
 
 	return nil
 }
-
-func Parse(format string, g GoGatorParsingFactory) []types.News {
-	formatToParser := map[string]Parser{
-		"json": g.CreateJsonParser(),
-		"xml":  g.CreateXmlParser(),
-		"html": g.CreateHtmlParser(),
-	}
-
-	if p, exists := formatToParser[format]; exists {
-		return p.Parse(nil)
-	}
-
-	return nil
-}

@@ -10,14 +10,6 @@ import (
 	"newsAggr/logger"
 )
 
-type FetchNewsInstruction struct {
-	*cobra.Command
-}
-
-func (i FetchNewsInstruction) Execute(params *types.FilteringParams, parser parsers.Parser) []types.News {
-	return parser.Parse(params)
-}
-
 var fetchNews = &cobra.Command{
 	Use:   "fetch",
 	Short: "Fetching news from downloaded data",

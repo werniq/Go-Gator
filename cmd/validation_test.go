@@ -55,3 +55,40 @@ func Test_validateSources(t *testing.T) {
 		assert.Equal(t, err, testCase.ExpectedOutput)
 	}
 }
+
+func Test_contains(t *testing.T) {
+	testCases := []struct {
+		Input struct {
+			Arr     []string
+			Keyword string
+		}
+		ExpectedOutput bool
+	}{
+		{
+			Input: struct {
+				Arr     []string
+				Keyword string
+			}{
+				Arr:     []string{"item1", "item2", "item3"},
+				Keyword: "item3",
+			},
+			ExpectedOutput: true,
+		},
+		{
+			Input: struct {
+				Arr     []string
+				Keyword string
+			}{
+				Arr:     []string{"item1", "item2", "item3"},
+				Keyword: "item4",
+			},
+			ExpectedOutput: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		match := contains(testCase.Input.Arr, testCase.Input.Keyword)
+
+		assert.Equal(t, match, testCase.ExpectedOutput)
+	}
+}

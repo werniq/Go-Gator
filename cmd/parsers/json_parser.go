@@ -5,6 +5,7 @@ import (
 	"newsAggr/cmd/types"
 	"newsAggr/logger"
 	"reflect"
+	"sync"
 )
 
 type JsonParser struct {
@@ -13,6 +14,7 @@ type JsonParser struct {
 // Parse function is required for JsonParser struct, in order to implement NewsParser interface, for data formatted in json
 func (jp JsonParser) Parse(params *types.FilteringParams) []types.News {
 	var news []types.News
+	var wg sync.WaitGroup
 
 	sourceToFile := map[string]string{
 		"nbc": "nbc-news.json",
@@ -35,19 +37,26 @@ func (jp JsonParser) Parse(params *types.FilteringParams) []types.News {
 	}
 
 	for _, filename := range filenames {
-		data := extractFileData(filename)
-		if data == nil {
-			logger.ErrorLogger.Fatalf("Error extracting file data: %v\n", filename)
-		}
+		wg.Add(1)
 
-		var dummy types.Json
-		err := json.Unmarshal(data, &dummy)
-		if err != nil {
-			logger.ErrorLogger.Fatalf("Error decoding JSON data: %v\n", err)
-		}
+		go func(filename string) {
+			defer wg.Done()
+			data := extractFileData(filename)
+			if data == nil {
+				logger.ErrorLogger.Fatalf("Error extracting file data: %v\n", filename)
+			}
 
-		news = append(news, types.JsonNewsToNews(dummy.Articles)...)
+			var dummy types.Json
+			err := json.Unmarshal(data, &dummy)
+			if err != nil {
+				logger.ErrorLogger.Fatalf("Error decoding JSON data: %v\n", err)
+			}
+
+			news = append(news, types.JsonNewsToNews(dummy.Articles)...)
+		}(filename)
 	}
+
+	wg.Wait()
 
 	return ApplyParams(news, params)
 }

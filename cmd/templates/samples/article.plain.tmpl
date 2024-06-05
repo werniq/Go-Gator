@@ -1,0 +1,10 @@
+{{ define "body"}}
+    {{ range . }}
+
+    Title: {{ .Title }}
+    Description: {{ .Description }}
+    PubDate: {{ .PubDate }}
+    Link: {{ .Link }}
+    ---
+    {{ end }}
+{{ end }}

@@ -8,7 +8,6 @@ import (
 // ApplyParams filters news by provided FilteringParams
 func ApplyParams(articles []types.News, params *types.FilteringParams) []types.News {
 	var filteredArticles []types.News
-
 	factory := filters.GoGatorInstructionFactory{}
 
 	keywordInstruction := factory.CreateApplyKeywordInstruction()

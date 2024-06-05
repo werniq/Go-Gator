@@ -7,6 +7,7 @@ import (
 	"newsAggr/logger"
 	"reflect"
 	"strings"
+	"sync"
 )
 
 type HtmlParser struct {
@@ -36,29 +37,36 @@ func (hp HtmlParser) Parse(params *types.FilteringParams) []types.News {
 		filenames = []string{"usa-today.html"}
 	}
 
+	var wg sync.WaitGroup
+
 	for _, filename := range filenames {
-		data := extractFileData(filename)
+		wg.Add(1)
 
-		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(data))
-		if err != nil {
-			logger.ErrorLogger.Fatalf("Unable to create new document: %v\n", err)
-		}
+		go func(filename string) {
+			defer wg.Done()
+			data := extractFileData(filename)
 
-		doc.Find("div.gnt_m_flm a").Each(func(i int, selection *goquery.Selection) {
-			title, _ := selection.Attr("data-c-br")
-			title = strings.TrimSpace(title)
-			description := strings.TrimSpace(selection.Text())
-			pubDate := strings.TrimSpace(selection.Find("div.gnt_m_flm_sbt").AttrOr("data-c-dt", ""))
+			doc, err := goquery.NewDocumentFromReader(bytes.NewReader(data))
+			if err != nil {
+				logger.ErrorLogger.Fatalf("Unable to create new document: %v\n", err)
+			}
 
-			news = append(news, types.News{
-				Title:       title,
-				Description: description,
-				PubDate:     pubDate,
+			doc.Find("div.gnt_m_flm a").Each(func(i int, selection *goquery.Selection) {
+				title, _ := selection.Attr("data-c-br")
+				title = strings.TrimSpace(title)
+				description := strings.TrimSpace(selection.Text())
+				pubDate := strings.TrimSpace(selection.Find("div.gnt_m_flm_sbt").AttrOr("data-c-dt", ""))
+
+				news = append(news, types.News{
+					Title:       title,
+					Description: description,
+					PubDate:     pubDate,
+				})
 			})
-		})
+		}(filename)
 	}
 
-	news = ApplyParams(news, params)
+	wg.Wait()
 
-	return news
+	return ApplyParams(news, params)
 }

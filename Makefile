@@ -4,7 +4,7 @@ build:
 
 run: build
 	@echo "[!] RUNNING GO-GATOR"
-	./bin/go-gator.exe fetch --sources abc
+	./bin/go-gator.exe fetch
 
 test:
 	@echo "[!] RUNNING GO-GATOR TESTS"

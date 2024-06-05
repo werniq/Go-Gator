@@ -44,7 +44,6 @@ var fetchNews = &cobra.Command{
 			log.Fatalln(err)
 		}
 
-		// Todo: add documentation
 		filteringParams := types.NewParams(keywordsFlag, startingTimestamp, endingTimestamp, sources)
 
 		news := parsers.ParseWithParams("json", filteringParams)

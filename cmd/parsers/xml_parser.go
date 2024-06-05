@@ -7,6 +7,7 @@ import (
 	"newsAggr/cmd/types"
 	"newsAggr/logger"
 	"reflect"
+	"sync"
 )
 
 type XMLParser struct {
@@ -14,10 +15,8 @@ type XMLParser struct {
 
 // Parse function is required for XMLParser struct, in order to implement NewsParser interface, for data formatted in xml
 func (xp XMLParser) Parse(params *types.FilteringParams) []types.News {
-	var data []byte
-	var err error
 	var news []types.News
-	b := &bytes.Buffer{}
+	var wg sync.WaitGroup
 
 	var filenames []string
 
@@ -46,22 +45,29 @@ func (xp XMLParser) Parse(params *types.FilteringParams) []types.News {
 	}
 
 	for _, filename := range filenames {
-		var dummy []types.RSS
+		wg.Add(1)
 
-		b = bytes.NewBuffer([]byte{})
-		b.Write(extractFileData(filename))
+		go func(filename string) {
+			defer wg.Done()
+			var dummy []types.RSS
 
-		data, err = io.ReadAll(b)
-		if err != nil {
-			logger.ErrorLogger.Fatalf("Error reading data from buffer: %v\n", err)
-		}
+			b := bytes.NewBuffer([]byte{})
+			b.Write(extractFileData(filename))
 
-		err = xml.Unmarshal(data, &dummy)
-		if err != nil {
-			logger.ErrorLogger.Fatalf("Error decoding XML data: %v\n", err)
-		}
-		news = append(news, dummy[0].Channel.Items...)
+			data, err := io.ReadAll(b)
+			if err != nil {
+				logger.ErrorLogger.Fatalf("Error reading data from buffer: %v\n", err)
+			}
+
+			err = xml.Unmarshal(data, &dummy)
+			if err != nil {
+				logger.ErrorLogger.Fatalf("Error decoding XML data: %v\n", err)
+			}
+			news = append(news, dummy[0].Channel.Items...)
+		}(filename)
 	}
+
+	wg.Wait()
 
 	return ApplyParams(news, params)
 }

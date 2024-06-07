@@ -1,27 +1,24 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
-	"newsAggr/logger"
 	"testing"
 )
 
 func TestInitRootCmd(t *testing.T) {
-	testRootCmd := &cobra.Command{
-		Use:   "go-gator",
-		Short: "Aggregate news from various sources",
-		Long: "Fetch latest and filtered news from different sources: NYT, BBC, ABC, etc. \n " +
-			"Filter them by topic, key words, country, and timestamp",
-		Version: "0.0.3",
+	cmd := InitRootCmd()
 
-		Run: func(cmd *cobra.Command, args []string) {
-			logger.InfoLogger.Println("[Go Gator]")
-		},
-	}
+	// Verify the root command properties
+	assert.Equal(t, "go-gator", cmd.Use, "Command use should be 'go-gator'")
+	assert.Equal(t, "Aggregate news from various sources", cmd.Short, "Command short description should match")
+	assert.Contains(t, cmd.Long, "Fetch latest and filtered news from different sources", "Command long description should contain 'Fetch latest and filtered news from different sources'")
+	assert.Equal(t, "0.0.3", cmd.Version, "Command version should be '0.0.3'")
 
-	testRootCmd.AddCommand(addFetchNewsCmd())
+	// Verify subcommands
+	subCmd := cmd.Commands()
+	assert.Equal(t, 1, len(subCmd), "There should be one subcommand")
 
-	assert.Equal(t, testRootCmd.Use, rootCmd.Use)
-	assert.Equal(t, testRootCmd.Short, rootCmd.Short)
+	fetchNewsCmd := subCmd[0]
+	assert.Equal(t, "fetch", fetchNewsCmd.Use, "Subcommand use should be 'fetch-news'")
+	assert.Equal(t, "Fetching news from downloaded data", fetchNewsCmd.Short, "Subcommand short description should match")
 }

@@ -1,94 +1,67 @@
 package cmd
 
 import (
-	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func Test_validationDate(t *testing.T) {
-	testCases := []struct {
-		Input          string
-		ExpectedOutput error
+func TestValidateDate(t *testing.T) {
+	tests := []struct {
+		dateStr string
+		wantErr bool
 	}{
-		{
-			Input:          "2024-05-12",
-			ExpectedOutput: nil,
-		},
-		{
-			Input:          "2024-13-05",
-			ExpectedOutput: fmt.Errorf("invalid date format for %s, expected YYYY-MM-DD", "2024-13-05"),
-		},
-		{
-			Input:          "2024-05-92",
-			ExpectedOutput: fmt.Errorf("invalid date format for %s, expected YYYY-MM-DD", "2024-05-92"),
-		},
+		{"2023-01-01", false},
+		{"2023-12-31", false},
+		// testing leap year
+		{"2023-02-29", true},
+		{"", false},
+		{"2023/01/01", true},
+		{"01-01-2023", true},
 	}
 
-	for _, testCase := range testCases {
-		err := validateDate(testCase.Input)
-		assert.Equal(t, err, testCase.ExpectedOutput)
-	}
-}
-
-func Test_validateSources(t *testing.T) {
-	testCases := []struct {
-		Input          []string
-		ExpectedOutput error
-	}{
-		{
-			Input: []string{"abc", "aaaa", "bbc"},
-			ExpectedOutput: fmt.Errorf("unsupported source: %s. Supported sources are: %v",
-				"aaaa",
-				[]string{"abc", "bbc", "nbc", "usatoday", "washingtontimes"}),
-		},
-		{
-			Input: []string{"abcbbc"},
-			ExpectedOutput: fmt.Errorf("unsupported source: %s. Supported sources are: %v",
-				"abcbbc",
-				[]string{"abc", "bbc", "nbc", "usatoday", "washingtontimes"}),
-		},
-	}
-
-	for _, testCase := range testCases {
-		err := validateSources(testCase.Input)
-		assert.Equal(t, err, testCase.ExpectedOutput)
-	}
-}
-
-func Test_contains(t *testing.T) {
-	testCases := []struct {
-		Input struct {
-			Arr     []string
-			Keyword string
+	for _, tt := range tests {
+		err := validateDate(tt.dateStr)
+		if (err != nil) != tt.wantErr {
+			t.Errorf("validateDate(%q) = %v, wantErr %v", tt.dateStr, err, tt.wantErr)
 		}
-		ExpectedOutput bool
+	}
+}
+
+func TestValidateSources(t *testing.T) {
+	tests := []struct {
+		sources []string
+		wantErr bool
 	}{
-		{
-			Input: struct {
-				Arr     []string
-				Keyword string
-			}{
-				Arr:     []string{"item1", "item2", "item3"},
-				Keyword: "item3",
-			},
-			ExpectedOutput: true,
-		},
-		{
-			Input: struct {
-				Arr     []string
-				Keyword string
-			}{
-				Arr:     []string{"item1", "item2", "item3"},
-				Keyword: "item4",
-			},
-			ExpectedOutput: false,
-		},
+		{[]string{"abc", "bbc"}, false},
+		{[]string{"abc", "xyz"}, true},
+		{[]string{}, false},
+		{[]string{"usatoday", "washingtontimes"}, false},
+		{[]string{"nbc", "fake"}, true},
 	}
 
-	for _, testCase := range testCases {
-		match := contains(testCase.Input.Arr, testCase.Input.Keyword)
+	for _, tt := range tests {
+		err := validateSources(tt.sources)
+		if (err != nil) != tt.wantErr {
+			t.Errorf("validateSources(%v) = %v, wantErr %v", tt.sources, err, tt.wantErr)
+		}
+	}
+}
 
-		assert.Equal(t, match, testCase.ExpectedOutput)
+func TestContains(t *testing.T) {
+	tests := []struct {
+		slice  []string
+		item   string
+		result bool
+	}{
+		{[]string{"a", "b", "c"}, "a", true},
+		{[]string{"a", "b", "c"}, "d", false},
+		{[]string{}, "a", false},
+		{[]string{"abc", "def", "ghi"}, "def", true},
+	}
+
+	for _, tt := range tests {
+		result := contains(tt.slice, tt.item)
+		if result != tt.result {
+			t.Errorf("contains(%v, %q) = %v, want %v", tt.slice, tt.item, result, tt.result)
+		}
 	}
 }

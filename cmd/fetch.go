@@ -1,13 +1,12 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
 	"log"
 	"newsAggr/cmd/filters"
 	"newsAggr/cmd/parsers"
+	"newsAggr/cmd/templates"
 	"newsAggr/cmd/types"
-	"newsAggr/logger"
 )
 
 var fetchNews = &cobra.Command{
@@ -42,18 +41,21 @@ var fetchNews = &cobra.Command{
 		news = append(news, parsers.ParseWithParams("xml", filteringParams)...)
 		news = append(news, parsers.ParseWithParams("html", filteringParams)...)
 
-		for _, article := range news {
-			logger.InfoLogger.Println(article.Title)
-			logger.InfoLogger.Println(article.Description)
-			logger.InfoLogger.Println(article.PubDate)
-			logger.InfoLogger.Println(article.Link)
-			fmt.Println("----")
+		if err := templates.ParseTemplate(filteringParams, news, false); err != nil {
+			panic(err)
 		}
-		fmt.Println("Articles retrieved: ", len(news))
+		//for _, article := range news {
+		//	logger.InfoLogger.Println(article.Title)
+		//	logger.InfoLogger.Println(article.Description)
+		//	logger.InfoLogger.Println(article.PubDate)
+		//	logger.InfoLogger.Println(article.Link)
+		//	fmt.Println("----")
+		//}
+		//fmt.Println("Articles retrieved: ", len(news))
 	},
 }
 
-func addFetchNewsCmd() *cobra.Command {
+func AddFetchNewsCmd() *cobra.Command {
 	fetchNews.Flags().String("keywords", "", "Topic on which news will be fetched (if empty, all news will be fetched, regardless of the theme). Separate them with ',' ")
 	fetchNews.Flags().String("ts-from", "", "Retrieve news based on their published date | Format 2024-05-24")
 	fetchNews.Flags().String("ts-to", "", "Retrieve news, where published date is not more then this value | Format 2024-05-24")

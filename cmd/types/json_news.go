@@ -1,5 +1,7 @@
 package types
 
+import "strings"
+
 type Json struct {
 	Status       string     `json:"status"`
 	TotalResults int        `json:"totalResults"`
@@ -22,7 +24,7 @@ type Source struct {
 	Name string `json:"name"`
 }
 
-func JsonNewsToNews(jsonNews []JsonNews) []News {
+func JsonNewsToNews(jsonNews []JsonNews, source string) []News {
 	news := []News{}
 	for _, article := range jsonNews {
 		news = append(news, News{
@@ -30,6 +32,7 @@ func JsonNewsToNews(jsonNews []JsonNews) []News {
 			Link:        article.Url,
 			PubDate:     article.PublishedAt,
 			Description: article.Description,
+			Source:      strings.Split(source, ".")[0],
 		})
 	}
 

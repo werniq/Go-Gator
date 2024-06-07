@@ -18,7 +18,7 @@ var rootCmd = &cobra.Command{
 }
 
 func InitRootCmd() *cobra.Command {
-	rootCmd.AddCommand(addFetchNewsCmd())
+	rootCmd.AddCommand(AddFetchNewsCmd())
 
 	return rootCmd
 }

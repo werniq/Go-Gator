@@ -23,25 +23,19 @@ type ApplyDateRangeInstruction struct{}
 
 // Apply in ApplyDateRangeInstruction is a method which is used to filter articles by data range
 func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.FilteringParams) bool {
-	timeFormats := []string{
-		time.Layout, time.ANSIC, time.UnixDate, time.RubyDate, time.RFC822, time.RFC822Z,
-		time.RFC850, time.RFC1123, time.RFC1123Z, time.RFC3339, time.RFC3339Nano,
-		time.Kitchen, time.Stamp, time.StampMilli, time.StampMicro, time.StampNano,
-		time.DateTime, time.DateOnly, time.TimeOnly, "January 2, 2006",
-	}
 
 	var publicationDate time.Time
 	var err error
 
 	if article.PubDate != "" {
-		publicationDate, err = parseDate(article.PubDate, timeFormats)
+		publicationDate, err = ParseDate(article.PubDate)
 		if err != nil {
 			return false
 		}
 	}
 
 	if params.StartingTimestamp != "" {
-		startingTime, err := parseDate(params.StartingTimestamp, timeFormats)
+		startingTime, err := ParseDate(params.StartingTimestamp)
 		if err != nil {
 			return false
 		}
@@ -51,7 +45,7 @@ func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.Filte
 	}
 
 	if params.EndingTimestamp != "" {
-		endingTime, err := parseDate(params.EndingTimestamp, timeFormats)
+		endingTime, err := ParseDate(params.EndingTimestamp)
 		if err != nil {
 			return false
 		}
@@ -63,12 +57,18 @@ func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.Filte
 	return true
 }
 
-// parseDate is utility function which parses date to time.Time object
-func parseDate(dateStr string, formats []string) (time.Time, error) {
+// ParseDate is utility function which parses date to time.Time object
+func ParseDate(dateStr string) (time.Time, error) {
 	var err error
 	var date time.Time
+	timeFormats := []string{
+		time.Layout, time.ANSIC, time.UnixDate, time.RubyDate, time.RFC822, time.RFC822Z,
+		time.RFC850, time.RFC1123, time.RFC1123Z, time.RFC3339, time.RFC3339Nano,
+		time.Kitchen, time.Stamp, time.StampMilli, time.StampMicro, time.StampNano,
+		time.DateTime, time.DateOnly, time.TimeOnly, "January 2, 2006",
+	}
 
-	for _, format := range formats {
+	for _, format := range timeFormats {
 		date, err = time.Parse(format, dateStr)
 		if err == nil {
 			return date, nil

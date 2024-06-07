@@ -27,5 +27,6 @@ type News struct {
 	Title       string `json:"title" xml:"title"`
 	PubDate     string `json:"pubDate" xml:"pubDate"`
 	Description string `json:"description" xml:"description"`
+	Source      string `json:"source" xml:"source"`
 	Link        string `json:"link" xml:"link"`
 }

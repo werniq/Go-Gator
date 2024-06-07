@@ -52,7 +52,7 @@ func (jp JsonParser) Parse(params *types.FilteringParams) []types.News {
 				logger.ErrorLogger.Fatalf("Error decoding JSON data: %v\n", err)
 			}
 
-			news = append(news, types.JsonNewsToNews(dummy.Articles)...)
+			news = append(news, types.JsonNewsToNews(dummy.Articles, filename)...)
 		}(filename)
 	}
 

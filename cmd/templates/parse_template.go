@@ -36,7 +36,7 @@ func contains(s string, arr []string) bool {
 	return false
 }
 
-func ParseTemplate(f *types.FilteringParams, articles []types.News, sortBySource bool) error {
+func ParseTemplate(f *types.FilteringParams, articles []types.News) error {
 	funcMap := template.FuncMap{
 		"highlight":  highlight,
 		"formatDate": formatDate,
@@ -49,14 +49,13 @@ func ParseTemplate(f *types.FilteringParams, articles []types.News, sortBySource
 		return err
 	}
 
-	tmpl := template.Must(template.New("article.plain.tmpl").Funcs(funcMap).ParseFiles(d + "\\cmd\\templates\\samples\\article.plain.tmpl"))
+	tmpl := template.Must(template.New("article.plain.tmpl").Funcs(funcMap).ParseFiles(d + "\\cmd\\templates\\templates\\article.plain.tmpl"))
 
 	data := types.TemplateData{
-		NewsItems:    articles,
-		FilterInfo:   "Applied Filters: " + fmt.Sprintf("%v", f),
-		TotalItems:   len(articles),
-		SortBySource: sortBySource,
-		Keywords:     filters.SplitString(f.Keywords, ","),
+		NewsItems:  articles,
+		FilterInfo: "Applied Filters: " + fmt.Sprintf("%v", f),
+		TotalItems: len(articles),
+		Keywords:   filters.SplitString(f.Keywords, ","),
 	}
 
 	err = tmpl.Execute(os.Stdout, data)

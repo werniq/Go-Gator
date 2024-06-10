@@ -29,7 +29,7 @@ func TestParseWithParams(t *testing.T) {
 	for _, testCase := range testCases {
 		var news []types.News
 		for _, format := range formats {
-			news = append(news, ParseWithParams(format, testCase.Input)...)
+			news = append(news, ParseBySources(format, testCase.Input)...)
 		}
 		assert.Equal(t, testCase.ExpectedOutput, len(news))
 	}

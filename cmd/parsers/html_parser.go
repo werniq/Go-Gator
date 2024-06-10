@@ -68,5 +68,5 @@ func (hp HtmlParser) Parse(params *types.FilteringParams) []types.News {
 
 	wg.Wait()
 
-	return ApplyParams(news, params)
+	return news
 }

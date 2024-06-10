@@ -37,21 +37,14 @@ var fetchNews = &cobra.Command{
 
 		filteringParams := types.NewParams(keywordsFlag, startingTimestamp, endingTimestamp, sources)
 
-		news := parsers.ParseWithParams("json", filteringParams)
-		news = append(news, parsers.ParseWithParams("xml", filteringParams)...)
-		news = append(news, parsers.ParseWithParams("html", filteringParams)...)
+		news := parsers.ParseBySources("json", filteringParams)
+		news = append(news, parsers.ParseBySources("xml", filteringParams)...)
+		news = append(news, parsers.ParseBySources("html", filteringParams)...)
+		news = parsers.ApplyParams(news, filteringParams)
 
-		if err := templates.ParseTemplate(filteringParams, news, false); err != nil {
+		if err := templates.ParseTemplate(filteringParams, news); err != nil {
 			panic(err)
 		}
-		//for _, article := range news {
-		//	logger.InfoLogger.Println(article.Title)
-		//	logger.InfoLogger.Println(article.Description)
-		//	logger.InfoLogger.Println(article.PubDate)
-		//	logger.InfoLogger.Println(article.Link)
-		//	fmt.Println("----")
-		//}
-		//fmt.Println("Articles retrieved: ", len(news))
 	},
 }
 

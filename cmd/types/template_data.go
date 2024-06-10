@@ -1,9 +1,8 @@
 package types
 
 type TemplateData struct {
-	NewsItems    []News
-	FilterInfo   string
-	TotalItems   int
-	SortBySource bool
-	Keywords     []string
+	NewsItems  []News
+	FilterInfo string
+	TotalItems int
+	Keywords   []string
 }

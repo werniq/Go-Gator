@@ -1,0 +1,19 @@
+{{- define "header" }}
+    {{.FilterInfo}}
+    Total news items: {{.TotalItems}}
+{{ end }}
+{{- template "header" . }}
+
+{{if eq .TotalItems 0}}
+    No news available for this period
+{{else}}
+----------------------------------------------------------------
+{{ $keywords := .Keywords }}
+{{ range .NewsItems}}
+        {{ highlight .Title $keywords  -}}
+        {{ highlight .Description $keywords  }}
+        {{ .Link -}}
+        {{ .PubDate  }}
+        ----------------------------------------------------------------
+{{end}}
+{{end}}

@@ -6,7 +6,7 @@ type Parser interface {
 	Parse(params *types.FilteringParams) []types.News
 }
 
-func ParseWithParams(format string, params *types.FilteringParams) []types.News {
+func ParseBySources(format string, params *types.FilteringParams) []types.News {
 	g := GoGatorParsingFactory{}
 	formatToParser := map[string]Parser{
 		"json": g.CreateJsonParser(),

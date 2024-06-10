@@ -8,10 +8,10 @@ import (
 // ApplyParams filters news by provided FilteringParams
 func ApplyParams(articles []types.News, params *types.FilteringParams) []types.News {
 	var filteredArticles []types.News
-	factory := filters.GoGatorInstructionFactory{}
+	f := filters.GoGatorInstructionFactory{}
 
-	keywordInstruction := factory.CreateApplyKeywordInstruction()
-	dateRangeInstruction := factory.CreateApplyDataRangeInstruction()
+	keywordInstruction := f.CreateApplyKeywordInstruction()
+	dateRangeInstruction := f.CreateApplyDataRangeInstruction()
 
 	for _, article := range articles {
 		if !keywordInstruction.Apply(article, params) {

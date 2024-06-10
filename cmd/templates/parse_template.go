@@ -3,7 +3,6 @@ package templates
 import (
 	"fmt"
 	"html/template"
-	"newsAggr/cmd/filters"
 	"newsAggr/cmd/types"
 	"os"
 	"strings"
@@ -55,7 +54,13 @@ func ParseTemplate(f *types.FilteringParams, articles []types.News) error {
 		NewsItems:  articles,
 		FilterInfo: "Applied Filters: " + fmt.Sprintf("%v", f),
 		TotalItems: len(articles),
-		Keywords:   filters.SplitString(f.Keywords, ","),
+		Keywords:   strings.Split(f.Keywords, ","),
+	}
+
+	for i, v := range data.Keywords {
+		if v == "" {
+			data.Keywords = append(data.Keywords[:i], data.Keywords[i+1:]...)
+		}
 	}
 
 	err = tmpl.Execute(os.Stdout, data)

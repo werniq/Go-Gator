@@ -17,6 +17,7 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+// InitRootCmd adds fetchNews command to our main command
 func InitRootCmd() *cobra.Command {
 	rootCmd.AddCommand(AddFetchNewsCmd())
 

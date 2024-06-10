@@ -11,8 +11,10 @@ func TestXMLParser_Parse(t *testing.T) {
 	params := &types.FilteringParams{
 		Keywords: "Ukraine and Russia exchange drone attacks while Russia continues its push in the east",
 	}
-	parser := XMLParser{}
-	news := parser.Parse(params)
+	parser := XMLParser{
+		"abc",
+	}
+	news := ApplyParams(parser.Parse(), params)
 
 	assert.Len(t, news, 1, "Expected 1 news item")
 

@@ -11,8 +11,10 @@ func TestJsonParser_ParseWithArgs(t *testing.T) {
 		Keywords: "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena",
 	}
 
-	parser := JsonParser{}
-	news := parser.Parse(params)
+	parser := JsonParser{
+		"nbc",
+	}
+	news := ApplyParams(parser.Parse(), params)
 
 	assert.Len(t, news, 1)
 	assert.Equal(t, "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena", news[0].Title)
@@ -21,9 +23,11 @@ func TestJsonParser_ParseWithArgs(t *testing.T) {
 }
 
 func TestJsonParser_Parse(t *testing.T) {
-	jsonParser := JsonParser{}
+	jsonParser := JsonParser{
+		"nbc",
+	}
 
-	news := jsonParser.Parse(&types.FilteringParams{})
+	news := jsonParser.Parse()
 
 	assert.NotEqual(t, news, nil)
 	assert.Equal(t, len(news), 100)

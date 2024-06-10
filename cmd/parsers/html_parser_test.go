@@ -8,11 +8,11 @@ import (
 )
 
 func TestHtmlParser_Parse(t *testing.T) {
-	params := &types.FilteringParams{
-		Keywords: "Zoo in China criticized for dyeing dogs for 'panda dog' exhibit",
+	parser := HtmlParser{
+		"usatoday",
 	}
-	parser := HtmlParser{}
-	news := parser.Parse(params)
+	params := &types.FilteringParams{Keywords: "Zoo in China criticized for dyeing dogs for 'panda dog' exhibit"}
+	news := ApplyParams(parser.Parse(), params)
 
 	assert.Len(t, news, 1, "Expected 1 news item")
 

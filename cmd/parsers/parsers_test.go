@@ -7,7 +7,7 @@ import (
 )
 
 func TestParseWithParams(t *testing.T) {
-	formats := []string{"xml", "json", "html"}
+	sources := []string{"abc", "bbc"}
 	testCases := []struct {
 		Input          *types.FilteringParams
 		ExpectedOutput int
@@ -22,14 +22,14 @@ func TestParseWithParams(t *testing.T) {
 			Input: &types.FilteringParams{
 				Keywords: "Ukraine",
 			},
-			ExpectedOutput: 9,
+			ExpectedOutput: 3,
 		},
 	}
 
 	for _, testCase := range testCases {
 		var news []types.News
-		for _, format := range formats {
-			news = append(news, ParseBySources(format, testCase.Input)...)
+		for _, source := range sources {
+			news = append(news, ApplyParams(ParseBySource(source), testCase.Input)...)
 		}
 		assert.Equal(t, testCase.ExpectedOutput, len(news))
 	}

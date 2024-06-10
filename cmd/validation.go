@@ -21,7 +21,7 @@ func validateDate(dateStr string) error {
 
 // validateSources checks if the provided sources are within the supported list
 func validateSources(sources []string) error {
-	supportedSources := []string{"abc", "bbc", "nbc", "usatoday", "washingtontimes"}
+	supportedSources := []string{"abc", "bbc", "nbc", "usatoday", "washingtontimes", "all"}
 
 	for _, source := range sources {
 		if !contains(supportedSources, source) {

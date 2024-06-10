@@ -12,16 +12,22 @@ type ParsingFactory interface {
 type GoGatorParsingFactory struct{}
 
 // CreateXmlParser creates an instance of XMLParser
-func (g GoGatorParsingFactory) CreateXmlParser() Parser {
-	return XMLParser{}
+func (g GoGatorParsingFactory) CreateXmlParser(source string) Parser {
+	return XMLParser{
+		Source: source,
+	}
 }
 
 // CreateJsonParser creates an instance of JsonParser
-func (g GoGatorParsingFactory) CreateJsonParser() Parser {
-	return JsonParser{}
+func (g GoGatorParsingFactory) CreateJsonParser(source string) Parser {
+	return JsonParser{
+		Source: source,
+	}
 }
 
 // CreateHtmlParser creates an instance of HtmlParser
-func (g GoGatorParsingFactory) CreateHtmlParser() Parser {
-	return HtmlParser{}
+func (g GoGatorParsingFactory) CreateHtmlParser(source string) Parser {
+	return HtmlParser{
+		Source: source,
+	}
 }

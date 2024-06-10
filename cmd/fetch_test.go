@@ -13,7 +13,7 @@ func TestAddFetchNewsCmd(t *testing.T) {
 
 	// Verify the flags
 	assert.NotNil(t, fetchNews.Flags().Lookup("keywords"), "Flag 'keywords' should be defined")
-	assert.NotNil(t, fetchNews.Flags().Lookup("ts-from"), "Flag 'ts-from' should be defined")
-	assert.NotNil(t, fetchNews.Flags().Lookup("ts-to"), "Flag 'ts-to' should be defined")
+	assert.NotNil(t, fetchNews.Flags().Lookup("date-from"), "Flag 'date-from' should be defined")
+	assert.NotNil(t, fetchNews.Flags().Lookup("date-end"), "Flag 'date-end' should be defined")
 	assert.NotNil(t, fetchNews.Flags().Lookup("sources"), "Flag 'sources' should be defined")
 }

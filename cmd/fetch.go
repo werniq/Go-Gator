@@ -3,7 +3,6 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	"log"
-	"newsAggr/cmd/filters"
 	"newsAggr/cmd/parsers"
 	"newsAggr/cmd/templates"
 	"newsAggr/cmd/types"
@@ -20,8 +19,9 @@ var fetchNews = &cobra.Command{
 		keywordsFlag, _ := cmd.Flags().GetString("keywords")
 		startingTimestamp, _ := cmd.Flags().GetString("ts-from")
 		endingTimestamp, _ := cmd.Flags().GetString("ts-to")
-		sourcesFlag, _ := cmd.Flags().GetString("sources")
+		sources, _ := cmd.Flags().GetString("sources")
 
+		// Validate user arguments
 		if err := validateDate(startingTimestamp); err != nil {
 			log.Fatalln(err)
 		}
@@ -30,29 +30,26 @@ var fetchNews = &cobra.Command{
 		}
 
 		// Split and validate sources
-		sources := filters.SplitString(sourcesFlag, ",")
-		if err := validateSources(sources); err != nil {
-			log.Fatalln(err)
-		}
+		filters := types.NewFilteringParams(keywordsFlag, startingTimestamp, endingTimestamp)
 
-		filteringParams := types.NewParams(keywordsFlag, startingTimestamp, endingTimestamp, sources)
+		// parsing news by sources and applying params to those news
+		news := parsers.ApplyParams(parsers.ParseBySource(sources), filters)
 
-		news := parsers.ParseBySources("json", filteringParams)
-		news = append(news, parsers.ParseBySources("xml", filteringParams)...)
-		news = append(news, parsers.ParseBySources("html", filteringParams)...)
-		news = parsers.ApplyParams(news, filteringParams)
-
-		if err := templates.ParseTemplate(filteringParams, news); err != nil {
+		// output using go templates
+		if err := templates.ParseTemplate(filters, news); err != nil {
 			panic(err)
 		}
+
+		log.Println(len(news))
 	},
 }
 
+// AddFetchNewsCmd attaches fetchNews command to rootCmd
 func AddFetchNewsCmd() *cobra.Command {
 	fetchNews.Flags().String("keywords", "", "Topic on which news will be fetched (if empty, all news will be fetched, regardless of the theme). Separate them with ',' ")
-	fetchNews.Flags().String("ts-from", "", "Retrieve news based on their published date | Format 2024-05-24")
-	fetchNews.Flags().String("ts-to", "", "Retrieve news, where published date is not more then this value | Format 2024-05-24")
-	fetchNews.Flags().String("sources", "", "Supported sources: [abc, bbc, nbc, usatoday, washingtontimes]")
+	fetchNews.Flags().String("date-from", "", "Retrieve news based on their published date | Format 2024-05-24")
+	fetchNews.Flags().String("date-end", "", "Retrieve news, where published date is not more then this value | Format 2024-05-24")
+	fetchNews.Flags().String("sources", "all", "Supported sources: [abc, bbc, nbc, usatoday, washingtontimes, all]")
 
 	return fetchNews
 }

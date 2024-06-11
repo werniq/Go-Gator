@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"github.com/PuerkitoBio/goquery"
 	"newsAggr/cmd/types"
-	"newsAggr/logger"
 	"strings"
 )
 
@@ -13,14 +12,17 @@ type HtmlParser struct {
 }
 
 // Parse function is required for HtmlParser struct, in order to implement NewsParser interface, for data formatted in html
-func (hp HtmlParser) Parse() []types.News {
+func (hp HtmlParser) Parse() ([]types.News, error) {
 	var news []types.News
 
-	data := extractFileData(sourceToFile[hp.Source])
+	data, err := extractFileData(sourceToFile[hp.Source])
+	if err != nil {
+		return nil, err
+	}
 
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(data))
 	if err != nil {
-		logger.ErrorLogger.Fatalf("Unable to create new document: %v\n", err)
+		return nil, err
 	}
 
 	doc.Find("div.gnt_m_flm a").Each(func(i int, selection *goquery.Selection) {
@@ -36,5 +38,5 @@ func (hp HtmlParser) Parse() []types.News {
 		})
 	})
 
-	return news
+	return news, nil
 }

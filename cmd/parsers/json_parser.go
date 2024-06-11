@@ -3,7 +3,6 @@ package parsers
 import (
 	"encoding/json"
 	"newsAggr/cmd/types"
-	"newsAggr/logger"
 )
 
 type JsonParser struct {
@@ -11,22 +10,22 @@ type JsonParser struct {
 }
 
 // Parse function is required for JsonParser struct, in order to implement NewsParser interface, for data formatted in json
-func (jp JsonParser) Parse() []types.News {
+func (jp JsonParser) Parse() ([]types.News, error) {
 	var news []types.News
 
-	data := extractFileData(sourceToFile[jp.Source])
+	data, err := extractFileData(sourceToFile[jp.Source])
 	if data == nil {
-		logger.ErrorLogger.Fatalf("Error extracting file data: %v\n", sourceToFile[jp.Source])
+		return nil, err
 	}
 
 	var tmp types.Json
 
-	err := json.Unmarshal(data, &tmp)
+	err = json.Unmarshal(data, &tmp)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	news = append(news, tmp.Articles...)
 
-	return news
+	return news, nil
 }

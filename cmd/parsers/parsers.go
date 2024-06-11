@@ -3,16 +3,16 @@ package parsers
 import (
 	"errors"
 	"newsAggr/cmd/types"
-	"newsAggr/logger"
 	"strings"
 )
 
 // Parser interface will be used to implement parsers
 type Parser interface {
-	Parse() []types.News
+	Parse() ([]types.News, error)
 }
 
 var (
+	g            ParsingFactory
 	sourceToFile = map[string]string{
 		"washingtontimes": "washington-times.xml",
 		"abc":             "abc.xml",
@@ -20,37 +20,43 @@ var (
 		"usatoday":        "usa-today.html",
 		"nbc":             "nbc-news.json",
 	}
-	ErrInvalidSource = errors.New("this source is not supported. Supported sources are [abc, bbc, nbc, usatoday, washingtontimes]")
-)
-
-// ParseBySource returns all news in particular source. If source is equal to "all", news will be
-// retrieved from all sources
-func ParseBySource(source string) []types.News {
-	var news []types.News
-
-	g := GoGatorParsingFactory{}
-	sourceToParser := map[string]Parser{
+	sourceToParser = map[string]Parser{
 		"nbc":             g.CreateJsonParser("nbc"),
 		"usatoday":        g.CreateHtmlParser("usatoday"),
 		"abc":             g.CreateXmlParser("abc"),
 		"bbc":             g.CreateXmlParser("bbc"),
 		"washingtontimes": g.CreateXmlParser("washingtontimes"),
 	}
+	ErrInvalidSource = errors.New("this source is not supported. Supported sources are [abc, bbc, nbc, usatoday, washingtontimes]")
+)
+
+// ParseBySource returns all news in particular source. If source is equal to "all", news will be
+// retrieved from all sources
+func ParseBySource(source string) ([]types.News, error) {
+	var news []types.News
 
 	if source == "all" {
 		for _, p := range sourceToParser {
-			news = append(news, p.Parse()...)
+			tmp, err := p.Parse()
+			if err != nil {
+				return nil, err
+			}
+			news = append(news, tmp...)
 		}
 	} else {
 		splitSources := strings.Split(source, ",")
 		for _, source := range splitSources {
 			if p, exists := sourceToParser[source]; exists {
-				news = append(news, p.Parse()...)
+				tmp, err := p.Parse()
+				if err != nil {
+					return nil, err
+				}
+				news = append(news, tmp...)
 			} else {
-				logger.ErrorLogger.Fatalln(ErrInvalidSource)
+				return nil, ErrInvalidSource
 			}
 		}
 	}
 
-	return news
+	return news, nil
 }

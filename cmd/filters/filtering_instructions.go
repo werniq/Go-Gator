@@ -16,6 +16,7 @@ func (a ApplyKeywordsInstruction) Apply(article types.News, params *types.Filter
 			return true
 		}
 	}
+
 	return false
 }
 

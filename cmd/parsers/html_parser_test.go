@@ -12,7 +12,10 @@ func TestHtmlParser_Parse(t *testing.T) {
 		"usatoday",
 	}
 	params := &types.FilteringParams{Keywords: "Zoo in China criticized for dyeing dogs for 'panda dog' exhibit"}
-	news := ApplyParams(parser.Parse(), params)
+	news, err := parser.Parse()
+	assert.Equal(t, err, nil)
+
+	news = ApplyParams(news, params)
 
 	assert.Len(t, news, 1, "Expected 1 news item")
 

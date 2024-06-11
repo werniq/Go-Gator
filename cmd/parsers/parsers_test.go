@@ -1,6 +1,7 @@
 package parsers
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"newsAggr/cmd/types"
 	"testing"
@@ -28,8 +29,12 @@ func TestParseWithParams(t *testing.T) {
 
 	for _, testCase := range testCases {
 		var news []types.News
+		var err error
+
 		for _, source := range sources {
-			news = append(news, ApplyParams(ParseBySource(source), testCase.Input)...)
+			news, err = ParseBySource(source)
+			assert.Equal(t, err, nil, fmt.Sprintf("Expected: %v, Got: %v", nil, err))
+			news = ApplyParams(news, testCase.Input)
 		}
 		assert.Equal(t, testCase.ExpectedOutput, len(news))
 	}

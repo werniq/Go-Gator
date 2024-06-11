@@ -6,7 +6,7 @@ import (
 )
 
 func TestGoGatorParsingFactory_CreateHtmlParser(t *testing.T) {
-	g := GoGatorParsingFactory{}
+	g := ParsingFactory{}
 
 	htmlParser := g.CreateHtmlParser("source")
 
@@ -14,7 +14,7 @@ func TestGoGatorParsingFactory_CreateHtmlParser(t *testing.T) {
 }
 
 func TestGoGatorParsingFactory_CreateJsonParser(t *testing.T) {
-	g := GoGatorParsingFactory{}
+	g := ParsingFactory{}
 
 	jsonParser := g.CreateJsonParser("source")
 
@@ -22,7 +22,7 @@ func TestGoGatorParsingFactory_CreateJsonParser(t *testing.T) {
 }
 
 func TestGoGatorParsingFactory_CreateXmlParser(t *testing.T) {
-	g := GoGatorParsingFactory{}
+	g := ParsingFactory{}
 
 	xmlParser := g.CreateXmlParser("source")
 

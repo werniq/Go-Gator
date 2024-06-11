@@ -6,7 +6,7 @@ import (
 )
 
 func TestGoGatorInstructionFactory_CreateApplyDataRangeInstruction(t *testing.T) {
-	g := GoGatorInstructionFactory{}
+	g := InstructionFactory{}
 
 	dataRangeInstruction := g.CreateApplyDataRangeInstruction()
 
@@ -14,7 +14,7 @@ func TestGoGatorInstructionFactory_CreateApplyDataRangeInstruction(t *testing.T)
 }
 
 func TestGoGatorInstructionFactory_CreateApplyKeywordInstruction(t *testing.T) {
-	g := GoGatorInstructionFactory{}
+	g := InstructionFactory{}
 
 	keywordInstruction := g.CreateApplyKeywordInstruction()
 

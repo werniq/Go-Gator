@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"io"
 	"newsAggr/cmd/types"
-	"newsAggr/logger"
 )
 
 type XMLParser struct {
@@ -13,24 +12,28 @@ type XMLParser struct {
 }
 
 // Parse function is required for XMLParser struct, in order to implement NewsParser interface, for data formatted in xml
-func (xp XMLParser) Parse() []types.News {
+func (xp XMLParser) Parse() ([]types.News, error) {
 	var news []types.News
 
 	var tmp []types.RSS
 
 	b := bytes.NewBuffer([]byte{})
-	b.Write(extractFileData(sourceToFile[xp.Source]))
-
-	data, err := io.ReadAll(b)
+	data, err := extractFileData(sourceToFile[xp.Source])
 	if err != nil {
-		logger.ErrorLogger.Fatalf("Error reading data from buffer: %v\n", err)
+		return nil, err
+	}
+	b.Write(data)
+
+	data, err = io.ReadAll(b)
+	if err != nil {
+		return nil, err
 	}
 
 	err = xml.Unmarshal(data, &tmp)
 	if err != nil {
-		logger.ErrorLogger.Fatalf("Error decoding XML data: %v\n", err)
+		return nil, err
 	}
 	news = append(news, tmp[0].Channel.Items...)
 
-	return news
+	return news, nil
 }

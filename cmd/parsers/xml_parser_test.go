@@ -1,6 +1,7 @@
 package parsers
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"newsAggr/cmd/types"
 	"strings"
@@ -14,7 +15,10 @@ func TestXMLParser_Parse(t *testing.T) {
 	parser := XMLParser{
 		"abc",
 	}
-	news := ApplyParams(parser.Parse(), params)
+
+	news, err := parser.Parse()
+	assert.Nil(t, err, fmt.Sprintf("Expected: %v, Got: %v", nil, err))
+	news = ApplyParams(news, params)
 
 	assert.Len(t, news, 1, "Expected 1 news item")
 

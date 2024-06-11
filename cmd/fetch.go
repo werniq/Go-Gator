@@ -73,7 +73,7 @@ func AddFetchNewsCmd() *cobra.Command {
 	fetchNews.Flags().String("keywords", "", "Topic on which news will be fetched (if empty, all news will be fetched, regardless of the theme). Separate them with ',' ")
 	fetchNews.Flags().String("date-from", "", "Retrieve news based on their published date | Format 2024-05-24")
 	fetchNews.Flags().String("date-end", "", "Retrieve news, where published date is not more then this value | Format 2024-05-24")
-	fetchNews.Flags().String("sources", "all", "Supported sources: [abc, bbc, nbc, usatoday, washingtontimes, all]")
+	fetchNews.Flags().String("sources", "", "Supported sources: [abc, bbc, nbc, usatoday, washingtontimes, all]")
 
 	return fetchNews
 }

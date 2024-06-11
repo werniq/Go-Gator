@@ -35,7 +35,7 @@ var (
 func ParseBySource(source string) ([]types.News, error) {
 	var news []types.News
 
-	if source == "all" {
+	if source == "" {
 		for _, p := range sourceToParser {
 			tmp, err := p.Parse()
 			if err != nil {

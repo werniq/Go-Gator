@@ -1,9 +1,7 @@
 package parsers
 
 import (
-	"bytes"
 	"encoding/xml"
-	"io"
 	"newsAggr/cmd/types"
 )
 
@@ -17,14 +15,7 @@ func (xp XMLParser) Parse() ([]types.News, error) {
 
 	var tmp []types.RSS
 
-	b := bytes.NewBuffer([]byte{})
 	data, err := extractFileData(sourceToFile[xp.Source])
-	if err != nil {
-		return nil, err
-	}
-	b.Write(data)
-
-	data, err = io.ReadAll(b)
 	if err != nil {
 		return nil, err
 	}

@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	// templateFuncs are functions which can be called in the template
 	templateFuncs = template.FuncMap{
 		"highlight":  highlight,
 		"formatDate": formatDate,

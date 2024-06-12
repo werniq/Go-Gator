@@ -2,6 +2,7 @@ package parsers
 
 import (
 	"errors"
+	"newsAggr/cmd/filters"
 	"newsAggr/cmd/types"
 	"strings"
 )
@@ -12,7 +13,13 @@ type Parser interface {
 }
 
 var (
-	g            ParsingFactory
+	// g and f are Parsing and instruction factories.
+	// These are custom types which will be used for parsers initialization for
+	// different data formats, and applying filters to retrieved data
+	g ParsingFactory
+	f filters.InstructionFactory
+
+	// sourceToFile maps source names (as strings) to their corresponding filenames
 	sourceToFile = map[string]string{
 		"washingtontimes": "washington-times.xml",
 		"abc":             "abc.xml",
@@ -20,6 +27,9 @@ var (
 		"usatoday":        "usa-today.html",
 		"nbc":             "nbc-news.json",
 	}
+
+	// sourceToParser maps source names to their corresponding parser instances
+	// The parser are created using ParsingFactory
 	sourceToParser = map[string]Parser{
 		"nbc":             g.CreateJsonParser("nbc"),
 		"usatoday":        g.CreateHtmlParser("usatoday"),
@@ -27,6 +37,8 @@ var (
 		"bbc":             g.CreateXmlParser("bbc"),
 		"washingtontimes": g.CreateXmlParser("washingtontimes"),
 	}
+
+	// ErrInvalidSource is thrown when we can not find the source requested by user
 	ErrInvalidSource = errors.New("this source is not supported. Supported sources are [abc, bbc, nbc, usatoday, washingtontimes]")
 )
 

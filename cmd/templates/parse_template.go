@@ -9,6 +9,14 @@ import (
 	"time"
 )
 
+var (
+	templateFuncs = template.FuncMap{
+		"highlight":  highlight,
+		"formatDate": formatDate,
+		"contains":   contains,
+	}
+)
+
 // Custom function to highlight keywords
 func highlight(content string, keywords []string) string {
 	if keywords == nil {
@@ -36,11 +44,6 @@ func contains(s string, arr []string) bool {
 }
 
 func ParseTemplate(f *types.FilteringParams, articles []types.News) error {
-	funcMap := template.FuncMap{
-		"highlight":  highlight,
-		"formatDate": formatDate,
-		"contains":   contains,
-	}
 	sortNewsByPubDate(articles)
 
 	d, err := os.Getwd()
@@ -48,7 +51,7 @@ func ParseTemplate(f *types.FilteringParams, articles []types.News) error {
 		return err
 	}
 
-	tmpl := template.Must(template.New("article.plain.tmpl").Funcs(funcMap).ParseFiles(d + "\\cmd\\templates\\templates\\article.plain.tmpl"))
+	tmpl := template.Must(template.New("article.plain.tmpl").Funcs(templateFuncs).ParseFiles(d + "\\cmd\\templates\\templates\\article.plain.tmpl"))
 
 	data := types.TemplateData{
 		NewsItems:  articles,

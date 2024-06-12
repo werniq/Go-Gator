@@ -11,21 +11,17 @@ type JsonParser struct {
 
 // Parse function is required for JsonParser struct, in order to implement NewsParser interface, for data formatted in json
 func (jp JsonParser) Parse() ([]types.News, error) {
-	var news []types.News
+	var news types.Json
 
 	data, err := extractFileData(sourceToFile[jp.Source])
 	if data == nil {
 		return nil, err
 	}
 
-	var tmp types.Json
-
-	err = json.Unmarshal(data, &tmp)
+	err = json.Unmarshal(data, &news)
 	if err != nil {
 		return nil, err
 	}
 
-	news = append(news, tmp.Articles...)
-
-	return news, nil
+	return news.Articles, nil
 }

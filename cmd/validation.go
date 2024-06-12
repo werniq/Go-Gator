@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -20,10 +21,10 @@ func validateDate(dateStr string) error {
 }
 
 // validateSources checks if the provided sources are within the supported list
-func validateSources(sources []string) error {
+func validateSources(sources string) error {
 	supportedSources := []string{"abc", "bbc", "nbc", "usatoday", "washingtontimes", "all"}
 
-	for _, source := range sources {
+	for _, source := range strings.Split(sources, ",") {
 		if !contains(supportedSources, source) {
 			return fmt.Errorf("unsupported source: %s. Supported sources are: %v", source, supportedSources)
 		}

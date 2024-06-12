@@ -1,7 +1,6 @@
 package parsers
 
 import (
-	"errors"
 	"newsAggr/cmd/filters"
 	"newsAggr/cmd/types"
 	"strings"
@@ -37,9 +36,6 @@ var (
 		"bbc":             g.CreateXmlParser("bbc"),
 		"washingtontimes": g.CreateXmlParser("washingtontimes"),
 	}
-
-	// ErrInvalidSource is thrown when we can not find the source requested by user
-	ErrInvalidSource = errors.New("this source is not supported. Supported sources are [abc, bbc, nbc, usatoday, washingtontimes]")
 )
 
 // ParseBySource returns all news in particular source. If source is equal to "all", news will be
@@ -64,8 +60,6 @@ func ParseBySource(source string) ([]types.News, error) {
 					return nil, err
 				}
 				news = append(news, tmp...)
-			} else {
-				return nil, ErrInvalidSource
 			}
 		}
 	}

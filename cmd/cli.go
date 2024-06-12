@@ -5,7 +5,7 @@ import (
 	"newsAggr/logger"
 )
 
-// InitRootCmd adds fetchNews command to our main command
+// InitRootCmd initializes root cmd and attaches fetchNews command to our main command
 func InitRootCmd() *cobra.Command {
 	var rootCmd = &cobra.Command{
 		Use:   "go-gator",

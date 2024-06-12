@@ -50,6 +50,11 @@ func AddFetchNewsCmd() *cobra.Command {
 				log.Fatalln("Error validating date: ", err)
 			}
 
+			err = validateSources(sources)
+			if err != nil {
+				log.Fatalln("Error validating sources: ", err)
+			}
+
 			// Split and validate sources
 			filters := types.NewFilteringParams(keywords, dateFrom, dateEnd)
 

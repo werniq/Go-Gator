@@ -2,7 +2,7 @@ package parsers
 
 import (
 	"encoding/json"
-	"newsAggr/cmd/types"
+	"newsaggr/cmd/types"
 )
 
 type JsonParser struct {
@@ -14,7 +14,7 @@ func (jp JsonParser) Parse() ([]types.News, error) {
 	var news types.Json
 
 	data, err := extractFileData(sourceToFile[jp.Source])
-	if data == nil {
+	if err != nil {
 		return nil, err
 	}
 

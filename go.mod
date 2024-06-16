@@ -1,4 +1,4 @@
-module newsAggr
+module newsaggr
 
 go 1.21
 

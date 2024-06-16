@@ -1,7 +1,7 @@
 package filters
 
 import (
-	"newsAggr/cmd/types"
+	"newsaggr/cmd/types"
 )
 
 type FactoryInterface interface {

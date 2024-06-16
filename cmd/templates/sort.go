@@ -1,8 +1,8 @@
 package templates
 
 import (
-	"newsAggr/cmd/filters"
-	"newsAggr/cmd/types"
+	"newsaggr/cmd/filters"
+	"newsaggr/cmd/types"
 	"sort"
 )
 

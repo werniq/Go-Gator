@@ -3,7 +3,7 @@ package templates
 import (
 	"fmt"
 	"html/template"
-	"newsAggr/cmd/types"
+	"newsaggr/cmd/types"
 	"os"
 	"strings"
 	"time"
@@ -44,7 +44,7 @@ func contains(s string, arr []string) bool {
 	return false
 }
 
-func ParseTemplate(f *types.FilteringParams, articles []types.News) error {
+func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
 	sortNewsByPubDate(articles)
 
 	d, err := os.Getwd()

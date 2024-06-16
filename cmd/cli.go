@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"newsAggr/logger"
+	"newsaggr/logger"
 )
 
 // InitRootCmd initializes root cmd and attaches fetchNews command to our main command

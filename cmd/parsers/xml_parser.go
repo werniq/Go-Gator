@@ -2,7 +2,7 @@ package parsers
 
 import (
 	"encoding/xml"
-	"newsAggr/cmd/types"
+	"newsaggr/cmd/types"
 )
 
 type XMLParser struct {

@@ -22,6 +22,9 @@ func validateDate(dateStr string) error {
 
 // validateSources checks if the provided sources are within the supported list
 func validateSources(sources string) error {
+	if sources == "" {
+		return nil
+	}
 	supportedSources := []string{"abc", "bbc", "nbc", "usatoday", "washingtontimes", "all"}
 
 	for _, source := range strings.Split(sources, ",") {

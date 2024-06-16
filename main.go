@@ -1,14 +1,14 @@
 package main
 
 import (
-	"newsAggr/cmd"
-	"newsAggr/logger"
+	"log"
+	"newsaggr/cmd"
 )
 
 func main() {
 	rootCmd := cmd.InitRootCmd()
 	err := rootCmd.Execute()
 	if err != nil {
-		logger.ErrorLogger.Fatalln(err)
+		log.Fatalln(err)
 	}
 }

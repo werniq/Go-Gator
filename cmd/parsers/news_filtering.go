@@ -1,7 +1,7 @@
 package parsers
 
 import (
-	"newsAggr/cmd/types"
+	"newsaggr/cmd/types"
 )
 
 // ApplyParams filters news by provided FilteringParams

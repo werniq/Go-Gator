@@ -21,23 +21,30 @@ var (
 	g ParsingFactory
 	f filters.InstructionFactory
 
+	// Define Sources
+	NbcNews         = "nbc"
+	UsaToday        = "usatoday"
+	ABC             = "abc"
+	BBC             = "bbc"
+	WashingtonTimes = "washingtontimes"
+
 	// sourceToFile maps source names (as strings) to their corresponding filenames
 	sourceToFile = map[string]string{
-		"washingtontimes": "washington-times.xml",
-		"abc":             "abc.xml",
-		"bbc":             "bbc.xml",
-		"usatoday":        "usa-today.html",
-		"nbc":             "nbc-news.json",
+		WashingtonTimes: "washington-times.xml",
+		ABC:             "abc.xml",
+		BBC:             "bbc.xml",
+		UsaToday:        "usa-today.html",
+		NbcNews:         "nbc-news.json",
 	}
 
 	// sourceToParser maps source names to their corresponding parser instances
 	// The parser are created using ParsingFactory
 	sourceToParser = map[string]Parser{
-		"nbc":             g.CreateJsonParser("nbc"),
-		"usatoday":        g.CreateHtmlParser("usatoday"),
-		"abc":             g.CreateXmlParser("abc"),
-		"bbc":             g.CreateXmlParser("bbc"),
-		"washingtontimes": g.CreateXmlParser("washingtontimes"),
+		NbcNews:         g.CreateJsonParser(NbcNews),
+		UsaToday:        g.CreateHtmlParser(UsaToday),
+		ABC:             g.CreateXmlParser(ABC),
+		BBC:             g.CreateXmlParser(BBC),
+		WashingtonTimes: g.CreateXmlParser(WashingtonTimes),
 	}
 )
 

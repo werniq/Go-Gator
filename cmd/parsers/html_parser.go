@@ -11,6 +11,13 @@ type HtmlParser struct {
 	Source string
 }
 
+const (
+	UsaTodayKeySelector = "div.gnt_m_flm a"
+	TitleTag            = "data-c-br"
+	TimestampTag        = "div.gnt_m_flm_sbt"
+	TimestampAttribute  = "data-c-dt"
+)
+
 // Parse function is required for HtmlParser struct, in order to implement NewsParser interface, for data formatted in html
 func (hp HtmlParser) Parse() ([]types.News, error) {
 	var news []types.News
@@ -25,11 +32,11 @@ func (hp HtmlParser) Parse() ([]types.News, error) {
 		return nil, err
 	}
 
-	doc.Find("div.gnt_m_flm a").Each(func(i int, selection *goquery.Selection) {
-		title, _ := selection.Attr("data-c-br")
+	doc.Find(UsaTodayKeySelector).Each(func(i int, selection *goquery.Selection) {
+		title, _ := selection.Attr(TitleTag)
 		title = strings.TrimSpace(title)
 		description := strings.TrimSpace(selection.Text())
-		pubDate := strings.TrimSpace(selection.Find("div.gnt_m_flm_sbt").AttrOr("data-c-dt", ""))
+		pubDate := strings.TrimSpace(selection.Find(TimestampTag).AttrOr(TimestampAttribute, ""))
 
 		news = append(news, types.News{
 			Title:       title,

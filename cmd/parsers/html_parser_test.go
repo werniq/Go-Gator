@@ -2,7 +2,7 @@ package parsers
 
 import (
 	"github.com/stretchr/testify/assert"
-	"newsAggr/cmd/types"
+	"newsaggr/cmd/types"
 	"strings"
 	"testing"
 )

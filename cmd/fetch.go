@@ -9,6 +9,13 @@ import (
 	"strings"
 )
 
+const (
+	KeywordFlag  = "keywords"
+	DateFromFlag = "date-from"
+	DateEndFlag  = "date-end"
+	SourcesFlag  = "sources"
+)
+
 func checkFlagErr(err error) {
 	if err != nil {
 		switch {
@@ -23,10 +30,10 @@ func checkFlagErr(err error) {
 // AddFetchNewsCmd attaches fetchNews command to rootCmd
 func AddFetchNewsCmd() *cobra.Command {
 	fetchNews := &cobra.Command{}
-	fetchNews.Flags().String("keywords", "", "Topic on which news will be fetched (if empty, all news will be fetched, regardless of the theme). Separate them with ',' ")
-	fetchNews.Flags().String("date-from", "", "Retrieve news based on their published date | Format 2024-05-24")
-	fetchNews.Flags().String("date-end", "", "Retrieve news, where published date is not more then this value | Format 2024-05-24")
-	fetchNews.Flags().String("sources", "", "Supported sources: [abc, bbc, nbc, usatoday, washingtontimes, all]")
+	fetchNews.Flags().String(KeywordFlag, "", "Topic on which news will be fetched (if empty, all news will be fetched, regardless of the theme). Separate them with ',' ")
+	fetchNews.Flags().String(DateFromFlag, "", "Retrieve news based on their published date | Format 2024-05-24")
+	fetchNews.Flags().String(DateEndFlag, "", "Retrieve news, where published date is not more then this value | Format 2024-05-24")
+	fetchNews.Flags().String(SourcesFlag, "", "Supported sources: [abc, bbc, nbc, usatoday, washingtontimes, all]")
 
 	fetchNews.Use = "fetch"
 	fetchNews.Short = "Fetching news from downloaded data"
@@ -35,13 +42,13 @@ func AddFetchNewsCmd() *cobra.Command {
 
 	fetchNews.Run = func(cmd *cobra.Command, args []string) {
 		// retrieve optional parameters
-		keywords, err := cmd.Flags().GetString("keywords")
+		keywords, err := cmd.Flags().GetString(KeywordFlag)
 		checkFlagErr(err)
-		dateFrom, err := cmd.Flags().GetString("date-from")
+		dateFrom, err := cmd.Flags().GetString(DateFromFlag)
 		checkFlagErr(err)
-		dateEnd, err := cmd.Flags().GetString("date-end")
+		dateEnd, err := cmd.Flags().GetString(DateEndFlag)
 		checkFlagErr(err)
-		sources, err := cmd.Flags().GetString("sources")
+		sources, err := cmd.Flags().GetString(SourcesFlag)
 		checkFlagErr(err)
 
 		// Validate user arguments

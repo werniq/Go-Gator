@@ -18,6 +18,11 @@ var (
 	}
 )
 
+const (
+	BaseTemplate     = "article.plain.tmpl"
+	BaseTemplatePath = "\\cmd\\templates\\templates\\article.plain.tmpl"
+)
+
 // Custom function to highlight keywords
 func highlight(content string, keywords []string) string {
 	if keywords == nil {
@@ -52,7 +57,7 @@ func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
 		return err
 	}
 
-	tmpl := template.Must(template.New("article.plain.tmpl").Funcs(templateFuncs).ParseFiles(d + "\\cmd\\templates\\templates\\article.plain.tmpl"))
+	tmpl := template.Must(template.New(BaseTemplate).Funcs(templateFuncs).ParseFiles(d + BaseTemplatePath))
 
 	data := types.TemplateData{
 		NewsItems:  articles,

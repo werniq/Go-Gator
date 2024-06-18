@@ -21,13 +21,6 @@ var (
 	g ParsingFactory
 	f filters.InstructionFactory
 
-	// Define Sources
-	NbcNews         = "nbc"
-	UsaToday        = "usatoday"
-	ABC             = "abc"
-	BBC             = "bbc"
-	WashingtonTimes = "washingtontimes"
-
 	// sourceToFile maps source names (as strings) to their corresponding filenames
 	sourceToFile = map[string]string{
 		WashingtonTimes: "washington-times.xml",
@@ -46,6 +39,15 @@ var (
 		BBC:             g.CreateXmlParser(BBC),
 		WashingtonTimes: g.CreateXmlParser(WashingtonTimes),
 	}
+)
+
+// Define Sources
+const (
+	NbcNews         = "nbc"
+	UsaToday        = "usatoday"
+	ABC             = "abc"
+	BBC             = "bbc"
+	WashingtonTimes = "washingtontimes"
 )
 
 // ParseBySource returns all news in particular source. If source is equal to "all", news will be

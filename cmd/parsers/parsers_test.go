@@ -3,7 +3,6 @@ package parsers
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"log"
 	"newsaggr/cmd/types"
 	"testing"
 )
@@ -38,6 +37,5 @@ func TestParseWithParams(t *testing.T) {
 		}
 		news = ApplyFilters(news, testCase.Input)
 		assert.Equal(t, testCase.ExpectedOutput, len(news))
-		log.Println(news)
 	}
 }

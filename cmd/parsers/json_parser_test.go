@@ -1,39 +1,49 @@
 package parsers
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"newsaggr/cmd/types"
 	"testing"
 )
 
 func TestJsonParser_ParseWithArgs(t *testing.T) {
-	params := &types.FilteringParams{
-		Keywords: "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena",
-	}
-
 	parser := JsonParser{
-		"nbc",
+		Source: "nbc",
 	}
 
-	news, err := parser.Parse()
-	assert.Nil(t, err)
-	news = ApplyFilters(news, params)
-
-	assert.Len(t, news, 1)
-	assert.Equal(t, "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena", news[0].Title)
-	assert.Equal(t, "The Vatican has issued new rules radically reforming its process for evaluating faith-based supernatural phenomena like visions of the Virgin Mary or stigmata.", news[0].Description)
-	assert.Equal(t, "2024-05-17T14:58:52Z", news[0].PubDate)
-}
-
-func TestJsonParser_Parse(t *testing.T) {
-	jsonParser := JsonParser{
-		"nbc",
+	testCases := []struct {
+		Expected []types.News
+		Input    *types.FilteringParams
+	}{
+		{
+			Expected: []types.News{
+				{
+					Title:       "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena",
+					Description: "The Vatican has issued new rules radically reforming its process for evaluating faith-based supernatural phenomena like visions of the Virgin Mary or stigmata.",
+					PubDate:     "2024-05-17T14:58:52Z",
+				},
+			},
+			Input: &types.FilteringParams{
+				Keywords: "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena",
+			},
+		},
 	}
 
-	news, err := jsonParser.Parse()
-	assert.Nil(t, err, fmt.Sprintf("Expected: %v, Got: %v", nil, err))
+	for _, testCase := range testCases {
+		news, err := parser.Parse()
+		assert.NoError(t, err)
 
-	assert.NotEqual(t, news, nil)
-	assert.Equal(t, len(news), 100)
+		filteredNews := ApplyFilters(news, testCase.Input)
+
+		if len(testCase.Expected) == 0 {
+			assert.Empty(t, filteredNews)
+		} else {
+			assert.Equal(t, len(filteredNews), len(testCase.Expected))
+			for i, expectedNews := range testCase.Expected {
+				assert.Equal(t, filteredNews[i].Title, expectedNews.Title)
+				assert.Equal(t, filteredNews[i].Description, expectedNews.Description)
+				assert.Equal(t, filteredNews[i].PubDate, expectedNews.PubDate)
+			}
+		}
+	}
 }

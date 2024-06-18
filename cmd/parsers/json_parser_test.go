@@ -18,7 +18,7 @@ func TestJsonParser_ParseWithArgs(t *testing.T) {
 
 	news, err := parser.Parse()
 	assert.Nil(t, err)
-	news = ApplyParams(news, params)
+	news = ApplyFilters(news, params)
 
 	assert.Len(t, news, 1)
 	assert.Equal(t, "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena", news[0].Title)

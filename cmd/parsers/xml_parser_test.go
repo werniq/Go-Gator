@@ -18,7 +18,7 @@ func TestXMLParser_Parse(t *testing.T) {
 
 	news, err := parser.Parse()
 	assert.Nil(t, err, fmt.Sprintf("Expected: %v, Got: %v", nil, err))
-	news = ApplyParams(news, params)
+	news = ApplyFilters(news, params)
 
 	assert.Len(t, news, 1, "Expected 1 news item")
 

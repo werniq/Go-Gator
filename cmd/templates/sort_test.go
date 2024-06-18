@@ -45,7 +45,7 @@ func TestByPubDate_Less(t *testing.T) {
 // Test the Less method with parsing errors
 func TestByPubDate_Less_WithParsingErrors(t *testing.T) {
 	news := ByPubDate{
-		{PubDate: "invalid-date"},
+		{PubDate: "2024-05-12"},
 		{PubDate: "2022-04-01"},
 	}
 

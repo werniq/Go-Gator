@@ -4,8 +4,8 @@ import (
 	"newsaggr/cmd/types"
 )
 
-// ApplyParams filters news by provided FilteringParams
-func ApplyParams(articles []types.News, params *types.FilteringParams) []types.News {
+// ApplyFilters filters news by provided FilteringParams
+func ApplyFilters(articles []types.News, params *types.FilteringParams) []types.News {
 	var filteredArticles []types.News
 
 	keywordInstruction := f.CreateApplyKeywordInstruction()

@@ -2,7 +2,7 @@ package filters
 
 import (
 	"github.com/stretchr/testify/assert"
-	"newsAggr/cmd/types"
+	"newsaggr/cmd/types"
 	"testing"
 )
 

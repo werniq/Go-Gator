@@ -16,14 +16,20 @@ const (
 	SourcesFlag  = "sources"
 )
 
+var errorMessages = map[string]string{
+	"flag accessed but not defined": "Unsupported flag: ",
+}
+
 func checkFlagErr(err error) {
 	if err != nil {
-		switch {
-		case strings.Contains(err.Error(), "flag accessed but not defined"):
-			log.Fatalln("Unsupported flag: ", err)
-		default:
-			log.Fatalln("Error parsing flags: ", err)
+		for substr, msg := range errorMessages {
+			if strings.Contains(err.Error(), substr) {
+				log.Fatalln(msg, err)
+				return
+			}
 		}
+
+		log.Fatalln("Error parsing flags: ", err)
 	}
 }
 
@@ -80,7 +86,7 @@ func AddFetchNewsCmd() *cobra.Command {
 			log.Fatalln("Error parsing news: ", err)
 		}
 
-		news = parsers.ApplyParams(news, filters)
+		news = parsers.ApplyFilters(news, filters)
 
 		// output using go templates
 		if err = templates.PrintTemplate(filters, news); err != nil {

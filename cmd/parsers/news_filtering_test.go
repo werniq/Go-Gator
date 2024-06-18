@@ -2,7 +2,7 @@ package parsers
 
 import (
 	"github.com/stretchr/testify/assert"
-	"newsAggr/cmd/types"
+	"newsaggr/cmd/types"
 	"testing"
 )
 
@@ -52,7 +52,7 @@ func TestApplyParams(t *testing.T) {
 
 	for _, testCase := range testCases {
 		var news []types.News
-		news = append(news, ApplyParams(testCase.Input.News, testCase.Input.Params)...)
+		news = append(news, ApplyFilters(testCase.Input.News, testCase.Input.Params)...)
 
 		assert.Equal(t, news, testCase.ExpectedOutput)
 	}

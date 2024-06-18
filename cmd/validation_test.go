@@ -28,14 +28,14 @@ func TestValidateDate(t *testing.T) {
 
 func TestValidateSources(t *testing.T) {
 	tests := []struct {
-		sources []string
+		sources string
 		wantErr bool
 	}{
-		{[]string{"abc", "bbc"}, false},
-		{[]string{"abc", "xyz"}, true},
-		{[]string{}, false},
-		{[]string{"usatoday", "washingtontimes"}, false},
-		{[]string{"nbc", "fake"}, true},
+		{"abc,bbc", false},
+		{"abc,xyz", true},
+		{"usatoday", false},
+		{"fakesource", true},
+		{"all", false},
 	}
 
 	for _, tt := range tests {

@@ -1,6 +1,6 @@
 package types
 
-// RSS struct is used to parse some RSS data.
+// RSS struct is used to parse articles in RSS format.
 // Because each resource has its own data output format,
 // this model will be used when we have the following structure:
 //

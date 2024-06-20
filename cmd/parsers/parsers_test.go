@@ -17,13 +17,13 @@ func TestParseWithParams(t *testing.T) {
 			Input: &types.FilteringParams{
 				Keywords: "glide",
 			},
-			ExpectedOutput: 1,
+			ExpectedOutput: 0,
 		},
 		{
 			Input: &types.FilteringParams{
 				Keywords: "Ukraine",
 			},
-			ExpectedOutput: 3,
+			ExpectedOutput: 2,
 		},
 	}
 

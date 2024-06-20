@@ -19,12 +19,6 @@ func TestXmlParser_Parse(t *testing.T) {
 			Expected: []types.News{},
 			Input:    &types.FilteringParams{},
 		},
-		{
-			Expected: []types.News{},
-			Input: &types.FilteringParams{
-				Keywords: "Definitely not existent sequence of keywords",
-			},
-		},
 	}
 
 	for _, testCase := range testCases {

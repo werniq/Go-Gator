@@ -2,6 +2,8 @@ package parsers
 
 import (
 	"encoding/xml"
+	"io"
+	"net/http"
 	"newsaggr/cmd/types"
 )
 
@@ -11,14 +13,19 @@ type XMLParser struct {
 
 // Parse function is required for XMLParser struct, in order to implement NewsParser interface, for data formatted in xml
 func (xp XMLParser) Parse() ([]types.News, error) {
-	var news []types.RSS
-
-	data, err := extractFileData(sourceToFile[xp.Source])
+	res, err := http.Get(sourceToEndpoint[xp.Source])
 	if err != nil {
 		return nil, err
 	}
 
-	err = xml.Unmarshal(data, &news)
+	var news []types.RSS
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	err = xml.Unmarshal(body, &news)
 	if err != nil {
 		return nil, err
 	}

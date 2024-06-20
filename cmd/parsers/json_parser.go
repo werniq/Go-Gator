@@ -13,7 +13,7 @@ type JsonParser struct {
 func (jp JsonParser) Parse() ([]types.News, error) {
 	var news types.Json
 
-	data, err := extractFileData(sourceToFile[jp.Source])
+	data, err := extractFileData(sourceToEndpoint[jp.Source])
 	if err != nil {
 		return nil, err
 	}

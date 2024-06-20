@@ -21,11 +21,11 @@ var (
 	g ParsingFactory
 	f filters.InstructionFactory
 
-	// sourceToFile maps source names (as strings) to their corresponding filenames
-	sourceToFile = map[string]string{
-		WashingtonTimes: "washington-times.xml",
-		ABC:             "abc.xml",
-		BBC:             "bbc.xml",
+	// sourceToEndpoint maps source names (as strings) to their corresponding filenames
+	sourceToEndpoint = map[string]string{
+		WashingtonTimes: "https://www.washingtontimes.com/rss/headlines/news/world",
+		ABC:             "https://abcnews.go.com/abcnews/internationalheadlines",
+		BBC:             "https://feeds.bbci.co.uk/news/rss.xml",
 		UsaToday:        "usa-today.html",
 		NbcNews:         "nbc-news.json",
 	}

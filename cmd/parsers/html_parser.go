@@ -22,7 +22,7 @@ const (
 func (hp HtmlParser) Parse() ([]types.News, error) {
 	var news []types.News
 
-	data, err := extractFileData(sourceToFile[hp.Source])
+	data, err := extractFileData(sourceToEndpoint[hp.Source])
 	if err != nil {
 		return nil, err
 	}

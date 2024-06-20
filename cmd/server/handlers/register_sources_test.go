@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"newsaggr/cmd/parsers"
 	"testing"
 )
 
@@ -37,7 +38,7 @@ func TestRegisterSource(t *testing.T) {
 			name:   "Register existent source",
 			source: "source1",
 			setup: func() {
-				Sources = []string{"source1", "source2", "source3"}
+				parsers.AddNewSource("xml", "source1", "https://source1.com")
 			},
 			statusCode: http.StatusBadRequest,
 			response: gin.H{

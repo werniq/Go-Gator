@@ -13,7 +13,7 @@ func TestRunServer(t *testing.T) {
 	}()
 
 	// Issue a request to ensure the server is running
-	resp, err := http.Get("http://localhost" + Addr + "/news")
+	resp, err := http.Get("http://localhost:8080/news?sources=abc")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }

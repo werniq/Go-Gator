@@ -17,7 +17,7 @@ func TestSetupRoutes(t *testing.T) {
 		url          string
 		expectedCode int
 	}{
-		{"GET", "http://localhost:8080/news", http.StatusOK},
+		{"GET", "http://localhost:8080/news?sources=bbc", http.StatusOK},
 		//{"GET", "/admin/source", http.StatusOK},
 		//{"POST", "/admin/source", http.StatusOK},
 		//{"PUT", "/admin/source", http.StatusOK},

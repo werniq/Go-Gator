@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"newsaggr/cmd/parsers"
 	"testing"
 )
 
@@ -26,7 +27,7 @@ func TestDeleteSource(t *testing.T) {
 			name:   "Delete existing source",
 			source: "source1",
 			setup: func() {
-				Sources = []string{"source1", "source2", "source3"}
+				parsers.AddNewSource("xml", "source1", "https://source1.com")
 			},
 			statusCode: http.StatusOK,
 			response: gin.H{
@@ -37,7 +38,7 @@ func TestDeleteSource(t *testing.T) {
 			name:   "Delete non-existent source",
 			source: "source4",
 			setup: func() {
-				Sources = []string{"source1", "source2", "source3"}
+				parsers.DeleteSource("source4")
 			},
 			statusCode: http.StatusBadRequest,
 			response: gin.H{

@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"newsaggr/cmd/parsers"
 )
 
 // DeleteSource handler deletes existing source from registered sources.
@@ -27,12 +28,7 @@ func DeleteSource(c *gin.Context) {
 		return
 	}
 
-	for i := 0; i <= len(Sources)-1; i++ {
-		if Sources[i] == reqBody.Source {
-			Sources = append(Sources[:i], Sources[i+1:]...)
-			break
-		}
-	}
+	parsers.DeleteSource(reqBody.Source)
 
 	c.JSON(http.StatusOK, gin.H{
 		"status": MsgSourceDeleted,

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/types"
+	"newsaggr/cmd/validator"
 )
 
 const (
@@ -25,9 +26,15 @@ const (
 
 	// ErrFailedParsing is thrown when program fails to parse sources
 	ErrFailedParsing = "error while parsing sources: "
+
+	// ErrFailedDateValidation is thrown when user submitted date in wrong format
+	ErrFailedDateValidation = "error while validating date. correct format is YYYY-mm-dd - 2024-05-15"
+
+	// ErrFailedSourceValidation is thrown when user submitted wrong source
+	ErrFailedSourceValidation = "error while validating sources."
 )
 
-// GetNews handler will be used in our server to retrieve news from files.
+// GetNews handler will be used in our server to retrieve news from prepared files
 func GetNews(c *gin.Context) {
 	keywords := c.Query(KeywordFlag)
 	sources := c.Query(SourcesFlag)
@@ -39,7 +46,32 @@ func GetNews(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": ErrDateFromAfter,
 			})
+			return
 		}
+	}
+
+	err := validator.ByDate(dateFrom)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": ErrFailedDateValidation + err.Error(),
+		})
+		return
+	}
+
+	err = validator.ByDate(dateEnd)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": ErrFailedDateValidation + err.Error(),
+		})
+		return
+	}
+
+	err = validator.BySources(sources)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": ErrFailedSourceValidation + err.Error(),
+		})
+		return
 	}
 
 	params := types.NewFilteringParams(keywords, dateFrom, dateEnd)
@@ -55,7 +87,7 @@ func GetNews(c *gin.Context) {
 	news = parsers.ApplyFilters(news, params)
 
 	c.JSON(http.StatusOK, gin.H{
-		"totalLength": len(news),
+		"totalAmount": len(news),
 		"news":        news,
 	})
 }

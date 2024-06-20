@@ -1,4 +1,4 @@
-package cmd
+package validator
 
 import (
 	"testing"
@@ -19,9 +19,9 @@ func TestValidateDate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		err := validateDate(tt.dateStr)
+		err := ByDate(tt.dateStr)
 		if (err != nil) != tt.wantErr {
-			t.Errorf("validateDate(%q) = %v, wantErr %v", tt.dateStr, err, tt.wantErr)
+			t.Errorf("ByDate(%q) = %v, wantErr %v", tt.dateStr, err, tt.wantErr)
 		}
 	}
 }
@@ -39,9 +39,9 @@ func TestValidateSources(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		err := validateSources(tt.sources)
+		err := BySources(tt.sources)
 		if (err != nil) != tt.wantErr {
-			t.Errorf("validateSources(%v) = %v, wantErr %v", tt.sources, err, tt.wantErr)
+			t.Errorf("BySources(%v) = %v, wantErr %v", tt.sources, err, tt.wantErr)
 		}
 	}
 }

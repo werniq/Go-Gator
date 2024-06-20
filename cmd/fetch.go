@@ -6,6 +6,7 @@ import (
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/templates"
 	"newsaggr/cmd/types"
+	"newsaggr/cmd/validator"
 	"strings"
 )
 
@@ -62,17 +63,17 @@ func AddFetchNewsCmd() *cobra.Command {
 			log.Fatalln("Ending date can not be more than starting date. ")
 		}
 
-		err = validateDate(dateFrom)
+		err = validator.ByDate(dateFrom)
 		if err != nil {
 			log.Fatalln("Error validating date: ", err)
 		}
 
-		err = validateDate(dateEnd)
+		err = validator.ByDate(dateEnd)
 		if err != nil {
 			log.Fatalln("Error validating date: ", err)
 		}
 
-		err = validateSources(sources)
+		err = validator.BySources(sources)
 		if err != nil {
 			log.Fatalln("Error validating sources: ", err)
 		}

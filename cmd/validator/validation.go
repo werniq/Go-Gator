@@ -1,4 +1,4 @@
-package cmd
+package validator
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// validateDate checks if the date string is in the correct format YYYY-MM-DD
-func validateDate(dateStr string) error {
+// ByDate checks if the date string is in the correct format YYYY-MM-DD
+func ByDate(dateStr string) error {
 	if dateStr == "" {
 		return nil
 	}
@@ -20,8 +20,8 @@ func validateDate(dateStr string) error {
 	return nil
 }
 
-// validateSources checks if the provided sources are within the supported list
-func validateSources(sources string) error {
+// BySources checks if the provided sources are within the supported list
+func BySources(sources string) error {
 	if sources == "" {
 		return nil
 	}

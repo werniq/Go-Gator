@@ -7,7 +7,7 @@ import (
 
 // setupRoutes attaches routes to *gin.Engine
 func setupRoutes(r *gin.Engine) {
-	r.GET("/", handlers.GetNews)
+	r.GET("/news", handlers.GetNews)
 
 	admin := r.Group("/admin")
 	admin.GET("/source", handlers.GetSources)

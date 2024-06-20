@@ -58,8 +58,10 @@ func AddFetchNewsCmd() *cobra.Command {
 		checkFlagErr(err)
 
 		// Validate user arguments
-		if dateEnd > dateFrom {
-			log.Fatalln("Ending date can not be more than starting date. ")
+		if dateEnd != "" && dateFrom != "" {
+			if dateFrom > dateEnd {
+				log.Fatalln("Date from can not be after date end.")
+			} 
 		}
 
 		err = validateDate(dateFrom)

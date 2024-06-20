@@ -1,11 +1,13 @@
-package parsers
+package filters
 
-import (
-	"newsaggr/cmd/types"
+import "newsaggr/cmd/types"
+
+var (
+	f InstructionFactory
 )
 
-// ApplyFilters filters news by provided FilteringParams
-func ApplyFilters(articles []types.News, params *types.FilteringParams) []types.News {
+// Apply filters news by provided FilteringParams
+func Apply(articles []types.News, params *types.FilteringParams) []types.News {
 	var filteredArticles []types.News
 
 	keywordInstruction := f.CreateApplyKeywordInstruction()

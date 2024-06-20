@@ -26,7 +26,7 @@ var (
 		WashingtonTimes: "https://www.washingtontimes.com/rss/headlines/news/world",
 		ABC:             "https://abcnews.go.com/abcnews/internationalheadlines",
 		BBC:             "https://feeds.bbci.co.uk/news/rss.xml",
-		UsaToday:        "usa-today.html",
+		UsaToday:        "https://usatoday.com",
 		NbcNews:         "nbc-news.json",
 	}
 

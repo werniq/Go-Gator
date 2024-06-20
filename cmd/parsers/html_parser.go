@@ -3,26 +3,34 @@ package parsers
 import (
 	"bytes"
 	"github.com/PuerkitoBio/goquery"
+	"io"
+	"net/http"
 	"newsaggr/cmd/types"
 	"strings"
+)
+
+const (
+	UsaTodayKeySelector = "a.section-helper-flex.section-helper-row.ten-column.spacer-small.p1-container"
+	TitleSelector       = "div.p1-title-spacer"
+	TimestampSelector   = "lit-timestamp"
+	TimestampAttribute  = "publishdate"
+	LinkAttribute       = "href"
 )
 
 type HtmlParser struct {
 	Source string
 }
 
-const (
-	UsaTodayKeySelector = "div.gnt_m_flm a"
-	TitleTag            = "data-c-br"
-	TimestampTag        = "div.gnt_m_flm_sbt"
-	TimestampAttribute  = "data-c-dt"
-)
-
-// Parse function is required for HtmlParser struct, in order to implement NewsParser interface, for data formatted in html
+// Parse function for HtmlParser struct
 func (hp HtmlParser) Parse() ([]types.News, error) {
 	var news []types.News
 
-	data, err := extractFileData(sourceToEndpoint[hp.Source])
+	res, err := http.Get(sourceToEndpoint[hp.Source])
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -33,15 +41,23 @@ func (hp HtmlParser) Parse() ([]types.News, error) {
 	}
 
 	doc.Find(UsaTodayKeySelector).Each(func(i int, selection *goquery.Selection) {
-		title, _ := selection.Attr(TitleTag)
-		title = strings.TrimSpace(title)
-		description := strings.TrimSpace(selection.Text())
-		pubDate := strings.TrimSpace(selection.Find(TimestampTag).AttrOr(TimestampAttribute, ""))
+		// Extracting the title
+		title := strings.TrimSpace(selection.Find(TitleSelector).Text())
+
+		// Extracting the timestamp
+		timestamp := strings.TrimSpace(selection.Find(TimestampSelector).AttrOr(TimestampAttribute, ""))
+
+		// Extracting the image URL (take the first URL from srcset)
+		link := strings.TrimSpace(selection.AttrOr(LinkAttribute, ""))
+
+		// Extracting description (if needed, here we just combine title and description)
+		description := title
 
 		news = append(news, types.News{
 			Title:       title,
 			Description: description,
-			PubDate:     pubDate,
+			PubDate:     timestamp,
+			Link:        link,
 		})
 	})
 

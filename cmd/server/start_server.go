@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
+	"time"
 )
 
 var (
@@ -21,6 +22,14 @@ func ConfAndRun() {
 	r := gin.Default()
 
 	setupRoutes(r)
+
+	go func() {
+		err := FetchNewsJob()
+		if err != nil {
+			log.Fatalln("Error executing fetch news job: ", err)
+		}
+		time.Sleep(time.Hour * 24)
+	}()
 
 	err := r.Run(Addr)
 	if err != nil {

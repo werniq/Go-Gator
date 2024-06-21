@@ -27,7 +27,7 @@ func TestRegisterSource(t *testing.T) {
 			name:   "Register non-existent source",
 			source: "source4",
 			setup: func() {
-				Sources = []string{"source1", "source2", "source3"}
+
 			},
 			statusCode: http.StatusCreated,
 			response: gin.H{

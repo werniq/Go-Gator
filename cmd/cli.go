@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"newsaggr/logger"
+	"log"
 )
 
 // InitRootCmd initializes root cmd and attaches fetchNews command to our main command
@@ -15,7 +15,7 @@ func InitRootCmd() *cobra.Command {
 		Version: "0.0.3",
 
 		Run: func(cmd *cobra.Command, args []string) {
-			logger.InfoLogger.Println("[Go Gator]")
+			log.Println("[Go Gator]")
 		},
 	}
 	rootCmd.AddCommand(AddFetchNewsCmd())

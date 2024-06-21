@@ -6,9 +6,6 @@ import (
 )
 
 var (
-	// Sources array stores all available sources from where we can parse news
-	Sources = []string{"abc", "bbc", "nbc", "usatoday", "washingtontimes"}
-
 	// MsgSourceCreated displays informational message after source was created
 	MsgSourceCreated = "Source was successfully registered."
 

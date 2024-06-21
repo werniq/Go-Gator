@@ -27,13 +27,13 @@ var (
 		ABC:             "https://abcnews.go.com/abcnews/internationalheadlines",
 		BBC:             "https://feeds.bbci.co.uk/news/rss.xml",
 		UsaToday:        "https://usatoday.com",
-		NbcNews:         "nbc-news.json",
+		//NbcNews:         "nbc-news.json",
 	}
 
 	// sourceToParser maps source names to their corresponding parser instances
 	// The parser are created using ParsingFactory
 	sourceToParser = map[string]Parser{
-		NbcNews:         g.CreateJsonParser(NbcNews),
+		//NbcNews:         g.CreateJsonParser(NbcNews),
 		UsaToday:        g.CreateHtmlParser(UsaToday),
 		ABC:             g.CreateXmlParser(ABC),
 		BBC:             g.CreateXmlParser(BBC),

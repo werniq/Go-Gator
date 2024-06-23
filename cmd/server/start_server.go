@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
-	"os"
 	"time"
 )
 
@@ -19,7 +18,13 @@ const (
 	// ProdAddr is used to run server in production environment
 	ProdAddr = ":443"
 
-	PathToCertsDit = "\\cmd\\server\\certs\\"
+	RelativePathToCertsDir = "\\cmd\\server\\certs\\"
+
+	// CertFile is the name of certificate file
+	CertFile = "server.crt"
+
+	// KeyFile is the name of the key for the certificate above
+	KeyFile = "server.key"
 )
 
 // ConfAndRun initializes server using gin framework, then attaches routes and handlers to it, and runs
@@ -37,13 +42,18 @@ func ConfAndRun() {
 		time.Sleep(time.Hour * 24)
 	}()
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	cwd = cwd + PathToCertsDit
+	//Cwd, err := os.Getwd()
+	//if err != nil {
+	//	log.Fatalln(err)
+	//}
+	//PathToCertsDir := Cwd + RelativePathToCertsDir
+	//
+	//err = r.RunTLS(ProdAddr, PathToCertsDir+CertFile, PathToCertsDir+KeyFile)
+	//if err != nil {
+	//	log.Fatalln(ErrRunningServer, err)
+	//}
 
-	err = r.RunTLS(ProdAddr, cwd+"ca.crt", cwd+"ca.key")
+	err := r.Run(DevAddr)
 	if err != nil {
 		log.Fatalln(ErrRunningServer, err)
 	}

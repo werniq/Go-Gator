@@ -54,7 +54,7 @@ const (
 	WashingtonTimes = "washingtontimes"
 
 	// FirstFetchedFileDate identifies first file which contains news
-	FirstFetchedFileDate = "2024-06-22"
+	FirstFetchedFileDate = "2024-06-20"
 
 	// PathToDataDir is used to join path from current working directory to data dir
 	PathToDataDir = "\\cmd\\parsers\\data\\"

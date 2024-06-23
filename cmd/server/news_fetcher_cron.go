@@ -17,13 +17,13 @@ const (
 // FetchNewsJob is a function that fetches news, parses it, and writes the parsed data
 // to a JSON file named with the current date in the format YYYY-MM-DD.
 func FetchNewsJob() error {
-	currentTimestamp := time.Now().Format(time.DateOnly)
+	dateTimestamp := time.Now().Format(time.DateOnly)
 
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	filename := fmt.Sprintf("%s\\%s\\%s.json", wd, PathToDataDir, currentTimestamp)
+	filename := fmt.Sprintf("%s\\%s\\%s.json", wd, PathToDataDir, dateTimestamp)
 
 	file, err := os.Create(filename)
 	if err != nil {
@@ -38,14 +38,16 @@ func FetchNewsJob() error {
 		return err
 	}
 
-	filters := types.NewFilteringParams("", currentTimestamp, "")
+	filters := types.NewFilteringParams("", dateTimestamp, "")
 	news = parsers.ApplyFilters(news, filters)
 
+	// marshalling data into json format
 	data, err := json.Marshal(news)
 	if err != nil {
 		return err
 	}
 
+	// writing json data
 	_, err = file.Write(data)
 	if err != nil {
 		return err

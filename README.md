@@ -9,7 +9,7 @@
 4. Logging
 
 ## Documentation
-Each package is (in my opinion) good documentation, but here I would like to explain the purpose of each directory as well.
+Here I would like to explain the purpose of each directory.
 <br />
 ### 1. Cmd
 Main logic of the application is there. Cmd has few sub folders:

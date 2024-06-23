@@ -6,7 +6,7 @@ import (
 )
 
 func TestInitRootCmd(t *testing.T) {
-	cmd := InitRootCmd()
+	cmd := InitNewsAggregatorCmd()
 
 	// Verify the root command properties
 	assert.Equal(t, "go-gator", cmd.Use, "Command use should be 'go-gator'")

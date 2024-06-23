@@ -4,20 +4,26 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
+	"os"
 	"time"
 )
 
 var (
-	ErrRunningServer = fmt.Errorf("error while running server on port %s: ", Addr)
+	ErrRunningServer = fmt.Errorf("error while running server on port %s: ", DevAddr)
 )
 
 const (
-	// Addr constant describes the port on which server will operate
-	Addr = ":8080"
+	// DevAddr constant describes the port on which server will operate in Development environment
+	DevAddr = ":8080"
+
+	// ProdAddr is used to run server in production environment
+	ProdAddr = ":443"
+
+	PathToCertsDit = "\\cmd\\server\\certs\\"
 )
 
 // ConfAndRun initializes server using gin framework, then attaches routes and handlers to it, and runs
-// server on the port Addr
+// server on the port DevAddr
 func ConfAndRun() {
 	r := gin.Default()
 
@@ -31,7 +37,13 @@ func ConfAndRun() {
 		time.Sleep(time.Hour * 24)
 	}()
 
-	err := r.Run(Addr)
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	cwd = cwd + PathToCertsDit
+
+	err = r.RunTLS(ProdAddr, cwd+"ca.crt", cwd+"ca.key")
 	if err != nil {
 		log.Fatalln(ErrRunningServer, err)
 	}

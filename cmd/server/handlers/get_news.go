@@ -76,10 +76,18 @@ func GetNews(c *gin.Context) {
 
 	params := types.NewFilteringParams(keywords, dateFrom, dateEnd)
 
-	news, err := parsers.ParseBySource(sources)
+	var news []types.News
+	if dateFrom == "" {
+		dateFrom = parsers.FirstFetchedFileDate
+	}
+	if dateEnd == "" {
+		dateEnd = parsers.LastFetchedFileDate
+	}
+
+	news, err = parsers.FromFiles(dateFrom, dateEnd)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": ErrFailedParsing + err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}

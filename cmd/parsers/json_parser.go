@@ -11,9 +11,9 @@ type JsonParser struct {
 
 // Parse function is required for JsonParser struct, in order to implement NewsParser interface, for data formatted in json
 func (jp JsonParser) Parse() ([]types.News, error) {
-	var news types.Json
+	var news []types.News
 
-	data, err := extractFileData(sourceToEndpoint[jp.Source])
+	data, err := extractFileData(jp.Source)
 	if err != nil {
 		return nil, err
 	}
@@ -23,5 +23,5 @@ func (jp JsonParser) Parse() ([]types.News, error) {
 		return nil, err
 	}
 
-	return news.Articles, nil
+	return news, nil
 }

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Parser interface will be used to implement parsers
@@ -27,7 +28,7 @@ var (
 		ABC:             "https://abcnews.go.com/abcnews/internationalheadlines",
 		BBC:             "https://feeds.bbci.co.uk/news/rss.xml",
 		UsaToday:        "https://usatoday.com",
-		//NbcNews:         "nbc-news.json",
+		NbcNews:         FirstFetchedFileDate,
 	}
 
 	// sourceToParser maps source names to their corresponding parser instances
@@ -39,6 +40,9 @@ var (
 		BBC:             g.CreateXmlParser(BBC),
 		WashingtonTimes: g.CreateXmlParser(WashingtonTimes),
 	}
+
+	// LastFetchedFileDate will be used for iterating over files with news
+	LastFetchedFileDate = time.Now().Format(time.DateOnly)
 )
 
 // Define Sources
@@ -48,7 +52,41 @@ const (
 	ABC             = "abc"
 	BBC             = "bbc"
 	WashingtonTimes = "washingtontimes"
+
+	// FirstFetchedFileDate identifies first file which contains news
+	FirstFetchedFileDate = "2024-06-22"
+
+	// PathToDataDir is used to join path from current working directory to data dir
+	PathToDataDir = "\\cmd\\parsers\\data\\"
+
+	AllSources = ""
 )
+
+// extractFileData reads data from file $filename and returns its content
+func extractFileData(filename string) ([]byte, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	cwd += PathToDataDir
+
+	file, err := os.Open(cwd + filename)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	err = file.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
 
 // ParseBySource returns all news in particular source. If source is equal to "all", news will be
 // retrieved from all sources
@@ -98,30 +136,4 @@ func ParseBySource(source string) ([]types.News, error) {
 	}
 
 	return news, nil
-}
-
-// extractFileData reads data from file $filename and returns its content
-func extractFileData(filename string) ([]byte, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	cwd += "\\data\\"
-
-	file, err := os.Open(cwd + filename)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := io.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-
-	err = file.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
 }

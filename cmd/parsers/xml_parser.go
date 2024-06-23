@@ -30,5 +30,9 @@ func (xp XMLParser) Parse() ([]types.News, error) {
 		return nil, err
 	}
 
+	for _, article := range news[0].Channel.Items {
+		article.Publisher = xp.Source
+	}
+
 	return news[0].Channel.Items, nil
 }

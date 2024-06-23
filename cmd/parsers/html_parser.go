@@ -51,12 +51,13 @@ func (hp HtmlParser) Parse() ([]types.News, error) {
 		link := strings.TrimSpace(selection.AttrOr(LinkAttribute, ""))
 
 		// Extracting description (if needed, here we just combine title and description)
-		description := title
+		description := selection.Text()
 
 		news = append(news, types.News{
 			Title:       title,
 			Description: description,
 			PubDate:     timestamp,
+			Publisher:   hp.Source,
 			Link:        link,
 		})
 	})

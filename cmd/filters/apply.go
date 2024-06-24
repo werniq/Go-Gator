@@ -2,29 +2,11 @@ package filters
 
 import (
 	"newsaggr/cmd/types"
-	"strings"
 )
 
 var (
-	PublisherMapping = map[string]string{
-		"nbc":             "nbc",
-		"usatoday":        "usatoday",
-		"abc":             "abc",
-		"bbc":             "bbc",
-		"washingtontimes": "washingtontimes",
-	}
 	f InstructionFactory
 )
-
-// determinePublisher returns the publisher based on the URL
-func determinePublisher(url string) string {
-	for key, publisher := range PublisherMapping {
-		if strings.Contains(url, key) {
-			return publisher
-		}
-	}
-	return "Unknown publisher"
-}
 
 // Apply filters news by provided FilteringParams
 func Apply(articles []types.News, params *types.FilteringParams) []types.News {

@@ -2,7 +2,6 @@ package parsers
 
 import (
 	"io"
-	"newsaggr/cmd/filters"
 	"newsaggr/cmd/types"
 	"os"
 	"strings"
@@ -20,7 +19,6 @@ var (
 	// These are custom types which will be used for parsers initialization for
 	// different data formats, and applying filters to retrieved data
 	g ParsingFactory
-	f filters.InstructionFactory
 
 	// sourceToEndpoint maps source names (as strings) to their corresponding filenames
 	sourceToEndpoint = map[string]string{

@@ -27,3 +27,9 @@ func (g InstructionFactory) CreateApplyKeywordInstruction() Instruction {
 func (g InstructionFactory) CreateApplyDataRangeInstruction() Instruction {
 	return ApplyDateRangeInstruction{}
 }
+
+// CreateSourcesInstruction initializes date range instructions.
+// It is used to check if article is published in given date range
+func (g InstructionFactory) CreateSourcesInstruction() Instruction {
+	return ApplySourcesInstruction{}
+}

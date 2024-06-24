@@ -28,7 +28,7 @@ var (
 		ABC:             "https://abcnews.go.com/abcnews/internationalheadlines",
 		BBC:             "https://feeds.bbci.co.uk/news/rss.xml",
 		UsaToday:        "https://usatoday.com",
-		NbcNews:         FirstFetchedFileDate,
+		//NbcNews:         FirstFetchedFileDate,
 	}
 
 	// sourceToParser maps source names to their corresponding parser instances

@@ -7,13 +7,27 @@ import (
 )
 
 func TestRunServer(t *testing.T) {
-	// This test ensures that ConfAndRun does not return an error on startup
+	testCases := []struct {
+		Url          string
+		ExpectedCode int
+	}{
+		{
+			Url:          "http://localhost:8080",
+			ExpectedCode: http.StatusOK,
+		},
+		{
+			Url:          "http://localhost:8080/some-path",
+			ExpectedCode: http.StatusNotFound,
+		},
+	}
+
 	go func() {
 		ConfAndRun()
 	}()
 
-	// Issue a request to ensure the server is running
-	resp, err := http.Get("http://localhost:8080/news?sources=abc")
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	for _, tt := range testCases {
+		resp, err := http.Get(tt.Url)
+		assert.NoError(t, err)
+		assert.Equal(t, resp.StatusCode, tt.ExpectedCode)
+	}
 }

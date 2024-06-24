@@ -38,6 +38,6 @@ type News struct {
 	Title       string `json:"title" xml:"title"`
 	PubDate     string `json:"publishedAt" xml:"pubDate"`
 	Description string `json:"description" xml:"description"`
-	Publisher   string `xml:"source"`
+	Publisher   string `xml:"source" json:"Publisher"`
 	Link        string `json:"url" xml:"link"`
 }

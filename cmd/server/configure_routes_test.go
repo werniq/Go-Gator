@@ -17,18 +17,19 @@ func TestSetupRoutes(t *testing.T) {
 		url          string
 		expectedCode int
 	}{
-		{"GET", "http://localhost:8080/news?sources=bbc", http.StatusOK},
-		//{"GET", "/admin/source", http.StatusOK},
-		//{"POST", "/admin/source", http.StatusOK},
-		//{"PUT", "/admin/source", http.StatusOK},
-		//{"DELETE", "/admin/source", http.StatusOK},
-		//{"GET", "/nonexistent", http.StatusNotFound},
-		//{"POST", "/admin/source/extra", http.StatusNotFound},
+		{"GET", "http://localhost:8080/news", http.StatusOK},
+		{"GET", "/admin/source", http.StatusOK},
+		{"POST", "/admin/source", http.StatusOK},
+		{"PUT", "/admin/source", http.StatusOK},
+		{"DELETE", "/admin/source", http.StatusOK},
+		{"GET", "/nonexistent", http.StatusNotFound},
+		{"POST", "/admin/source/extra", http.StatusNotFound},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.method+" "+tt.url, func(t *testing.T) {
-			req, _ := http.NewRequest(tt.method, tt.url, nil)
+			req, err := http.NewRequest(tt.method, tt.url, nil)
+			assert.Nil(t, err)
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, req)
 			assert.Equal(t, tt.expectedCode, w.Code)

@@ -71,11 +71,9 @@ func FromFiles(dateFrom, dateEnd string) ([]types.News, error) {
 		go collectNews(jp)
 	}
 
-	// Wait for all goroutines to complete
 	wg.Wait()
 	close(errChannel)
 
-	// Check if there were any errors
 	for err := range errChannel {
 		if err != nil {
 			return nil, err

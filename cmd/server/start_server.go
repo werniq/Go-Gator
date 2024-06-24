@@ -25,6 +25,9 @@ const (
 
 	// KeyFile is the name of the key for the certificate above
 	KeyFile = "server.key"
+
+	// UpdatesFrequency is used to update the news every X hours
+	UpdatesFrequency = 4
 )
 
 // ConfAndRun initializes server using gin framework, then attaches routes and handlers to it, and runs
@@ -39,7 +42,7 @@ func ConfAndRun() {
 		if err != nil {
 			log.Fatalln("Error executing fetch news job: ", err)
 		}
-		time.Sleep(time.Hour * 24)
+		time.Sleep(time.Hour * UpdatesFrequency)
 	}()
 
 	//Cwd, err := os.Getwd()

@@ -30,9 +30,11 @@ func (xp XMLParser) Parse() ([]types.News, error) {
 		return nil, err
 	}
 
-	for _, article := range news[0].Channel.Items {
-		article.Publisher = xp.Source
+	articles := news[0].Channel.Items
+
+	for i := 0; i <= len(articles)-1; i++ {
+		articles[i].Publisher = xp.Source
 	}
 
-	return news[0].Channel.Items, nil
+	return articles, nil
 }

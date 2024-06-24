@@ -77,3 +77,21 @@ func ParseDate(dateStr string) (time.Time, error) {
 	}
 	return time.Time{}, err
 }
+
+type ApplySourcesInstruction struct{}
+
+// Apply in ApplySourcesInstruction is a method which is used to filter articles by publisher
+func (a ApplySourcesInstruction) Apply(article types.News, params *types.FilteringParams) bool {
+	if params.Sources == "" {
+		return true
+	}
+
+	sources := strings.Split(params.Sources, ",")
+	for _, source := range sources {
+		if article.Publisher == source {
+			return true
+		}
+	}
+
+	return false
+}

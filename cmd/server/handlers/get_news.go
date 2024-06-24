@@ -74,7 +74,7 @@ func GetNews(c *gin.Context) {
 		return
 	}
 
-	params := types.NewFilteringParams(keywords, dateFrom, dateEnd)
+	params := types.NewFilteringParams(keywords, dateFrom, dateEnd, sources)
 
 	var news []types.News
 	if dateFrom == "" {

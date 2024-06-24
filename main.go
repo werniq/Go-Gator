@@ -1,7 +1,7 @@
 package main
 
 //func main() {
-//	rootCmd := cmd.InitRootCmd()
+//	rootCmd := cmd.InitNewsAggregatorCmd()
 //	err := rootCmd.Execute()
 //	if err != nil {
 //		log.Fatalln(err)

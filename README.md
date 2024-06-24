@@ -9,7 +9,7 @@
 4. Logging
 
 ## Documentation
-Each package is (in my opinion) good documentation, but here I would like to explain the purpose of each directory as well.
+Here I would like to explain the purpose of each directory.
 <br />
 ### 1. Cmd
 Main logic of the application is there. Cmd has few sub folders:
@@ -45,9 +45,9 @@ Available parameters: <br/>
 ## 5. Examples:
 `.\bin\go-gator.exe fetch --ts-from 2024-05-18 --keywords Ukraine --ts-to 2024-05-20 --sources bbc`
 
-![img.png](images/example_1.png)
+![img.png](docs/images/example_1.png)
 <hr/>
 
 `.\bin\go-gator.exe fetch --ts-from 2024-05-18 --keywords Ukraine --ts-to 2024-05-20 --sources washingtontimes,abc,usatoday`
 
-![img.png](images/example_2.png)
+![img.png](docs/images/example_2.png)

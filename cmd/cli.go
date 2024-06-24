@@ -5,8 +5,8 @@ import (
 	"log"
 )
 
-// InitRootCmd initializes root cmd and attaches fetchNews command to our main command
-func InitRootCmd() *cobra.Command {
+// InitNewsAggregatorCmd initializes root cmd and attaches fetchNews command to our main command
+func InitNewsAggregatorCmd() *cobra.Command {
 	var rootCmd = &cobra.Command{
 		Use:   "go-gator",
 		Short: "Aggregate news from various sources",

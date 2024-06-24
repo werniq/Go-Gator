@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"newsaggr/cmd/filters"
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/types"
 	"os"
@@ -36,8 +37,8 @@ func FetchNewsJob() error {
 
 	// since some publishers may still store news from previous dates
 	// program additionally applies date range filters
-	filters := types.NewFilteringParams("", dateTimestamp, "", "")
-	news = parsers.ApplyFilters(news, filters)
+	f := types.NewFilteringParams("", dateTimestamp, "", "")
+	news = filters.Apply(news, f)
 
 	data, err := json.Marshal(news)
 	if err != nil {

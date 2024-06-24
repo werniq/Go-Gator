@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	"log"
+	"newsaggr/cmd/filters"
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/templates"
 	"newsaggr/cmd/types"
@@ -81,7 +82,7 @@ func AddFetchNewsCmd() *cobra.Command {
 		}
 
 		// Split and validate sources
-		filters := types.NewFilteringParams(keywords, dateFrom, dateEnd)
+		f := types.NewFilteringParams(keywords, dateFrom, dateEnd, sources)
 
 		// parsing news by sources and applying params to those news
 		news, err := parsers.ParseBySource(sources)
@@ -89,10 +90,10 @@ func AddFetchNewsCmd() *cobra.Command {
 			log.Fatalln("Error parsing news: ", err)
 		}
 
-		news = parsers.ApplyFilters(news, filters)
+		news = filters.Apply(news, f)
 
 		// output using go templates
-		if err = templates.PrintTemplate(filters, news); err != nil {
+		if err = templates.PrintTemplate(f, news); err != nil {
 			log.Fatalln(err)
 		}
 

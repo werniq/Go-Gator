@@ -1,4 +1,4 @@
-package parsers
+package filters
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestApplyParams(t *testing.T) {
+func TestApply(t *testing.T) {
 	testCases := []struct {
 		Input struct {
 			News   []types.News
@@ -52,7 +52,7 @@ func TestApplyParams(t *testing.T) {
 
 	for _, testCase := range testCases {
 		var news []types.News
-		news = append(news, ApplyFilters(testCase.Input.News, testCase.Input.Params)...)
+		news = append(news, Apply(testCase.Input.News, testCase.Input.Params)...)
 
 		assert.Equal(t, news, testCase.ExpectedOutput)
 	}

@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"newsaggr/cmd/filters"
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/types"
 	"newsaggr/cmd/validator"
@@ -92,7 +93,7 @@ func GetNews(c *gin.Context) {
 		return
 	}
 
-	news = parsers.ApplyFilters(news, params)
+	news = filters.Apply(news, params)
 
 	c.JSON(http.StatusOK, gin.H{
 		"totalAmount": len(news),

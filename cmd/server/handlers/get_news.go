@@ -7,6 +7,12 @@ import (
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/types"
 	"newsaggr/cmd/validator"
+	"time"
+)
+
+var (
+	// LastFetchedFileDate will be used for iterating over files with news
+	LastFetchedFileDate = time.Now().Format(time.DateOnly)
 )
 
 const (
@@ -22,17 +28,11 @@ const (
 	// SourcesFlag will be used to get the sources (or empty string) from URL parameter
 	SourcesFlag = "sources"
 
-	// ErrDateFromAfter is thrown when user provided DateFrom bigger than DateEnd
-	ErrDateFromAfter = "Date from can not be after date end"
-
 	// ErrFailedParsing is thrown when program fails to parse sources
 	ErrFailedParsing = "error while parsing sources: "
 
-	// ErrFailedDateValidation is thrown when user submitted date in wrong format
-	ErrFailedDateValidation = "error while validating date. correct format is YYYY-mm-dd - 2024-05-15"
-
-	// ErrFailedSourceValidation is thrown when user submitted wrong source
-	ErrFailedSourceValidation = "error while validating sources."
+	// FirstFetchedFileDate identifies first file which contains news
+	FirstFetchedFileDate = "2024-06-20"
 )
 
 // GetNews handler will be used in our server to retrieve news from prepared files
@@ -42,35 +42,17 @@ func GetNews(c *gin.Context) {
 	dateFrom := c.Query(DateFromFlag)
 	dateEnd := c.Query(DateEndFlag)
 
-	if dateEnd != "" && dateFrom != "" {
-		if dateFrom > dateEnd {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": ErrDateFromAfter,
-			})
-			return
-		}
-	}
+	dateRangeHandler := &validator.DateRangeHandler{}
+	dateValidationHandler := &validator.DateValidationHandler{}
+	sourceValidationHandler := &validator.SourceValidationHandler{}
 
-	err := validator.ByDate(dateFrom)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": ErrFailedDateValidation + err.Error(),
-		})
-		return
-	}
+	dateRangeHandler.SetNext(dateValidationHandler)
+	dateValidationHandler.SetNext(sourceValidationHandler)
 
-	err = validator.ByDate(dateEnd)
-	if err != nil {
+	// Start the chain
+	if err := dateRangeHandler.Handle(c); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": ErrFailedDateValidation + err.Error(),
-		})
-		return
-	}
-
-	err = validator.BySources(sources)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": ErrFailedSourceValidation + err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
@@ -79,13 +61,13 @@ func GetNews(c *gin.Context) {
 
 	var news []types.News
 	if dateFrom == "" {
-		dateFrom = parsers.FirstFetchedFileDate
+		dateFrom = FirstFetchedFileDate
 	}
 	if dateEnd == "" {
-		dateEnd = parsers.LastFetchedFileDate
+		dateEnd = LastFetchedFileDate
 	}
 
-	news, err = parsers.FromFiles(dateFrom, dateEnd)
+	news, err := parsers.FromFiles(dateFrom, dateEnd)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),

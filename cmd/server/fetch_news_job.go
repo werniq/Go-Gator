@@ -3,13 +3,18 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"newsaggr/cmd/filters"
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/types"
 	"os"
 	"time"
 )
+
+//type Job struct {
+//	Filters *types.FilteringParams
+//	Settings
+//}
+// + Method Run
 
 // FetchNewsJob is a function that fetches news, parses it, and writes the parsed data
 // to a JSON file named with the current date in the format YYYY-MM-DD.
@@ -26,9 +31,9 @@ func FetchNewsJob() error {
 	if err != nil {
 		return err
 	}
-	if file == nil {
-		log.Fatalln("File is nil")
-	}
+
+	// TODO: work with news aggregator
+	// TODO: model job
 
 	news, err := parsers.ParseBySource(parsers.AllSources)
 	if err != nil {

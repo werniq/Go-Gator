@@ -4,11 +4,16 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
+	"newsaggr/cmd/server/handlers"
 	"time"
 )
 
 var (
+	// ErrRunningServer is throws whenever we encounter errors while running our server
 	ErrRunningServer = fmt.Errorf("error while running server on port %s: ", DevAddr)
+
+	// ErrFetchNewsJob is thrown when we have problems while doing fetch news job
+	ErrFetchNewsJob = fmt.Errorf("error while doing fetch news job: ")
 )
 
 const (
@@ -18,6 +23,7 @@ const (
 	// ProdAddr is used to run server in production environment
 	ProdAddr = ":443"
 
+	// RelativePathToCertsDir is a path to the folder with OpenSSL Certificate and Key
 	RelativePathToCertsDir = "\\cmd\\server\\certs\\"
 
 	// CertFile is the name of certificate file
@@ -40,9 +46,11 @@ func ConfAndRun() {
 	go func() {
 		err := FetchNewsJob()
 		if err != nil {
-			log.Fatalln("Error executing fetch news job: ", err)
+			log.Fatalln(ErrFetchNewsJob, err)
 		}
 		time.Sleep(time.Hour * UpdatesFrequency)
+
+		handlers.LastFetchedFileDate = time.Now().Format(time.DateOnly)
 	}()
 
 	//Cwd, err := os.Getwd()

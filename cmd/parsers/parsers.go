@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"time"
 )
 
 // Parser interface will be used to implement parsers
@@ -38,9 +37,6 @@ var (
 		BBC:             g.CreateXmlParser(BBC),
 		WashingtonTimes: g.CreateXmlParser(WashingtonTimes),
 	}
-
-	// LastFetchedFileDate will be used for iterating over files with news
-	LastFetchedFileDate = time.Now().Format(time.DateOnly)
 )
 
 // Define Sources
@@ -50,9 +46,6 @@ const (
 	ABC             = "abc"
 	BBC             = "bbc"
 	WashingtonTimes = "washingtontimes"
-
-	// FirstFetchedFileDate identifies first file which contains news
-	FirstFetchedFileDate = "2024-06-20"
 
 	// PathToDataDir is used to join path from current working directory to data dir
 	PathToDataDir = "\\cmd\\parsers\\data\\"

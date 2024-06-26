@@ -1,8 +1,88 @@
 package validator
 
 import (
+	"errors"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
+
+func TestDateRangeHandler_Handle(t *testing.T) {
+	tests := []struct {
+		name      string
+		dateFrom  string
+		dateEnd   string
+		expectErr error
+	}{
+		{"ValidDateRange", "2024-05-01", "2024-05-15", nil},
+		{"InvalidDateRange", "2024-05-16", "2024-05-15", errors.New(ErrDateFromAfter)},
+		{"EmptyDates", "", "", nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := &DateRangeHandler{}
+
+			c, _ := gin.CreateTestContext(httptest.NewRecorder())
+			c.Request = httptest.NewRequest(http.MethodGet, "/?date-from="+tt.dateFrom+"&date-end="+tt.dateEnd, nil)
+
+			err := handler.Handle(c)
+			assert.Equal(t, tt.expectErr, err)
+		})
+	}
+}
+
+func TestDateValidationHandler_Handle(t *testing.T) {
+	tests := []struct {
+		name      string
+		dateFrom  string
+		dateEnd   string
+		expectErr error
+	}{
+		{"ValidDates", "2024-05-01", "2024-05-15", nil},
+		{"InvalidDateFrom", "2024-15-01", "2024-05-15", errors.New(ErrFailedDateValidation)},
+		{"InvalidDateEnd", "2024-05-01", "2024-15-15", errors.New(ErrFailedDateValidation)},
+		{"EmptyDates", "", "", nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := &DateValidationHandler{}
+
+			c, _ := gin.CreateTestContext(httptest.NewRecorder())
+			c.Request = httptest.NewRequest(http.MethodGet, "/?date-from="+tt.dateFrom+"&date-end="+tt.dateEnd, nil)
+
+			err := handler.Handle(c)
+			assert.Equal(t, tt.expectErr, err)
+		})
+	}
+}
+
+func TestSourceValidationHandler_Handle(t *testing.T) {
+	tests := []struct {
+		name      string
+		sources   string
+		expectErr error
+	}{
+		{"ValidSources", "abc,bbc", nil},
+		{"InvalidSource", "abc,xyz", errors.New(ErrFailedSourceValidation)},
+		{"EmptySources", "", nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := &SourceValidationHandler{}
+
+			c, _ := gin.CreateTestContext(httptest.NewRecorder())
+			c.Request = httptest.NewRequest(http.MethodGet, "/?sources="+tt.sources, nil)
+
+			err := handler.Handle(c)
+			assert.Equal(t, tt.expectErr, err)
+		})
+	}
+}
 
 func TestValidateDate(t *testing.T) {
 	tests := []struct {
@@ -35,7 +115,7 @@ func TestValidateSources(t *testing.T) {
 		{"abc,xyz", true},
 		{"usatoday", false},
 		{"fakesource", true},
-		{"all", false},
+		{"firstS,secondS", true},
 	}
 
 	for _, tt := range tests {

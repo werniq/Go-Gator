@@ -11,9 +11,9 @@ func setupRoutes(r *gin.Engine) {
 
 	admin := r.Group("/admin")
 
-	source := admin.Group("/source")
-	source.GET("/", handlers.GetSources)
-	source.POST("/", handlers.RegisterSource)
-	source.PUT("/", handlers.UpdateSource)
-	source.DELETE("/", handlers.DeleteSource)
+	sources := admin.Group("/sources")
+	sources.GET("/", handlers.GetSources)
+	sources.POST("/", handlers.RegisterSource)
+	sources.PUT("/", handlers.UpdateSource)
+	sources.DELETE("/", handlers.DeleteSource)
 }

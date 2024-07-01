@@ -11,20 +11,39 @@ import (
 // If not-existent source is going to be updated - throws an error.
 func UpdateSource(c *gin.Context) {
 	var reqBody types.Source
+	var err error
 
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
+	if err = c.ShouldBindJSON(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": ErrFailedToDecode + err.Error(),
 		})
 		return
 	}
 
-	if reqBody.Name != "" {
-		if reqBody.Endpoint != "" {
-			parsers.UpdateSourceEndpoint(reqBody.Name, reqBody.Endpoint)
+	if reqBody.Name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": ErrNoSourceName,
+		})
+		return
+	}
+
+	if reqBody.Endpoint != "" {
+		err = parsers.UpdateSourceEndpoint(reqBody.Name, reqBody.Endpoint)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": ErrUpdateSource + err.Error(),
+			})
+			return
 		}
-		if reqBody.Format != "" {
-			parsers.UpdateSourceFormat(reqBody.Name, reqBody.Format)
+	}
+
+	if reqBody.Format != "" {
+		err = parsers.UpdateSourceFormat(reqBody.Name, reqBody.Format)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": ErrUpdateSource + err.Error(),
+			})
+			return
 		}
 	}
 

@@ -5,7 +5,7 @@ import (
 	"newsaggr/cmd/parsers"
 )
 
-var (
+const (
 	// MsgSourceCreated displays informational message after source was created
 	MsgSourceCreated = "Source was successfully registered."
 
@@ -23,6 +23,17 @@ var (
 
 	// ErrSourceNotFound displays when we try to delete not-existent source
 	ErrSourceNotFound = "Source is not found in available sources. Please, check the name and try again."
+
+	// ErrAddSource is thrown whenever we encounter error while adding new source (Admin API)
+	ErrAddSource = "Failed to add source: "
+
+	// ErrUpdateSource is thrown whenever we encounter error while updating new source (Admin API)
+	ErrUpdateSource = "Failed to update source: "
+
+	// ErrDeleteSource is thrown whenever we encounter error while deleting new source (Admin API)
+	ErrDeleteSource = "Failed to delete source: "
+
+	ErrNoSourceName = "No source name detected. Please, provide source name."
 )
 
 // GetSources returns all currently available news sources

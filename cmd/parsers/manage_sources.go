@@ -3,6 +3,7 @@ package parsers
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"newsaggr/cmd/types"
 	"os"
 )
@@ -34,9 +35,16 @@ func determineFormat(p Parser, source string) string {
 }
 
 // AddNewSource inserts new source to available sources list and determines the appropriate Parser for it
-func AddNewSource(format, source, endpoint string) {
+func AddNewSource(format, source, endpoint string) error {
 	sourceToEndpoint[source] = endpoint
 	sourceToParser[source] = determineParser(format, source)
+
+	err := updateSourcesFile()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetAllSources returns all available sources
@@ -45,33 +53,86 @@ func GetAllSources() map[string]string {
 }
 
 // UpdateSourceEndpoint updates endpoint for the given source
-func UpdateSourceEndpoint(source, newEndpoint string) {
+func UpdateSourceEndpoint(source, newEndpoint string) error {
 	sourceToEndpoint[source] = newEndpoint
+	err := updateSourcesFile()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // UpdateSourceFormat updates format for the given source
-func UpdateSourceFormat(source, format string) {
+func UpdateSourceFormat(source, format string) error {
 	sourceToParser[source] = determineParser(format, source)
+	err := updateSourcesFile()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // DeleteSource removes source from the map
-func DeleteSource(source string) {
+func DeleteSource(source string) error {
 	if _, exists := sourceToEndpoint[source]; exists {
 		sourceToEndpoint[source] = ""
 		sourceToParser[source] = nil
+
+		err := updateSourcesFile()
+		if err != nil {
+			return err
+		}
+
 	}
+	return nil
+}
+
+// LoadSourcesFile initializes sourceToParser and sourceToEndpoint with data from sources.json file
+func LoadSourcesFile() error {
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	filename := fmt.Sprintf("%s%s%s", wd, PathToSourcesFile, sourcesFile)
+
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return err
+	}
+	if data == nil {
+		return nil
+	}
+
+	var sources []types.Source
+	err = json.Unmarshal(data, &sources)
+	if err != nil {
+		return err
+	}
+
+	for _, s := range sources {
+		sourceToParser[s.Name] = determineParser(s.Format, s.Name)
+		sourceToEndpoint[s.Name] = s.Endpoint
+	}
+
+	return nil
 }
 
 // updateSourcesFile is used to update file with information about sources to prevent losing all information if server
 // crashes
 func updateSourcesFile() error {
-	const sourcesFile = "sources.json"
 
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	filename := fmt.Sprintf("%s%s%s.json", wd, PathToSourcesFile, sourcesFile)
+	filename := fmt.Sprintf("%s%s%s", wd, PathToSourcesFile, sourcesFile)
 
 	file, err := os.Create(filename)
 	if err != nil {

@@ -51,9 +51,12 @@ const (
 	PathToDataDir = "\\cmd\\parsers\\data\\"
 
 	// PathToSourcesFile is used to append this path to cwd to get sources file
-	PathToSourcesFile = "\\data\\"
+	PathToSourcesFile = "\\cmd\\parsers\\data\\"
 
 	AllSources = ""
+
+	//
+	sourcesFile = "sources.json"
 )
 
 // extractFileData reads data from file $filename and returns its content

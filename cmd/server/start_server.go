@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
+	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/server/handlers"
 	"time"
 )
@@ -39,6 +40,11 @@ const (
 // ConfAndRun initializes server using gin framework, then attaches routes and handlers to it, and runs
 // server on the port DevAddr
 func ConfAndRun() {
+	err := parsers.LoadSourcesFile()
+	if err != nil {
+		log.Fatalln("Error loading sources file: " + err.Error())
+	}
+
 	r := gin.Default()
 
 	setupRoutes(r)
@@ -64,7 +70,7 @@ func ConfAndRun() {
 	//	log.Fatalln(ErrRunningServer, err)
 	//}
 
-	err := r.Run(DevAddr)
+	err = r.Run(DevAddr)
 	if err != nil {
 		log.Fatalln(ErrRunningServer, err)
 	}

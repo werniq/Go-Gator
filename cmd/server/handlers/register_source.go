@@ -35,7 +35,13 @@ func RegisterSource(c *gin.Context) {
 		return
 	}
 
-	parsers.AddNewSource(reqBody.Format, reqBody.Name, reqBody.Endpoint)
+	err = parsers.AddNewSource(reqBody.Format, reqBody.Name, reqBody.Endpoint)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": ErrAddSource + err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"status": MsgSourceCreated,

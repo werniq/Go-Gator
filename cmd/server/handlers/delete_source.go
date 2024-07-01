@@ -10,7 +10,7 @@ import (
 // If non-existent source is going to be deleted - throws an error.
 func DeleteSource(c *gin.Context) {
 	var reqBody struct {
-		Source string `json:"source"`
+		Source string `json:"name"`
 	}
 
 	err := c.ShouldBindJSON(&reqBody)
@@ -28,7 +28,13 @@ func DeleteSource(c *gin.Context) {
 		return
 	}
 
-	parsers.DeleteSource(reqBody.Source)
+	err = parsers.DeleteSource(reqBody.Source)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": ErrDeleteSource + err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"status": MsgSourceDeleted,

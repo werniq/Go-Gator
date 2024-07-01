@@ -27,7 +27,10 @@ func TestDeleteSource(t *testing.T) {
 			name:   "Delete existing source",
 			source: "source1",
 			setup: func() {
-				parsers.AddNewSource("xml", "source1", "https://source1.com")
+				err := parsers.AddNewSource("xml", "source1", "https://source1.com")
+				if err != nil {
+					panic(err)
+				}
 			},
 			statusCode: http.StatusOK,
 			response: gin.H{
@@ -38,7 +41,10 @@ func TestDeleteSource(t *testing.T) {
 			name:   "Delete non-existent source",
 			source: "source4",
 			setup: func() {
-				parsers.DeleteSource("source4")
+				err := parsers.DeleteSource("source4")
+				if err != nil {
+					panic(err)
+				}
 			},
 			statusCode: http.StatusBadRequest,
 			response: gin.H{

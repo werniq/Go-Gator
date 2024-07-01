@@ -1,6 +1,7 @@
 package parsers
 
 import (
+	"github.com/stretchr/testify/assert"
 	"log"
 	"testing"
 )
@@ -19,7 +20,8 @@ func TestAddNewSource(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		AddNewSource(tt.format, tt.source, tt.endpoint)
+		err := AddNewSource(tt.format, tt.source, tt.endpoint)
+		assert.Nil(t, err)
 
 		if sourceToEndpoint[tt.source] != tt.expectedEndpoint {
 			t.Errorf("expected endpoint %s, got %s", tt.expectedEndpoint, sourceToEndpoint[tt.source])

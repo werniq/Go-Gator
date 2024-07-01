@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"newsaggr/cmd/parsers"
+	"newsaggr/cmd/types"
 )
 
 // sourceInArray checks if sources is already in array
@@ -17,11 +18,7 @@ func sourceInArray(source string) bool {
 // RegisterSource handler will be used in order to create new source from where
 // we can parse news
 func RegisterSource(c *gin.Context) {
-	var reqBody struct {
-		Source   string `json:"source"`
-		Endpoint string `json:"endpoint"`
-		Format   string `json:"format"`
-	}
+	var reqBody types.Source
 
 	err := c.ShouldBindJSON(&reqBody)
 	if err != nil {
@@ -31,14 +28,14 @@ func RegisterSource(c *gin.Context) {
 		return
 	}
 
-	if sourceInArray(reqBody.Source) {
+	if sourceInArray(reqBody.Name) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": ErrSourceExists,
 		})
 		return
 	}
 
-	parsers.AddNewSource(reqBody.Format, reqBody.Source, reqBody.Endpoint)
+	parsers.AddNewSource(reqBody.Format, reqBody.Name, reqBody.Endpoint)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"status": MsgSourceCreated,

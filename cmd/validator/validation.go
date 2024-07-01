@@ -108,7 +108,7 @@ func (h *SourceValidationHandler) Handle(c *gin.Context) error {
 	sources := c.Query(SourcesFlag)
 
 	if err := BySources(sources); err != nil {
-		return errors.New(ErrFailedSourceValidation)
+		return errors.New(ErrFailedSourceValidation + err.Error())
 	}
 
 	return h.HandleNext(c)

@@ -1,8 +1,10 @@
 package parsers
 
 import (
+	"errors"
 	"fmt"
 	"newsaggr/cmd/types"
+	"os"
 	"sync"
 	"time"
 )
@@ -75,6 +77,9 @@ func FromFiles(dateFrom, dateEnd string) ([]types.News, error) {
 	close(errChannel)
 
 	for err := range errChannel {
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
 		if err != nil {
 			return nil, err
 		}

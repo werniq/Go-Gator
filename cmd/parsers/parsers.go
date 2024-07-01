@@ -50,6 +50,9 @@ const (
 	// PathToDataDir is used to join path from current working directory to data dir
 	PathToDataDir = "\\cmd\\parsers\\data\\"
 
+	// PathToSourcesFile is used to append this path to cwd to get sources file
+	PathToSourcesFile = "\\data\\"
+
 	AllSources = ""
 )
 

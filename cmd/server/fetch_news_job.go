@@ -32,7 +32,6 @@ func FetchNewsJob() error {
 		return err
 	}
 
-	// TODO: work with news aggregator
 	// TODO: model job
 
 	news, err := parsers.ParseBySource(parsers.AllSources)

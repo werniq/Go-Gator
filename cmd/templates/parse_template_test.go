@@ -1,6 +1,8 @@
 package templates
 
 import (
+	"github.com/stretchr/testify/assert"
+	"newsaggr/cmd/types"
 	"testing"
 	"time"
 )
@@ -65,5 +67,41 @@ func TestContains(t *testing.T) {
 		if result != test.expected {
 			t.Errorf("contains(%q, %v) = %v; want %v", test.s, test.arr, result, test.expected)
 		}
+	}
+}
+
+func TestPrintTemplate(t *testing.T) {
+	testCases := []struct {
+		Name  string
+		Input struct {
+			Filters  *types.FilteringParams
+			Articles []types.News
+		}
+	}{
+		{
+			Name: "Successful template execution",
+			Input: struct {
+				Filters  *types.FilteringParams
+				Articles []types.News
+			}{
+				Filters: types.NewFilteringParams("", "", "", ""),
+				Articles: []types.News{
+					{
+						Title:       "Article 1",
+						Description: "Description 1",
+					},
+					{
+						Title:       "Article 2",
+						Description: "Description 2",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		err := PrintTemplate(tt.Input.Filters, tt.Input.Articles)
+
+		assert.Nil(t, err)
 	}
 }

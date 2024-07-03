@@ -2,9 +2,52 @@ package parsers
 
 import (
 	"github.com/stretchr/testify/assert"
-	"log"
 	"testing"
 )
+
+func TestDetermineParser(t *testing.T) {
+	tests := []struct {
+		format   string
+		source   string
+		expected Parser
+	}{
+		{"json", "source1", JsonParser{Source: "source1"}},
+		{"xml", "source2", XMLParser{Source: "source2"}},
+		{"html", "source3", HtmlParser{Source: "source3"}},
+		{"invalid", "source4", nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.format, func(t *testing.T) {
+			got := determineParser(tt.format, tt.source)
+			if got != tt.expected {
+				t.Errorf("determineParser(%s, %s) = %v, expected %v", tt.format, tt.source, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestDetermineFormat(t *testing.T) {
+	tests := []struct {
+		parser   Parser
+		source   string
+		expected string
+	}{
+		{JsonParser{Source: "source1"}, "source1", "json"},
+		{XMLParser{Source: "source2"}, "source2", "xml"},
+		{HtmlParser{Source: "source3"}, "source3", "html"},
+		{nil, "source4", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expected, func(t *testing.T) {
+			got := determineFormat(tt.parser, tt.source)
+			if got != tt.expected {
+				t.Errorf("determineFormat(%v, %s) = %v, expected %v", tt.parser, tt.source, got, tt.expected)
+			}
+		})
+	}
+}
 
 func TestAddNewSource(t *testing.T) {
 	tests := []struct {
@@ -51,12 +94,10 @@ func TestGetAllSources(t *testing.T) {
 		ABC:             "https://abcnews.go.com/abcnews/internationalheadlines",
 		BBC:             "https://feeds.bbci.co.uk/news/rss.xml",
 		UsaToday:        "https://usatoday.com",
-		NbcNews:         "nbc-news.json",
 	}
 
 	result := GetAllSources()
 	for key, value := range expected {
-		log.Println(result)
 		if result[key] != value {
 			t.Errorf("for key %s, expected %s, got %s", key, value, result[key])
 		}

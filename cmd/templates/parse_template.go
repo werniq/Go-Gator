@@ -16,11 +16,12 @@ var (
 		"formatDate": formatDate,
 		"contains":   contains,
 	}
+	cwdPath = "C:\\Users\\Oleksandr Matviienko\\GolandProjects\\newsAggr-2\\Go-Gator\\cmd\\templates"
 )
 
 const (
 	BaseTemplate     = "article.plain.tmpl"
-	BaseTemplatePath = "\\cmd\\templates\\templates\\article.plain.tmpl"
+	BaseTemplatePath = "\\templates\\article.plain.tmpl"
 )
 
 // Custom function to highlight keywords
@@ -50,14 +51,11 @@ func contains(s string, arr []string) bool {
 }
 
 func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
+	var err error
+
 	sortNewsByPubDate(articles)
 
-	d, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	tmpl := template.Must(template.New(BaseTemplate).Funcs(templateFuncs).ParseFiles(d + BaseTemplatePath))
+	tmpl := template.Must(template.New(BaseTemplate).Funcs(templateFuncs).ParseFiles(cwdPath + BaseTemplatePath))
 
 	data := types.TemplateData{
 		NewsItems:  articles,

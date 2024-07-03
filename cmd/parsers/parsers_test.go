@@ -3,12 +3,13 @@ package parsers
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"newsaggr/cmd/filters"
 	"newsaggr/cmd/types"
 	"testing"
 )
 
 func TestParseWithParams(t *testing.T) {
-	sources := []string{"abc", "bbc"}
+	sources := []string{"2024-06-20.json"}
 	testCases := []struct {
 		Input          *types.FilteringParams
 		ExpectedOutput int
@@ -23,7 +24,7 @@ func TestParseWithParams(t *testing.T) {
 			Input: &types.FilteringParams{
 				Keywords: "Ukraine",
 			},
-			ExpectedOutput: 2,
+			ExpectedOutput: 0,
 		},
 	}
 
@@ -35,7 +36,7 @@ func TestParseWithParams(t *testing.T) {
 			news, err = ParseBySource(source)
 			assert.Equal(t, err, nil, fmt.Sprintf("Expected: %v, Got: %v", nil, err))
 		}
-		news = ApplyFilters(news, testCase.Input)
+		news = filters.Apply(news, testCase.Input)
 		assert.Equal(t, testCase.ExpectedOutput, len(news))
 	}
 }

@@ -67,7 +67,7 @@ func TestSourceValidationHandler_Handle(t *testing.T) {
 		expectErr error
 	}{
 		{"ValidSources", "abc,bbc", nil},
-		{"InvalidSource", "abc,xyz", errors.New(ErrFailedSourceValidation)},
+		{"InvalidSource", "abc,xyz", errors.New(ErrFailedSourceValidation + "unsupported source: xyz. Supported sources are: [abc bbc nbc usatoday washingtontimes]")},
 		{"EmptySources", "", nil},
 	}
 

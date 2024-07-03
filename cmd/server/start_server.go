@@ -1,12 +1,13 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"log"
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/server/handlers"
 	"newsaggr/cmd/types"
+	"os"
 	"time"
 )
 
@@ -36,17 +37,29 @@ const (
 
 	// UpdatesFrequency is used to update the news every X hours
 	UpdatesFrequency = 4
+
+	CwdPath = "C:\\Users\\Oleksandr Matviienko\\GolandProjects\\newsAggr-2\\Go-Gator"
 )
 
 // ConfAndRun initializes server using gin framework, then attaches routes and handlers to it, and runs
 // server on the port DevAddr
-func ConfAndRun() {
-	err := parsers.LoadSourcesFile()
-	if err != nil {
-		log.Fatalln("Error loading sources file: " + err.Error())
-	}
+func ConfAndRun() error {
+	var (
+		errChan = make(chan error, 1)
+		server  = gin.Default()
+		err     error
+	)
 
-	server := gin.Default()
+	err = parsers.LoadSourcesFile()
+	switch {
+	case errors.Is(err, os.ErrNotExist):
+		err = parsers.InitSourcesFile()
+		if err != nil {
+			return err
+		}
+	case err != nil:
+		return err
+	}
 
 	setupRoutes(server)
 
@@ -55,11 +68,13 @@ func ConfAndRun() {
 		j := FetchNewsJob{
 			Filters: types.NewFilteringParams("", dateTimestamp, "", ""),
 		}
-		err := j.Run()
 
+		err := j.Run()
 		if err != nil {
-			log.Fatalln(ErrFetchNewsJob, err)
+			errChan <- err
+			return
 		}
+
 		time.Sleep(time.Hour * UpdatesFrequency)
 
 		handlers.LastFetchedFileDate = time.Now().Format(time.DateOnly)
@@ -78,6 +93,16 @@ func ConfAndRun() {
 
 	err = server.Run(DevAddr)
 	if err != nil {
-		log.Fatalln(ErrRunningServer, err)
+		return err
 	}
+
+	close(errChan)
+
+	for err := range errChan {
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

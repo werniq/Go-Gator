@@ -16,18 +16,12 @@ type FetchNewsJob struct {
 // Run is a function that fetches news, parses it, and writes the parsed data
 // to a JSON file named with the current date in the format YYYY-MM-DD.
 func (j *FetchNewsJob) Run() error {
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	filename := fmt.Sprintf("%s%s%s.json", wd, parsers.PathToDataDir, j.Filters.StartingTimestamp)
+	filename := fmt.Sprintf("%s%s%s.json", CwdPath, parsers.PathToDataDir, j.Filters.StartingTimestamp)
 
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
-
-	// TODO: model job
 
 	news, err := parsers.ParseBySource(parsers.AllSources)
 	if err != nil {

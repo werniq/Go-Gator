@@ -2,6 +2,7 @@ package parsers
 
 import (
 	"github.com/stretchr/testify/assert"
+	"newsaggr/cmd/filters"
 	"newsaggr/cmd/types"
 	"testing"
 )
@@ -25,7 +26,7 @@ func TestHtmlParser_Parse(t *testing.T) {
 		news, err := parser.Parse()
 		assert.NoError(t, err)
 
-		filteredNews := ApplyFilters(news, testCase.Input)
+		filteredNews := filters.Apply(news, testCase.Input)
 
 		assert.NotNil(t, filteredNews)
 	}

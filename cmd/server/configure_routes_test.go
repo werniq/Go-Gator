@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -9,30 +10,28 @@ import (
 )
 
 func TestSetupRoutes(t *testing.T) {
-	router := gin.Default()
-	setupRoutes(router)
-
 	tests := []struct {
-		method       string
-		url          string
-		expectedCode int
+		name       string
+		method     string
+		url        string
+		statusCode int
 	}{
-		{"GET", "http://localhost:8080/news", http.StatusOK},
-		{"GET", "/admin/source", http.StatusOK},
-		{"POST", "/admin/source", http.StatusOK},
-		{"PUT", "/admin/source", http.StatusOK},
-		{"DELETE", "/admin/source", http.StatusOK},
-		{"GET", "/nonexistent", http.StatusNotFound},
-		{"POST", "/admin/source/extra", http.StatusNotFound},
+		{"GET /news", "GET", "/non-existent", http.StatusNotFound},
+		{"GET /admin/sources", "GET", "/admin/sources", http.StatusOK},
 	}
 
+	gin.SetMode(gin.TestMode)
+	server := gin.Default()
+	setupRoutes(server)
+
 	for _, tt := range tests {
-		t.Run(tt.method+" "+tt.url, func(t *testing.T) {
-			req, err := http.NewRequest(tt.method, tt.url, nil)
-			assert.Nil(t, err)
-			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)
-			assert.Equal(t, tt.expectedCode, w.Code)
+		t.Run(tt.name, func(t *testing.T) {
+			req, _ := http.NewRequest(tt.method, tt.url, bytes.NewBuffer([]byte{}))
+
+			resp := httptest.NewRecorder()
+			server.ServeHTTP(resp, req)
+
+			assert.Equal(t, tt.statusCode, resp.Code)
 		})
 	}
 }

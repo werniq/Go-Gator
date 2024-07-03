@@ -9,11 +9,8 @@ import (
 func setupRoutes(r *gin.Engine) {
 	r.GET("/news", handlers.GetNews)
 
-	admin := r.Group("/admin")
-
-	sources := admin.Group("/sources")
-	sources.GET("/", handlers.GetSources)
-	sources.POST("/", handlers.RegisterSource)
-	sources.PUT("/", handlers.UpdateSource)
-	sources.DELETE("/", handlers.DeleteSource)
+	r.GET("/admin/sources", handlers.GetSources)
+	r.POST("/admin/sources", handlers.RegisterSource)
+	r.PUT("/admin/sources", handlers.UpdateSource)
+	r.DELETE("/admin/sources", handlers.DeleteSource)
 }

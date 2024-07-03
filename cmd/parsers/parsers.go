@@ -25,18 +25,25 @@ var (
 		ABC:             "https://abcnews.go.com/abcnews/internationalheadlines",
 		BBC:             "https://feeds.bbci.co.uk/news/rss.xml",
 		UsaToday:        "https://usatoday.com",
-		//NbcNews:         FirstFetchedFileDate,
+		//NbcNews:         "nbc-news.json",
 	}
 
 	// sourceToParser maps source names to their corresponding parser instances
 	// The parser are created using ParsingFactory
 	sourceToParser = map[string]Parser{
-		//NbcNews:         g.CreateJsonParser(NbcNews),
+		//NbcNews:         g.CreateJsonParser("nbc-news.json"),
 		UsaToday:        g.CreateHtmlParser(UsaToday),
 		ABC:             g.CreateXmlParser(ABC),
 		BBC:             g.CreateXmlParser(BBC),
 		WashingtonTimes: g.CreateXmlParser(WashingtonTimes),
 	}
+
+	// PathToDataDir is used to join path from current working directory to data dir
+	PathToDataDir = "\\cmd\\parsers\\data\\"
+
+	// When testing change to:
+	//PathToDataDir = "\\data\\"
+
 )
 
 // Define Sources
@@ -47,27 +54,16 @@ const (
 	BBC             = "bbc"
 	WashingtonTimes = "washingtontimes"
 
-	// PathToDataDir is used to join path from current working directory to data dir
-	PathToDataDir = "/cmd/parsers/data/"
-
-	// PathToSourcesFile is used to append this path to cwd to get sources file
-	PathToSourcesFile = "/cmd/parsers/data/"
-
 	AllSources = ""
 
-	//
 	sourcesFile = "sources.json"
+
+	cwdPath = "C:\\Users\\Oleksandr Matviienko\\GolandProjects\\newsAggr-2\\Go-Gator"
 )
 
 // extractFileData reads data from file $filename and returns its content
 func extractFileData(filename string) ([]byte, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	cwd += PathToDataDir
-
-	file, err := os.Open(cwd + filename)
+	file, err := os.Open(cwdPath + PathToDataDir + filename)
 	if err != nil {
 		return nil, err
 	}

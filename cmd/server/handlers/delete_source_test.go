@@ -13,8 +13,8 @@ import (
 
 func TestDeleteSource(t *testing.T) {
 	// Initialize Gin engine
-	r := gin.Default()
-	r.DELETE("/admin/source", DeleteSource)
+	server := gin.Default()
+	server.DELETE("/admin/source", DeleteSource)
 
 	tests := []struct {
 		name       string
@@ -29,7 +29,7 @@ func TestDeleteSource(t *testing.T) {
 			setup: func() {
 				err := parsers.AddNewSource("xml", "source1", "https://source1.com")
 				if err != nil {
-					panic(err)
+					assert.Equal(t, err, nil)
 				}
 			},
 			statusCode: http.StatusOK,
@@ -39,11 +39,11 @@ func TestDeleteSource(t *testing.T) {
 		},
 		{
 			name:   "Delete non-existent source",
-			source: "source4",
+			source: "source2",
 			setup: func() {
-				err := parsers.DeleteSource("source4")
+				err := parsers.DeleteSource("source2")
 				if err != nil {
-					panic(err)
+					assert.Equal(t, err, nil)
 				}
 			},
 			statusCode: http.StatusBadRequest,
@@ -57,7 +57,7 @@ func TestDeleteSource(t *testing.T) {
 			setup:      func() {},
 			statusCode: http.StatusInternalServerError,
 			response: gin.H{
-				"error ": ErrFailedToDecode + "invalid character 'i' looking for beginning of object key string",
+				"error": ErrFailedToDecode + "invalid character 'i' looking for beginning of object key string",
 			},
 		},
 	}
@@ -68,16 +68,16 @@ func TestDeleteSource(t *testing.T) {
 
 			var reqBody []byte
 			if testCase.source != "" {
-				reqBody, _ = json.Marshal(gin.H{"source": testCase.source})
+				reqBody, _ = json.Marshal(gin.H{"name": testCase.source})
 			} else {
 				reqBody = []byte("{invalid json")
 			}
 
-			req, _ := http.NewRequest(http.MethodDelete, "/admin/source", bytes.NewBuffer(reqBody))
+			req, _ := http.NewRequest(http.MethodDelete, "http://localhost:8080/admin/source", bytes.NewBuffer(reqBody))
 			req.Header.Set("Content-Type", "application/json")
 
 			w := httptest.NewRecorder()
-			r.ServeHTTP(w, req)
+			server.ServeHTTP(w, req)
 
 			assert.Equal(t, testCase.statusCode, w.Code)
 

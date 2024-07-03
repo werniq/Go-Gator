@@ -13,8 +13,8 @@ import (
 
 func TestRegisterSource(t *testing.T) {
 	// Initialize Gin engine
-	r := gin.Default()
-	r.POST("/admin/source", RegisterSource)
+	server := gin.Default()
+	server.POST("/admin/source", RegisterSource)
 
 	tests := []struct {
 		name       string
@@ -24,11 +24,9 @@ func TestRegisterSource(t *testing.T) {
 		response   gin.H
 	}{
 		{
-			name:   "Register non-existent source",
-			source: "source4",
-			setup: func() {
-
-			},
+			name:       "Register non-existent source",
+			source:     "source5",
+			setup:      func() {},
 			statusCode: http.StatusCreated,
 			response: gin.H{
 				"status": MsgSourceCreated,
@@ -36,9 +34,12 @@ func TestRegisterSource(t *testing.T) {
 		},
 		{
 			name:   "Register existent source",
-			source: "source1",
+			source: "source3",
 			setup: func() {
-				parsers.AddNewSource("xml", "source1", "https://source1.com")
+				err := parsers.AddNewSource("xml", "source3", "https://source1.com")
+				if err != nil {
+					assert.Equal(t, err, nil)
+				}
 			},
 			statusCode: http.StatusBadRequest,
 			response: gin.H{
@@ -51,7 +52,7 @@ func TestRegisterSource(t *testing.T) {
 			setup:      func() {},
 			statusCode: http.StatusInternalServerError,
 			response: gin.H{
-				"error ": ErrFailedToDecode + "invalid character 't' looking for beginning of object key string",
+				"error": ErrFailedToDecode + "invalid character 't' looking for beginning of object key string",
 			},
 		},
 	}
@@ -62,7 +63,7 @@ func TestRegisterSource(t *testing.T) {
 
 			var reqBody []byte
 			if testCase.source != "" {
-				reqBody, _ = json.Marshal(gin.H{"source": testCase.source})
+				reqBody, _ = json.Marshal(gin.H{"name": testCase.source})
 			} else {
 				reqBody = []byte("{testing with invalid json")
 			}
@@ -71,7 +72,7 @@ func TestRegisterSource(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 
 			w := httptest.NewRecorder()
-			r.ServeHTTP(w, req)
+			server.ServeHTTP(w, req)
 
 			assert.Equal(t, testCase.statusCode, w.Code)
 

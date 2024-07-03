@@ -5,8 +5,29 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"newsaggr/cmd/parsers"
 	"testing"
 )
+
+func TestSourceInArray(t *testing.T) {
+	// Test cases
+	tests := []struct {
+		source   string
+		expected bool
+	}{
+		{parsers.WashingtonTimes, true},
+		{parsers.ABC, true},
+		{parsers.BBC, true},
+		{parsers.UsaToday, true},
+		{"no-source", false},
+		{"abcbbccbb", false},
+	}
+
+	for _, test := range tests {
+		result := sourceInArray(test.source)
+		assert.Equal(t, test.expected, result, "Expected %v for source %s, got %v", test.expected, test.source, result)
+	}
+}
 
 func TestGetNews(t *testing.T) {
 	// Initialize Gin engine

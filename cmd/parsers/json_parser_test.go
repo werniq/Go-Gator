@@ -2,13 +2,14 @@ package parsers
 
 import (
 	"github.com/stretchr/testify/assert"
+	"newsaggr/cmd/filters"
 	"newsaggr/cmd/types"
 	"testing"
 )
 
 func TestJsonParser_ParseWithArgs(t *testing.T) {
 	parser := JsonParser{
-		Source: "nbc",
+		Source: "2024-06-20.json",
 	}
 
 	testCases := []struct {
@@ -18,13 +19,13 @@ func TestJsonParser_ParseWithArgs(t *testing.T) {
 		{
 			Expected: []types.News{
 				{
-					Title:       "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena",
-					Description: "The Vatican has issued new rules radically reforming its process for evaluating faith-based supernatural phenomena like visions of the Virgin Mary or stigmata.",
-					PubDate:     "2024-05-17T14:58:52Z",
+					Title:       "Historic flooding in southern China kills 47, with more floods feared in coming days\n",
+					Description: "At least 47 people have died as downpours in southern China's Guangdong province caused historic flooding and slides, state media reported Friday, while authorities warned of more extreme weather ahead in other parts of the country.\n",
+					PubDate:     "Fri, 21 Jun 2024 07:26:14 -0400",
 				},
 			},
 			Input: &types.FilteringParams{
-				Keywords: "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena",
+				Keywords: "Historic flooding",
 			},
 		},
 	}
@@ -33,7 +34,7 @@ func TestJsonParser_ParseWithArgs(t *testing.T) {
 		news, err := parser.Parse()
 		assert.NoError(t, err)
 
-		filteredNews := ApplyFilters(news, testCase.Input)
+		filteredNews := filters.Apply(news, testCase.Input)
 
 		if len(testCase.Expected) == 0 {
 			assert.Empty(t, filteredNews)

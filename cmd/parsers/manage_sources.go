@@ -52,6 +52,15 @@ func GetAllSources() map[string]string {
 	return sourceToEndpoint
 }
 
+// GetSourceDetailed returns detailed information about source
+func GetSourceDetailed(source string) types.Source {
+	return types.Source{
+		Name:     source,
+		Format:   determineFormat(sourceToParser[source], source),
+		Endpoint: sourceToEndpoint[source],
+	}
+}
+
 // UpdateSourceEndpoint updates endpoint for the given source
 func UpdateSourceEndpoint(source, newEndpoint string) error {
 	sourceToEndpoint[source] = newEndpoint
@@ -84,18 +93,13 @@ func DeleteSource(source string) error {
 		if err != nil {
 			return err
 		}
-
 	}
 	return nil
 }
 
 // LoadSourcesFile initializes sourceToParser and sourceToEndpoint with data from sources.json file
 func LoadSourcesFile() error {
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	filename := fmt.Sprintf("%s%s%s", wd, PathToSourcesFile, sourcesFile)
+	filename := fmt.Sprintf("%s%s%s", cwdPath, PathToDataDir, sourcesFile)
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -127,11 +131,43 @@ func LoadSourcesFile() error {
 // updateSourcesFile is used to update file with information about sources to prevent losing all information if server
 // crashes
 func updateSourcesFile() error {
-	wd, err := os.Getwd()
+	filepath := fmt.Sprintf("%s%s%s", cwdPath, PathToDataDir, sourcesFile)
+
+	file, err := os.Create(filepath)
 	if err != nil {
 		return err
 	}
-	filepath := fmt.Sprintf("%s%s%s", wd, PathToSourcesFile, sourcesFile)
+
+	var sources []types.Source
+	for key, val := range sourceToEndpoint {
+		sources = append(sources, types.Source{
+			Name:     key,
+			Format:   determineFormat(sourceToParser[key], key),
+			Endpoint: val,
+		})
+	}
+
+	out, err := json.Marshal(sources)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write(out)
+	if err != nil {
+		return err
+	}
+
+	err = file.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// InitSourcesFile is used to initialize file with information about sources
+func InitSourcesFile() error {
+	filepath := fmt.Sprintf("%s%s%s", cwdPath, PathToDataDir, sourcesFile)
 
 	file, err := os.Create(filepath)
 	if err != nil {

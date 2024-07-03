@@ -15,7 +15,8 @@ func InitNewsAggregatorCmd() *cobra.Command {
 		Version: "0.0.3",
 
 		Run: func(cmd *cobra.Command, args []string) {
-			log.Println("[Go Gator]")
+			log.Println("[Go Gator] is a news fetching tool build in golang\n",
+				"Fetch news from multiple sources by running command `fetch`")
 		},
 	}
 	rootCmd.AddCommand(AddFetchNewsCmd())

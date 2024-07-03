@@ -11,6 +11,7 @@ func TestNewParams(t *testing.T) {
 			Keywords   string
 			StartingTs string
 			EndingTs   string
+			Sources    string
 		}
 		ExpectedOutput *FilteringParams
 	}{
@@ -19,15 +20,18 @@ func TestNewParams(t *testing.T) {
 				Keywords   string
 				StartingTs string
 				EndingTs   string
+				Sources    string
 			}{
 				Keywords:   "Ukraine",
 				StartingTs: "2024-05-12",
 				EndingTs:   "2024-05-15",
+				Sources:    "abc",
 			},
 			ExpectedOutput: &FilteringParams{
 				Keywords:          "Ukraine",
 				StartingTimestamp: "2024-05-12",
 				EndingTimestamp:   "2024-05-15",
+				Sources:           "abc",
 			},
 		},
 	}
@@ -37,6 +41,7 @@ func TestNewParams(t *testing.T) {
 			testCase.Input.Keywords,
 			testCase.Input.StartingTs,
 			testCase.Input.EndingTs,
+			testCase.Input.Sources,
 		)
 		assert.Equal(t, params, testCase.ExpectedOutput)
 	}

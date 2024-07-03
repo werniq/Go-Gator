@@ -16,7 +16,7 @@ func DeleteSource(c *gin.Context) {
 	err := c.ShouldBindJSON(&reqBody)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error ": ErrFailedToDecode + err.Error(),
+			"error": ErrFailedToDecode + err.Error(),
 		})
 		return
 	}

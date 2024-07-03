@@ -27,6 +27,13 @@ func UpdateSource(c *gin.Context) {
 		return
 	}
 
+	if !sourceInArray(reqBody.Name) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": ErrSourceNotFound,
+		})
+		return
+	}
+
 	if reqBody.Endpoint != "" {
 		err = parsers.UpdateSourceEndpoint(reqBody.Name, reqBody.Endpoint)
 		if err != nil {
@@ -48,6 +55,6 @@ func UpdateSource(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": MsgSourceUpdated,
+		"status": MsgSourceUpdated,
 	})
 }

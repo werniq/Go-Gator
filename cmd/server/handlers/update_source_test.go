@@ -12,13 +12,12 @@ import (
 )
 
 func TestUpdateSource(t *testing.T) {
-	// Initialize Gin engine
 	server := gin.Default()
 	server.PUT("/admin/source", UpdateSource)
 
 	tests := []struct {
 		name       string
-		body       types.Source
+		body       *types.Source
 		source     string
 		setup      func()
 		statusCode int
@@ -27,7 +26,7 @@ func TestUpdateSource(t *testing.T) {
 		{
 			name:   "Update non-existent source",
 			source: "source6",
-			body: types.Source{
+			body: &types.Source{
 				Name:     "source6",
 				Format:   "xml",
 				Endpoint: "https://source5.com",
@@ -39,9 +38,33 @@ func TestUpdateSource(t *testing.T) {
 			},
 		},
 		{
+			name:   "Empty source name",
+			source: "source6",
+			body: &types.Source{
+				Name:     "",
+				Format:   "",
+				Endpoint: "",
+			},
+			setup:      func() {},
+			statusCode: http.StatusBadRequest,
+			response: gin.H{
+				"error": ErrNoSourceName,
+			},
+		},
+		{
+			name:       "Empty source struct",
+			source:     "source6",
+			body:       nil,
+			setup:      func() {},
+			statusCode: http.StatusBadRequest,
+			response: gin.H{
+				"error": ErrFailedToDecode + "json: cannot unmarshal string into Go value of type types.Source",
+			},
+		},
+		{
 			name:   "Update format in existent source",
 			source: "source5",
-			body: types.Source{
+			body: &types.Source{
 				Name:   "bbc",
 				Format: "html",
 			},
@@ -54,8 +77,9 @@ func TestUpdateSource(t *testing.T) {
 		{
 			name:   "Update endpoint in existent source",
 			source: "source5",
-			body: types.Source{
+			body: &types.Source{
 				Name:     "bbc",
+				Format:   "",
 				Endpoint: "https://bbc.com/",
 			},
 			setup:      func() {},
@@ -71,7 +95,11 @@ func TestUpdateSource(t *testing.T) {
 			tt.setup()
 
 			var reqBody []byte
-			reqBody, _ = json.Marshal(tt.body)
+			if tt.body != nil {
+				reqBody, _ = json.Marshal(tt.body)
+			} else {
+				reqBody, _ = json.Marshal("{invalid json")
+			}
 
 			req, _ := http.NewRequest(http.MethodPut, "http://localhost:8080/admin/source", bytes.NewBuffer(reqBody))
 			req.Header.Set("Content-Type", "application/json")

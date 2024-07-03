@@ -53,7 +53,6 @@ func TestConfAndRun(t *testing.T) {
 				}
 			case <-ctx.Done():
 				t.Log("ConfAndRun took too long, returning nil error because server is working fine.")
-				assert.Nil(t, nil)
 			}
 		})
 	}

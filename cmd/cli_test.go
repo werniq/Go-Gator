@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	"log"
+	"reflect"
 	"testing"
 )
 
@@ -21,4 +24,8 @@ func TestInitRootCmd(t *testing.T) {
 	fetchNewsCmd := subCmd[0]
 	assert.Equal(t, "fetch", fetchNewsCmd.Use, "Subcommand use should be 'fetch-news'")
 	assert.Equal(t, "Fetching news from downloaded data", fetchNewsCmd.Short, "Subcommand short description should match")
+	reflect.DeepEqual(cmd.Run, func(cmd *cobra.Command, args []string) {
+		log.Println("[Go Gator] is a news fetching tool build in golang\n",
+			"Fetch news from multiple sources by running command `fetch`")
+	})
 }

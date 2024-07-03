@@ -82,6 +82,62 @@ func TestApplyDateRangeInstruction_Apply(t *testing.T) {
 				Params  *types.FilteringParams
 			}{
 				Article: types.News{
+					PubDate: "2024-05-55",
+				},
+				Params: &types.FilteringParams{
+					StartingTimestamp: "2024-05-12",
+				},
+			},
+			ExpectedOutput: false,
+		},
+		{
+			Input: struct {
+				Article types.News
+				Params  *types.FilteringParams
+			}{
+				Article: types.News{
+					PubDate: "2024-05-12",
+				},
+				Params: &types.FilteringParams{
+					StartingTimestamp: "2024-05-55",
+				},
+			},
+			ExpectedOutput: false,
+		},
+		{
+			Input: struct {
+				Article types.News
+				Params  *types.FilteringParams
+			}{
+				Article: types.News{
+					PubDate: "2024-05-12",
+				},
+				Params: &types.FilteringParams{
+					EndingTimestamp: "2024-05-55",
+				},
+			},
+			ExpectedOutput: false,
+		},
+		{
+			Input: struct {
+				Article types.News
+				Params  *types.FilteringParams
+			}{
+				Article: types.News{
+					PubDate: "2024-05-10",
+				},
+				Params: &types.FilteringParams{
+					StartingTimestamp: "2024-05-12",
+				},
+			},
+			ExpectedOutput: false,
+		},
+		{
+			Input: struct {
+				Article types.News
+				Params  *types.FilteringParams
+			}{
+				Article: types.News{
 					PubDate: "2024-05-14",
 				},
 				Params: &types.FilteringParams{

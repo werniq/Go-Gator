@@ -7,25 +7,20 @@ import (
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/types"
 	"os"
-	"time"
 )
 
-//type Job struct {
-//	Filters *types.FilteringParams
-//	Settings
-//}
-// + Method Run
+type FetchNewsJob struct {
+	Filters *types.FilteringParams
+}
 
-// FetchNewsJob is a function that fetches news, parses it, and writes the parsed data
+// Run is a function that fetches news, parses it, and writes the parsed data
 // to a JSON file named with the current date in the format YYYY-MM-DD.
-func FetchNewsJob() error {
-	dateTimestamp := time.Now().Format(time.DateOnly)
-
+func (j *FetchNewsJob) Run() error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	filename := fmt.Sprintf("%s%s%s.json", wd, parsers.PathToDataDir, dateTimestamp)
+	filename := fmt.Sprintf("%s%s%s.json", wd, parsers.PathToDataDir, j.Filters.StartingTimestamp)
 
 	file, err := os.Create(filename)
 	if err != nil {
@@ -41,8 +36,7 @@ func FetchNewsJob() error {
 
 	// since some publishers may still store news from previous dates
 	// program additionally applies date range filters
-	f := types.NewFilteringParams("", dateTimestamp, "", "")
-	news = filters.Apply(news, f)
+	news = filters.Apply(news, j.Filters)
 
 	data, err := json.Marshal(news)
 	if err != nil {

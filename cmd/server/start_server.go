@@ -6,6 +6,7 @@ import (
 	"log"
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/server/handlers"
+	"newsaggr/cmd/types"
 	"time"
 )
 
@@ -45,12 +46,17 @@ func ConfAndRun() {
 		log.Fatalln("Error loading sources file: " + err.Error())
 	}
 
-	r := gin.Default()
+	server := gin.Default()
 
-	setupRoutes(r)
+	setupRoutes(server)
 
 	go func() {
-		err := FetchNewsJob()
+		dateTimestamp := time.Now().Format(time.DateOnly)
+		j := FetchNewsJob{
+			Filters: types.NewFilteringParams("", dateTimestamp, "", ""),
+		}
+		err := j.Run()
+
 		if err != nil {
 			log.Fatalln(ErrFetchNewsJob, err)
 		}
@@ -65,12 +71,12 @@ func ConfAndRun() {
 	//}
 	//PathToCertsDir := Cwd + RelativePathToCertsDir
 	//
-	//err = r.RunTLS(ProdAddr, PathToCertsDir+CertFile, PathToCertsDir+KeyFile)
+	//err = server.RunTLS(ProdAddr, PathToCertsDir+CertFile, PathToCertsDir+KeyFile)
 	//if err != nil {
 	//	log.Fatalln(ErrRunningServer, err)
 	//}
 
-	err = r.Run(DevAddr)
+	err = server.Run(DevAddr)
 	if err != nil {
 		log.Fatalln(ErrRunningServer, err)
 	}

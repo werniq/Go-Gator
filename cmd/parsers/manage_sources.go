@@ -127,14 +127,13 @@ func LoadSourcesFile() error {
 // updateSourcesFile is used to update file with information about sources to prevent losing all information if server
 // crashes
 func updateSourcesFile() error {
-
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	filename := fmt.Sprintf("%s%s%s", wd, PathToSourcesFile, sourcesFile)
+	filepath := fmt.Sprintf("%s%s%s", wd, PathToSourcesFile, sourcesFile)
 
-	file, err := os.Create(filename)
+	file, err := os.Create(filepath)
 	if err != nil {
 		return err
 	}

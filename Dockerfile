@@ -12,10 +12,10 @@ RUN go mod download
 COPY . .
 
 # Build the Go application
-RUN CGO_ENABLED=0 GOOS=linux go build -o go-gator .
+RUN go build -o go-gator .
 
 # Stage 2: Final stage
-FROM alpine:edge
+FROM alpine
 
 # Set the working directory
 WORKDIR /app
@@ -29,6 +29,7 @@ RUN mkdir -p ./cmd/parsers/data/ && mkdir -p ./cmd/server/certs/
 COPY --from=build /app/go-gator .
 COPY --from=build /app/cmd/server/certs/certificate.pem ./cmd/server/certs/certificate.pem
 COPY --from=build /app/cmd/server/certs/key.pem ./cmd/server/certs/key.pem
+COPY --from=build /app/cmd/parsers/data ./cmd/parsers/data
 
 # Set the timezone and install CA certificates
 # RUN apk --no-cache add ca-certificates tzdata

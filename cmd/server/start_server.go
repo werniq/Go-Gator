@@ -23,7 +23,7 @@ var (
 
 const (
 	// DevAddr constant describes the port on which server will operate in Development environment
-	DevAddr = "localhost:8080"
+	DevAddr = ":8080"
 
 	// ProdAddr is used to run server in production environment
 	ProdAddr = ":443"
@@ -48,18 +48,19 @@ func ConfAndRun() error {
 	)
 
 	err = parsers.LoadSourcesFile()
-	switch {
-	case strings.Contains(err.Error(), "no such file or directory"):
-		err = parsers.InitSourcesFile()
-		if err != nil {
+	if err != nil {
+		switch {
+		case strings.Contains(err.Error(), "no such file or directory"):
+			err = parsers.InitSourcesFile()
+			if err != nil {
+				return err
+			}
+		default:
 			return err
 		}
-	case err != nil:
-		return err
 	}
 
 	setupRoutes(server)
-
 	go func() {
 		dateTimestamp := time.Now().Format(time.DateOnly)
 		j := FetchNewsJob{

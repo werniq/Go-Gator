@@ -32,7 +32,7 @@ const (
 	ErrFailedParsing = "error while parsing sources: "
 
 	// FirstFetchedFileDate identifies first file which contains news
-	FirstFetchedFileDate = "2024-06-20"
+	FirstFetchedFileDate = "2024-07-05"
 )
 
 // GetNews handler will be used in our server to retrieve news from prepared files

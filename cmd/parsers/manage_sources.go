@@ -2,6 +2,7 @@ package parsers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"newsaggr/cmd/types"
@@ -99,6 +100,10 @@ func DeleteSource(source string) error {
 
 // LoadSourcesFile initializes sourceToParser and sourceToEndpoint with data from sources.json file
 func LoadSourcesFile() error {
+	cwdPath, err := os.Getwd()
+	if err != nil {
+		return err
+	}
 	filename := fmt.Sprintf("%s%s%s", cwdPath, PathToDataDir, sourcesFile)
 
 	file, err := os.Open(filename)
@@ -131,6 +136,11 @@ func LoadSourcesFile() error {
 // updateSourcesFile is used to update file with information about sources to prevent losing all information if server
 // crashes
 func updateSourcesFile() error {
+	cwdPath, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
 	filepath := fmt.Sprintf("%s%s%s", cwdPath, PathToDataDir, sourcesFile)
 
 	file, err := os.Create(filepath)
@@ -167,10 +177,21 @@ func updateSourcesFile() error {
 
 // InitSourcesFile is used to initialize file with information about sources
 func InitSourcesFile() error {
+	cwdPath, err := os.Getwd()
+	if err != nil {
+		return err
+	}
 	filepath := fmt.Sprintf("%s%s%s", cwdPath, PathToDataDir, sourcesFile)
 
 	file, err := os.Create(filepath)
 	if err != nil {
+		switch {
+		case errors.Is(err, os.ErrExist):
+			file, err = os.Open(filepath)
+		case err != nil:
+			return err
+		}
+
 		return err
 	}
 

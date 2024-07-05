@@ -16,7 +16,6 @@ var (
 		"formatDate": formatDate,
 		"contains":   contains,
 	}
-	cwdPath = "C:\\Users\\Oleksandr Matviienko\\GolandProjects\\newsAggr-2\\Go-Gator\\cmd\\templates"
 )
 
 const (
@@ -52,6 +51,10 @@ func contains(s string, arr []string) bool {
 
 func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
 	var err error
+	cwdPath, err := os.Getwd()
+	if err != nil {
+		return err
+	}
 
 	sortNewsByPubDate(articles)
 

@@ -4,4 +4,4 @@ bin/*
 .idea
 cmd/parsers/data
 coverage
-
+cover

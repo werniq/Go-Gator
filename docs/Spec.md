@@ -88,7 +88,7 @@ We will use external APIs in order to retrieve latest news.
 
 1. Get Filtered News
 
-- Endpoint: /api/news
+- Endpoint: /news
 - Request Method: GET
 - Parameters: 
   - keywords (optional): Comma-separated keywords to filter articles

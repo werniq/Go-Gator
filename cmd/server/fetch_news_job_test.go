@@ -27,6 +27,10 @@ func TestFetchNewsJob_Run(t *testing.T) {
 		t.Fatalf("Run() returned an error: %v", err)
 	}
 
+	CwdPath, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
 	expectedFilename := fmt.Sprintf("%s%s%s.json", CwdPath, parsers.PathToDataDir, d)
 
 	if _, err := os.Stat(expectedFilename); os.IsNotExist(err) {

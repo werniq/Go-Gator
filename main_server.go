@@ -11,17 +11,22 @@ import (
 func init() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalln("Error loading .env file: ")
+		log.Println("Error loading .env file: ")
 	}
 
 	switch os.Getenv("APP_MODE") {
-	case "DEVELOPMENT":
+	case "WINDOWS":
 		parsers.PathToDataDir = "\\cmd\\parsers\\data\\"
+		server.RelativePathToCertsDir = "\\cmd\\server\\certs\\"
 	case "DOCKER":
 		parsers.PathToDataDir = "/cmd/parsers/data/"
+		server.RelativePathToCertsDir = "/cmd/server/certs/"
 	}
 }
 
 func main() {
-	server.ConfAndRun()
+	err := server.ConfAndRun()
+	if err != nil {
+		log.Fatalln(err)
+	}
 }

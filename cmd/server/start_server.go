@@ -1,13 +1,12 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/server/handlers"
 	"newsaggr/cmd/types"
-	"os"
+	"strings"
 	"time"
 )
 
@@ -17,28 +16,26 @@ var (
 
 	// ErrFetchNewsJob is thrown when we have problems while doing fetch news job
 	ErrFetchNewsJob = fmt.Errorf("error while doing fetch news job: ")
+
+	// RelativePathToCertsDir is a path to the folder with OpenSSL Certificate and Key
+	RelativePathToCertsDir = "\\cmd\\server\\certs\\"
 )
 
 const (
 	// DevAddr constant describes the port on which server will operate in Development environment
-	DevAddr = ":8080"
+	DevAddr = "localhost:8080"
 
 	// ProdAddr is used to run server in production environment
 	ProdAddr = ":443"
 
-	// RelativePathToCertsDir is a path to the folder with OpenSSL Certificate and Key
-	RelativePathToCertsDir = "\\cmd\\server\\certs\\"
-
 	// CertFile is the name of certificate file
-	CertFile = "server.crt"
+	CertFile = "certificate.pem"
 
 	// KeyFile is the name of the key for the certificate above
-	KeyFile = "server.key"
+	KeyFile = "key.pem"
 
 	// UpdatesFrequency is used to update the news every X hours
 	UpdatesFrequency = 4
-
-	CwdPath = "C:\\Users\\Oleksandr Matviienko\\GolandProjects\\newsAggr-2\\Go-Gator"
 )
 
 // ConfAndRun initializes server using gin framework, then attaches routes and handlers to it, and runs
@@ -52,7 +49,7 @@ func ConfAndRun() error {
 
 	err = parsers.LoadSourcesFile()
 	switch {
-	case errors.Is(err, os.ErrNotExist):
+	case strings.Contains(err.Error(), "no such file or directory"):
 		err = parsers.InitSourcesFile()
 		if err != nil {
 			return err

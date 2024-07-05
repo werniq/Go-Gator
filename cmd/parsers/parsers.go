@@ -57,12 +57,15 @@ const (
 	AllSources = ""
 
 	sourcesFile = "sources.json"
-
-	cwdPath = "C:\\Users\\Oleksandr Matviienko\\GolandProjects\\newsAggr-2\\Go-Gator"
 )
 
 // extractFileData reads data from file $filename and returns its content
 func extractFileData(filename string) ([]byte, error) {
+	cwdPath, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
 	file, err := os.Open(cwdPath + PathToDataDir + filename)
 	if err != nil {
 		return nil, err

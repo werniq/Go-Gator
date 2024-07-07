@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"newsaggr/logger"
+	"log"
 )
 
 // InitNewsAggregatorCmd initializes root cmd and attaches fetchNews command to our main command
@@ -15,7 +15,8 @@ func InitNewsAggregatorCmd() *cobra.Command {
 		Version: "0.0.3",
 
 		Run: func(cmd *cobra.Command, args []string) {
-			logger.InfoLogger.Println("[Go Gator]")
+			log.Println("[Go Gator] This program is dynamically fetching news from the internet\n" +
+				"Run the [fetch] command to retrieve the latest news, and include any arguments if you wish!")
 		},
 	}
 	rootCmd.AddCommand(AddFetchNewsCmd())

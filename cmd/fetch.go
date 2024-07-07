@@ -7,7 +7,6 @@ import (
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/templates"
 	"newsaggr/cmd/types"
-	"strings"
 )
 
 const (
@@ -17,24 +16,7 @@ const (
 	SourcesFlag  = "sources"
 )
 
-var errorMessages = map[string]string{
-	"flag accessed but not defined": "Unsupported flag: ",
-}
-
-func checkFlagErr(err error) {
-	if err != nil {
-		for substr, msg := range errorMessages {
-			if strings.Contains(err.Error(), substr) {
-				log.Fatalln(msg, err)
-				return
-			}
-		}
-
-		log.Fatalln("Error parsing flags: ", err)
-	}
-}
-
-// AddFetchNewsCmd attaches fetchNews command to rootCmd
+// AddFetchNewsCmd initializes and returns fetch command
 func AddFetchNewsCmd() *cobra.Command {
 	fetchNews := &cobra.Command{}
 	fetchNews.Flags().String(KeywordFlag, "", "Topic on which news will be fetched (if empty, all news will be fetched, regardless of the theme). Separate them with ',' ")
@@ -47,43 +29,44 @@ func AddFetchNewsCmd() *cobra.Command {
 	fetchNews.Long = "This command parses HTML, XML and JSON files sorts them by given arguments, and returns list of news" +
 		"based on provided flags"
 
-	fetchNews.Run = func(cmd *cobra.Command, args []string) {
+	fetchNews.RunE = func(cmd *cobra.Command, args []string) error {
 		// retrieve optional parameters
 		keywords, err := cmd.Flags().GetString(KeywordFlag)
-		checkFlagErr(err)
+		err = checkFlagErr(err)
+		if err != nil {
+			return err
+		}
+
 		dateFrom, err := cmd.Flags().GetString(DateFromFlag)
-		checkFlagErr(err)
+		err = checkFlagErr(err)
+		if err != nil {
+			return err
+		}
+
 		dateEnd, err := cmd.Flags().GetString(DateEndFlag)
-		checkFlagErr(err)
+		err = checkFlagErr(err)
+		if err != nil {
+			return err
+		}
+
 		sources, err := cmd.Flags().GetString(SourcesFlag)
-		checkFlagErr(err)
-
-		// Validate user arguments
-		if dateEnd != "" && dateFrom != "" {
-			if dateFrom > dateEnd {
-				log.Fatalln("Date from can not be after date end.")
-			}
-		}
-
-		err = validateDate(dateFrom)
+		err = checkFlagErr(err)
 		if err != nil {
-			log.Fatalln("Error validating date: ", err)
+			return err
 		}
 
-		err = validateDate(dateEnd)
+		sourcesValidationHandler := &SourcesValidationHandler{}
+		dateValidationHandler := &DateValidationHandler{}
+
+		sourcesValidationHandler.SetNext(dateValidationHandler)
+
+		err = sourcesValidationHandler.Handle(cmd)
 		if err != nil {
-			log.Fatalln("Error validating date: ", err)
+			return err
 		}
 
-		err = validateSources(sources)
-		if err != nil {
-			log.Fatalln("Error validating sources: ", err)
-		}
-
-		// Split and validate sources
 		f := types.NewFilteringParams(keywords, dateFrom, dateEnd)
 
-		// parsing news by sources and applying params to those news
 		news, err := parsers.ParseBySource(sources)
 		if err != nil {
 			log.Fatalln("Error parsing news: ", err)
@@ -91,12 +74,12 @@ func AddFetchNewsCmd() *cobra.Command {
 
 		news = filters.Apply(news, f)
 
-		// output using go templates
-		if err = templates.PrintTemplate(f, news); err != nil {
-			log.Fatalln(err)
+		err = templates.PrintTemplate(f, news)
+		if err != nil {
+			return err
 		}
 
-		log.Println(len(news))
+		return nil
 	}
 
 	return fetchNews

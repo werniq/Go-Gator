@@ -23,32 +23,6 @@ const (
 	BaseTemplatePath = "\\cmd\\templates\\templates\\article.plain.tmpl"
 )
 
-// Custom function to highlight keywords
-func highlight(content string, keywords []string) string {
-	if keywords == nil {
-		return content
-	}
-
-	for _, keyword := range keywords {
-		content = strings.ReplaceAll(content, keyword, "[!]"+keyword+"[!]")
-	}
-	return content
-}
-
-// Custom function to format date
-func formatDate(t time.Time, layout string) string {
-	return t.Format(layout)
-}
-
-func contains(s string, arr []string) bool {
-	for _, keyword := range arr {
-		if strings.Contains(s, keyword) {
-			return true
-		}
-	}
-	return false
-}
-
 func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
 	sortNewsByPubDate(articles)
 
@@ -78,4 +52,30 @@ func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
 	}
 
 	return nil
+}
+
+// Custom function to highlight keywords
+func highlight(content string, keywords []string) string {
+	if keywords == nil {
+		return content
+	}
+
+	for _, keyword := range keywords {
+		content = strings.ReplaceAll(content, keyword, "[!]"+keyword+"[!]")
+	}
+	return content
+}
+
+// Custom function to format date
+func formatDate(t time.Time, layout string) string {
+	return t.Format(layout)
+}
+
+func contains(s string, arr []string) bool {
+	for _, keyword := range arr {
+		if strings.Contains(s, keyword) {
+			return true
+		}
+	}
+	return false
 }

@@ -33,11 +33,11 @@ var (
 	// sourceToParser maps source names to their corresponding parser instances
 	// The parser are created using ParsingFactory
 	sourceToParser = map[string]Parser{
-		NbcNews:         g.CreateJsonParser(NbcNews),
-		UsaToday:        g.CreateHtmlParser(UsaToday),
-		ABC:             g.CreateXmlParser(ABC),
-		BBC:             g.CreateXmlParser(BBC),
-		WashingtonTimes: g.CreateXmlParser(WashingtonTimes),
+		NbcNews:         g.JsonParser(NbcNews),
+		UsaToday:        g.HtmlParser(UsaToday),
+		ABC:             g.XmlParser(ABC),
+		BBC:             g.XmlParser(BBC),
+		WashingtonTimes: g.XmlParser(WashingtonTimes),
 	}
 )
 

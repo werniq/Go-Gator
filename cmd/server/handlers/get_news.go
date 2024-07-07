@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"newsaggr/cmd/filters"
 	"newsaggr/cmd/parsers"
@@ -72,6 +73,7 @@ func GetNews(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
+		log.Println(err.Error())
 		return
 	}
 

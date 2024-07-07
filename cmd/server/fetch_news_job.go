@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"newsaggr/cmd/filters"
 	"newsaggr/cmd/parsers"
@@ -12,6 +13,11 @@ import (
 type FetchNewsJob struct {
 	Filters *types.FilteringParams
 }
+
+var (
+	ErrCreatingFile  = "Error while creating a file: "
+	ErrParsingSource = "Error while parsing sources: "
+)
 
 // Run is a function that fetches news, parses it, and writes the parsed data
 // to a JSON file named with the current date in the format YYYY-MM-DD.
@@ -24,12 +30,12 @@ func (j *FetchNewsJob) Run() error {
 
 	file, err := os.Create(filename)
 	if err != nil {
-		return err
+		return errors.New(ErrCreatingFile + err.Error())
 	}
 
 	news, err := parsers.ParseBySource(parsers.AllSources)
 	if err != nil {
-		return err
+		return errors.New(ErrParsingSource + err.Error())
 	}
 
 	// since some publishers may still store news from previous dates

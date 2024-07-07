@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"newsaggr/cmd/parsers"
 )
@@ -33,6 +34,7 @@ func DeleteSource(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": ErrDeleteSource + err.Error(),
 		})
+		log.Println(ErrDeleteSource + err.Error())
 		return
 	}
 

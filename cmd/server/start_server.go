@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/server/handlers"
 	"newsaggr/cmd/types"
@@ -53,6 +54,7 @@ func ConfAndRun() error {
 		case strings.Contains(err.Error(), "no such file or directory"):
 			err = parsers.InitSourcesFile()
 			if err != nil {
+				log.Println("Error loading sources file: ", err.Error())
 				return err
 			}
 		default:
@@ -69,6 +71,7 @@ func ConfAndRun() error {
 
 		err := j.Run()
 		if err != nil {
+			log.Println("Error running fetch news job: ", err.Error())
 			errChan <- err
 			return
 		}

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/types"
@@ -40,6 +41,7 @@ func UpdateSource(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": ErrUpdateSource + err.Error(),
 			})
+			log.Println(ErrUpdateSource + err.Error())
 			return
 		}
 	}
@@ -50,6 +52,7 @@ func UpdateSource(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": ErrUpdateSource + err.Error(),
 			})
+			log.Println(ErrUpdateSource + err.Error())
 			return
 		}
 	}

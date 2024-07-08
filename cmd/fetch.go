@@ -35,8 +35,8 @@ func checkFlagErr(err error) {
 	}
 }
 
-// AddFetchNewsCmd attaches fetchNews command to rootCmd
-func AddFetchNewsCmd() *cobra.Command {
+// FetchNewsCmd attaches fetchNews command to rootCmd
+func FetchNewsCmd() *cobra.Command {
 	fetchNews := &cobra.Command{}
 	fetchNews.Flags().String(KeywordFlag, "", "Topic on which news will be fetched (if empty, all news will be fetched, regardless of the theme). Separate them with ',' ")
 	fetchNews.Flags().String(DateFromFlag, "", "Retrieve news based on their published date | Format 2024-05-24")

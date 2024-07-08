@@ -54,7 +54,7 @@ func TestCheckFlagErr(t *testing.T) {
 }
 
 func TestAddFetchNewsCmd(t *testing.T) {
-	fetchNews := AddFetchNewsCmd()
+	fetchNews := FetchNewsCmd()
 
 	runFunc := func(cmd *cobra.Command, args []string) {
 		// retrieve optional parameters

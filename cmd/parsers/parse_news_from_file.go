@@ -68,7 +68,7 @@ func FromFiles(dateFrom, dateEnd string) ([]types.News, error) {
 	}
 
 	for _, date := range dates {
-		jp := g.CreateJsonParser(date + ".json")
+		jp := g.JsonParser(date + ".json")
 		wg.Add(1)
 		go collectNews(jp)
 	}

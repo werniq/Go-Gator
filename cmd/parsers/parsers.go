@@ -31,11 +31,11 @@ var (
 	// sourceToParser maps source names to their corresponding parser instances
 	// The parser are created using ParsingFactory
 	sourceToParser = map[string]Parser{
-		//NbcNews:         g.CreateJsonParser("nbc-news.json"),
-		UsaToday:        g.CreateHtmlParser(UsaToday),
-		ABC:             g.CreateXmlParser(ABC),
-		BBC:             g.CreateXmlParser(BBC),
-		WashingtonTimes: g.CreateXmlParser(WashingtonTimes),
+		//NbcNews:         g.JsonParser("nbc-news.json"),
+		UsaToday:        g.HtmlParser(UsaToday),
+		ABC:             g.XmlParser(ABC),
+		BBC:             g.XmlParser(BBC),
+		WashingtonTimes: g.XmlParser(WashingtonTimes),
 	}
 
 	// PathToDataDir is used to join path from current working directory to data dir

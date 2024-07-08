@@ -19,7 +19,7 @@ func InitNewsAggregatorCmd() *cobra.Command {
 				"Fetch news from multiple sources by running command `fetch`")
 		},
 	}
-	rootCmd.AddCommand(AddFetchNewsCmd())
+	rootCmd.AddCommand(FetchNewsCmd())
 
 	return rootCmd
 }

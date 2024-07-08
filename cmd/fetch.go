@@ -22,19 +22,6 @@ var errorMessages = map[string]string{
 	"flag accessed but not defined": "Unsupported flag: ",
 }
 
-func checkFlagErr(err error) {
-	if err != nil {
-		for substr, msg := range errorMessages {
-			if strings.Contains(err.Error(), substr) {
-				log.Fatalln(msg, err)
-				return
-			}
-		}
-
-		log.Fatalln("Error parsing flags: ", err)
-	}
-}
-
 // FetchNewsCmd attaches fetchNews command to rootCmd
 func FetchNewsCmd() *cobra.Command {
 	fetchNews := &cobra.Command{}
@@ -101,4 +88,17 @@ func FetchNewsCmd() *cobra.Command {
 	}
 
 	return fetchNews
+}
+
+func checkFlagErr(err error) {
+	if err != nil {
+		for substr, msg := range errorMessages {
+			if strings.Contains(err.Error(), substr) {
+				log.Fatalln(msg, err)
+				return
+			}
+		}
+
+		log.Fatalln("Error parsing flags: ", err)
+	}
 }

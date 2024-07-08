@@ -59,31 +59,6 @@ const (
 	sourcesFile = "sources.json"
 )
 
-// extractFileData reads data from file $filename and returns its content
-func extractFileData(filename string) ([]byte, error) {
-	cwdPath, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-
-	file, err := os.Open(cwdPath + PathToDataDir + filename)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := io.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-
-	err = file.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
-}
-
 // ParseBySource returns all news in particular source. If source is equal to "all", news will be
 // retrieved from all sources
 func ParseBySource(source string) ([]types.News, error) {
@@ -132,4 +107,29 @@ func ParseBySource(source string) ([]types.News, error) {
 	}
 
 	return news, nil
+}
+
+// extractFileData reads data from file $filename and returns its content
+func extractFileData(filename string) ([]byte, error) {
+	cwdPath, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
+	file, err := os.Open(cwdPath + PathToDataDir + filename)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	err = file.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }

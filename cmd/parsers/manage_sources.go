@@ -9,32 +9,6 @@ import (
 	"os"
 )
 
-// determineParser is used to determine which parser we will need for that source
-func determineParser(format, source string) Parser {
-	switch format {
-	case "json":
-		return JsonParser{Source: source}
-	case "xml":
-		return XMLParser{Source: source}
-	case "html":
-		return HtmlParser{Source: source}
-	}
-	return nil
-}
-
-// determineParser is used to determine which format we will use based on the Parser
-func determineFormat(p Parser, source string) string {
-	switch p {
-	case JsonParser{Source: source}:
-		return "json"
-	case XMLParser{Source: source}:
-		return "xml"
-	case HtmlParser{Source: source}:
-		return "html"
-	}
-	return ""
-}
-
 // AddNewSource inserts new source to available sources list and determines the appropriate Parser for it
 func AddNewSource(format, source, endpoint string) error {
 	sourceToEndpoint[source] = endpoint
@@ -220,4 +194,30 @@ func InitSourcesFile() error {
 	}
 
 	return nil
+}
+
+// determineParser is used to determine which parser we will need for that source
+func determineParser(format, source string) Parser {
+	switch format {
+	case "json":
+		return JsonParser{Source: source}
+	case "xml":
+		return XMLParser{Source: source}
+	case "html":
+		return HtmlParser{Source: source}
+	}
+	return nil
+}
+
+// determineParser is used to determine which format we will use based on the Parser
+func determineFormat(p Parser, source string) string {
+	switch p {
+	case JsonParser{Source: source}:
+		return "json"
+	case XMLParser{Source: source}:
+		return "xml"
+	case HtmlParser{Source: source}:
+		return "html"
+	}
+	return ""
 }

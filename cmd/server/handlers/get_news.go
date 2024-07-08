@@ -13,7 +13,14 @@ import (
 
 var (
 	// LastFetchedFileDate will be used for iterating over files with news
+	//
+	// It is assigned date of launching the server and will be often updated
 	LastFetchedFileDate = time.Now().Format(time.DateOnly)
+
+	// FirstFetchedFileDate identifies first file which contains news
+	//
+	// It is assigned date of launching the server, and won't be updated.
+	FirstFetchedFileDate = time.Now().Format(time.DateOnly)
 )
 
 const (
@@ -31,9 +38,6 @@ const (
 
 	// ErrFailedParsing is thrown when program fails to parse sources
 	ErrFailedParsing = "error while parsing sources: "
-
-	// FirstFetchedFileDate identifies first file which contains news
-	FirstFetchedFileDate = "2024-07-05"
 )
 
 // GetNews handler will be used in our server to retrieve news from prepared files

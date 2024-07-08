@@ -1,12 +1,13 @@
 ## Go Gator
-### News Aggregator CLI App, implemented in golang
+### News Aggregator Server, implemented in golang
 <hr>
 
 ## Implemented:
-1. Reading from .xml, .json, .html files
-2. Parsing that data into structures
-3. Filtering news by parameters (provided by user, handling user input)
-4. Logging
+1. Dynamic reading from different feeds
+2. Storing that data into sorted files
+3. Reading from that files whenever user asked for the news
+4. Filtering that news by parameters
+5. Logging
 
 ## Documentation
 Here I would like to explain the purpose of each directory.
@@ -23,23 +24,8 @@ Main logic of the application is there. Cmd has few sub folders:
 5. Server - server initialization and configuration
 6. Server/handlers - handlers attached to the server
 
-### 3. Data
-Files from where data is retrieved are located in this folder
-
-### 4. Docs 
+### 3. Docs 
 Documentation, specfile and C4 model.
-
-### Usage
-GoGator has only root and fetch commands. Root just prints simple message, and fetch performs actual
-news retrieval and filtering.
-
-You can run this application, by running:
-<br />
-> `go build -o ./bin/go-gator.exe` <br/><br/>
-> `./bin/go-gator fetch` <br/>
-
-P.S. I am using windows, if You are using Linux just miss the .exe extension.  <br />
-I am not sure how use it in the Mac, but I suppose also miss .exe part.
 
 Available parameters: <br/>
 > `ts-from 2024-05-12` News will be retrieved starting from that timestamp <br/>
@@ -47,12 +33,3 @@ Available parameters: <br/>
 > `sources bbc,washingtontimes` News will be retrieved ONLY from mentioned sources (separated by ',') <br/> 
 > `keywords Ukraine,Chine` News will be filtered by existence of keywords in title or description <br/>
 
-## 5. Examples:
-`.\bin\go-gator.exe fetch --ts-from 2024-05-18 --keywords Ukraine --ts-to 2024-05-20 --sources bbc`
-
-![img.png](docs/images/example_1.png)
-<hr/>
-
-`.\bin\go-gator.exe fetch --ts-from 2024-05-18 --keywords Ukraine --ts-to 2024-05-20 --sources washingtontimes,abc,usatoday`
-
-![img.png](docs/images/example_2.png)

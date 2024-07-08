@@ -19,7 +19,7 @@ func InitNewsAggregatorCmd() *cobra.Command {
 				"Run the [fetch] command to retrieve the latest news, and include any arguments if you wish!")
 		},
 	}
-	rootCmd.AddCommand(AddFetchNewsCmd())
+	rootCmd.AddCommand(FetchNewsCmd())
 
 	return rootCmd
 }

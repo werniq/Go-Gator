@@ -6,7 +6,7 @@ import (
 )
 
 func TestAddFetchNewsCmd(t *testing.T) {
-	fetchNews := AddFetchNewsCmd()
+	fetchNews := FetchNewsCmd()
 
 	// Verify the command properties
 	assert.Equal(t, "fetch", fetchNews.Use, "Command use should be 'fetch'")

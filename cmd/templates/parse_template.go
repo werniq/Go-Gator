@@ -5,6 +5,7 @@ import (
 	"gogator/cmd/types"
 	"html/template"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -16,11 +17,11 @@ var (
 		"formatDate": formatDate,
 		"contains":   contains,
 	}
+	BaseTemplatePath = filepath.Join("cmd", "templates", "templates", "article.plain.tmpl")
 )
 
 const (
-	BaseTemplate     = "article.plain.tmpl"
-	BaseTemplatePath = "\\cmd\\templates\\templates\\article.plain.tmpl"
+	BaseTemplate = "article.plain.tmpl"
 )
 
 func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
@@ -30,8 +31,9 @@ func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
 	if err != nil {
 		return err
 	}
+	d = filepath.Join(d, BaseTemplatePath)
 
-	tmpl := template.Must(template.New(BaseTemplate).Funcs(templateFuncs).ParseFiles(d + BaseTemplatePath))
+	tmpl := template.Must(template.New(BaseTemplate).Funcs(templateFuncs).ParseFiles(d))
 
 	data := types.TemplateData{
 		NewsItems:  articles,

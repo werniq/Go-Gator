@@ -5,6 +5,7 @@ import (
 	"gogator/cmd/types"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -27,11 +28,11 @@ var (
 
 	// sourceToFile maps source names (as strings) to their corresponding filenames
 	sourceToFile = map[string]string{
-		WashingtonTimes: "washington-times.xml",
-		ABC:             "abc.xml",
-		BBC:             "bbc.xml",
-		UsaToday:        "usa-today.html",
-		NbcNews:         "nbc-news.json",
+		WashingtonTimes: "/washington-times.xml",
+		ABC:             "/abc.xml",
+		BBC:             "/bbc.xml",
+		UsaToday:        "/usa-today.html",
+		NbcNews:         "/nbc-news.json",
 	}
 
 	// sourceToParser maps source names to their corresponding parser instances
@@ -110,7 +111,7 @@ func extractFileData(filename string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	cwd += "\\data\\"
+	cwd = filepath.Join(cwd, "data", "")
 
 	file, err := os.Open(cwd + filename)
 	if err != nil {

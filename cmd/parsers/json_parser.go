@@ -2,7 +2,7 @@ package parsers
 
 import (
 	"encoding/json"
-	"newsaggr/cmd/types"
+	"gogator/cmd/types"
 )
 
 type JsonParser struct {

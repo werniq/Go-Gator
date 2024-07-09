@@ -1,12 +1,12 @@
 package main
 
 import (
+	"gogator/cmd"
 	"log"
-	"newsaggr/cmd"
 )
 
 func main() {
-	rootCmd := cmd.InitNewsAggregatorCmd()
+	rootCmd := cmd.FetchNewsCmd()
 	err := rootCmd.Execute()
 	if err != nil {
 		log.Fatalln(err)

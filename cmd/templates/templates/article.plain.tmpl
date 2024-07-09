@@ -10,7 +10,7 @@
 
     {{- $keywords := .Keywords }}
         {{- range .NewsItems -}}
-            {{- highlight .Title $keywords }}
+            {{- highlight .Title $keywords | println "" }}
             {{- highlight .Description $keywords  }}
             {{- .Link }}
             {{- .PubDate  }}

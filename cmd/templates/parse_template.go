@@ -2,8 +2,8 @@ package templates
 
 import (
 	"fmt"
+	"gogator/cmd/types"
 	"html/template"
-	"newsaggr/cmd/types"
 	"os"
 	"strings"
 	"time"

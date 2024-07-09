@@ -3,7 +3,7 @@ package parsers
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"newsaggr/cmd/types"
+	"gogator/cmd/types"
 	"testing"
 )
 

@@ -1,7 +1,7 @@
 package templates
 
 import (
-	"newsaggr/cmd/types"
+	"gogator/cmd/types"
 	"sort"
 	"time"
 )

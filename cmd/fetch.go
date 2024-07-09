@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"gogator/cmd/filters"
+	"gogator/cmd/parsers"
+	"gogator/cmd/templates"
+	"gogator/cmd/types"
+	"gogator/cmd/validator"
 	"log"
-	"newsaggr/cmd/filters"
-	"newsaggr/cmd/parsers"
-	"newsaggr/cmd/templates"
-	"newsaggr/cmd/types"
 )
 
 const (
@@ -16,7 +17,7 @@ const (
 	SourcesFlag  = "sources"
 )
 
-// FetchNewsCmd initializes and returns fetch command
+// FetchNewsCmd initializes and returns command to fetch news
 func FetchNewsCmd() *cobra.Command {
 	fetchNews := &cobra.Command{}
 	fetchNews.Flags().String(KeywordFlag, "", "Topic on which news will be fetched (if empty, all news will be fetched, regardless of the theme). Separate them with ',' ")
@@ -27,42 +28,39 @@ func FetchNewsCmd() *cobra.Command {
 	fetchNews.Use = "fetch"
 	fetchNews.Short = "Fetching news from downloaded data"
 	fetchNews.Long = "This command parses HTML, XML and JSON files sorts them by given arguments, and returns list of news" +
-		"based on provided flags"
+		"based on mentioned flags"
 
-	fetchNews.RunE = func(cmd *cobra.Command, args []string) error {
+	fetchNews.Run = func(cmd *cobra.Command, args []string) {
 		// retrieve optional parameters
 		keywords, err := cmd.Flags().GetString(KeywordFlag)
-		err = checkFlagErr(err)
+		err = validator.CheckFlagErr(err)
 		if err != nil {
-			return err
+			log.Fatalln(err)
 		}
 
 		dateFrom, err := cmd.Flags().GetString(DateFromFlag)
-		err = checkFlagErr(err)
+		err = validator.CheckFlagErr(err)
 		if err != nil {
-			return err
+			log.Fatalln(err)
+
 		}
 
 		dateEnd, err := cmd.Flags().GetString(DateEndFlag)
-		err = checkFlagErr(err)
+		err = validator.CheckFlagErr(err)
 		if err != nil {
-			return err
+			log.Fatalln(err)
+
 		}
 
 		sources, err := cmd.Flags().GetString(SourcesFlag)
-		err = checkFlagErr(err)
+		err = validator.CheckFlagErr(err)
 		if err != nil {
-			return err
+			log.Fatalln(err)
 		}
 
-		sourcesValidationHandler := &SourcesValidationHandler{}
-		dateValidationHandler := &DateValidationHandler{}
-
-		sourcesValidationHandler.SetNext(dateValidationHandler)
-
-		err = sourcesValidationHandler.Handle(cmd)
+		err = validator.Validate(dateFrom, dateEnd, sources)
 		if err != nil {
-			return err
+			log.Fatalln(err)
 		}
 
 		f := types.NewFilteringParams(keywords, dateFrom, dateEnd)
@@ -76,10 +74,8 @@ func FetchNewsCmd() *cobra.Command {
 
 		err = templates.PrintTemplate(f, news)
 		if err != nil {
-			return err
+			log.Fatalln(err)
 		}
-
-		return nil
 	}
 
 	return fetchNews

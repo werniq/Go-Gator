@@ -3,7 +3,7 @@ package parsers
 import (
 	"bytes"
 	"github.com/PuerkitoBio/goquery"
-	"newsaggr/cmd/types"
+	"gogator/cmd/types"
 	"strings"
 )
 

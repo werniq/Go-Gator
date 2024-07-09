@@ -1,7 +1,7 @@
 package filters
 
 import (
-	"newsaggr/cmd/types"
+	"gogator/cmd/types"
 	"strings"
 	"time"
 )

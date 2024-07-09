@@ -1,15 +1,19 @@
 package parsers
 
 import (
+	"gogator/cmd/filters"
+	"gogator/cmd/types"
 	"io"
-	"newsaggr/cmd/filters"
-	"newsaggr/cmd/types"
 	"os"
 	"strings"
 	"sync"
 )
 
 // Parser interface will be used to implement parsers
+//
+// It provides a Parse method, which is used to open json, xml or html file
+// retrieve all data from it, and parse into an array of articles.
+// Returns an error, if file not exists, or error while decoding data.
 type Parser interface {
 	Parse() ([]types.News, error)
 }

@@ -18,6 +18,15 @@ const (
 )
 
 // FetchNewsCmd initializes and returns command to fetch news
+// This command opens prepared files and parses their data into an array of articles.
+//
+// It accepts few flags: keywords, date-from, date-end, and sources.
+// All of them will be used to filter retrieved news, if asked:
+// Filtering by keyword will remove all articles that do not contain provided keywords. Should be separated by ','
+// Date-From and Date-End are used to validate article publishing date: it will be included if it falls in range
+// specified ones
+// Sources flag will be defining from what sources you want to get articles from: ABC, BBC, Usa Today, Washington Times
+// or all from above.
 func FetchNewsCmd() *cobra.Command {
 	fetchNews := &cobra.Command{}
 	fetchNews.Flags().String(KeywordFlag, "", "Topic on which news will be fetched (if empty, all news will be fetched, regardless of the theme). Separate them with ',' ")

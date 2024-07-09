@@ -111,9 +111,9 @@ func extractFileData(filename string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	cwd = filepath.Join(cwd, "data", "")
+	cwd = filepath.Join(cwd, "data", filename)
 
-	file, err := os.Open(cwd + filename)
+	file, err := os.Open(cwd)
 	if err != nil {
 		return nil, err
 	}

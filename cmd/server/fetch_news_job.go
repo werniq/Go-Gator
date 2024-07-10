@@ -3,11 +3,11 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"newsaggr/cmd/filters"
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/types"
 	"os"
+	"path/filepath"
 )
 
 type FetchNewsJob struct {
@@ -26,9 +26,12 @@ func (j *FetchNewsJob) Run() error {
 	if err != nil {
 		return err
 	}
-	filename := fmt.Sprintf("%s%s%s.json", CwdPath, parsers.PathToDataDir, j.Filters.StartingTimestamp)
 
-	file, err := os.Create(filename)
+	f := filepath.Join(CwdPath,
+		parsers.CmdDir, parsers.ParsersDir, parsers.DataDir,
+		j.Filters.StartingTimestamp)
+
+	file, err := os.Create(f)
 	if err != nil {
 		return errors.New(ErrCreatingFile + err.Error())
 	}

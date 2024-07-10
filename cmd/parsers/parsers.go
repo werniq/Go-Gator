@@ -4,6 +4,7 @@ import (
 	"io"
 	"newsaggr/cmd/types"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -40,10 +41,6 @@ var (
 
 	// PathToDataDir is used to join path from current working directory to data dir
 	PathToDataDir = "\\cmd\\parsers\\data\\"
-
-	// When testing change to:
-	//PathToDataDir = "\\data\\"
-
 )
 
 // Define Sources
@@ -55,6 +52,12 @@ const (
 	WashingtonTimes = "washingtontimes"
 
 	AllSources = ""
+
+	CmdDir = "cmd"
+
+	ParsersDir = "parsers"
+
+	DataDir = "data"
 
 	sourcesFile = "sources.json"
 )
@@ -116,7 +119,9 @@ func extractFileData(filename string) ([]byte, error) {
 		return nil, err
 	}
 
-	file, err := os.Open(cwdPath + PathToDataDir + filename)
+	f := filepath.Join(cwdPath, CmdDir, ParsersDir, DataDir, filename)
+
+	file, err := os.Open(f)
 	if err != nil {
 		return nil, err
 	}

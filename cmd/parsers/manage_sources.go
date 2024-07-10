@@ -3,10 +3,10 @@ package parsers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"newsaggr/cmd/types"
 	"os"
+	"path/filepath"
 )
 
 // AddNewSource inserts new source to available sources list and determines the appropriate Parser for it
@@ -61,8 +61,8 @@ func UpdateSourceFormat(source, format string) error {
 // DeleteSource removes source from the map
 func DeleteSource(source string) error {
 	if _, exists := sourceToEndpoint[source]; exists {
-		sourceToEndpoint[source] = ""
-		sourceToParser[source] = nil
+		delete(sourceToEndpoint, source)
+		delete(sourceToParser, source)
 
 		err := updateSourcesFile()
 		if err != nil {
@@ -78,9 +78,10 @@ func LoadSourcesFile() error {
 	if err != nil {
 		return err
 	}
-	filename := fmt.Sprintf("%s%s%s", cwdPath, PathToDataDir, sourcesFile)
 
-	file, err := os.Open(filename)
+	f := filepath.Join(cwdPath, CmdDir, ParsersDir, DataDir, sourcesFile)
+
+	file, err := os.Open(f)
 	if err != nil {
 		return err
 	}
@@ -115,9 +116,9 @@ func updateSourcesFile() error {
 		return err
 	}
 
-	filepath := fmt.Sprintf("%s%s%s", cwdPath, PathToDataDir, sourcesFile)
+	f := filepath.Join(cwdPath, CmdDir, ParsersDir, DataDir, sourcesFile)
 
-	file, err := os.Create(filepath)
+	file, err := os.Create(f)
 	if err != nil {
 		return err
 	}
@@ -155,13 +156,14 @@ func InitSourcesFile() error {
 	if err != nil {
 		return err
 	}
-	filepath := fmt.Sprintf("%s%s%s", cwdPath, PathToDataDir, sourcesFile)
 
-	file, err := os.Create(filepath)
+	f := filepath.Join(cwdPath, CmdDir, ParsersDir, DataDir, sourcesFile)
+
+	file, err := os.Create(f)
 	if err != nil {
 		switch {
 		case errors.Is(err, os.ErrExist):
-			file, err = os.Open(filepath)
+			file, err = os.Open(f)
 		case err != nil:
 			return err
 		}

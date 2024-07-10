@@ -28,9 +28,9 @@ func UpdateSource(c *gin.Context) {
 		return
 	}
 
-	if !sourceInArray(reqBody.Name) {
+	if sourceInArray(reqBody.Name) {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": ErrSourceNotFound,
+			"error": ErrSourceExists,
 		})
 		return
 	}

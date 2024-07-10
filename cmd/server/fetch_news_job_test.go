@@ -2,10 +2,10 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/types"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -31,7 +31,10 @@ func TestFetchNewsJob_Run(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectedFilename := fmt.Sprintf("%s%s%s.json", CwdPath, parsers.PathToDataDir, d)
+	expectedFilename := filepath.Join(CwdPath, parsers.CmdDir,
+		parsers.ParsersDir,
+		parsers.DataDir,
+		d)
 
 	if _, err := os.Stat(expectedFilename); os.IsNotExist(err) {
 		t.Fatalf("expected file %s does not exist", expectedFilename)

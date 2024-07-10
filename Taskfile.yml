@@ -19,10 +19,38 @@ tasks:
       - ./bin/server.exe
 
   test:
-    label: "Run all tests in application"
+    label: "Run all tests in application in MacOS/Linux"
     summary: |
-      This task runs go test ./cmd/... which tests all available files from all child folders
-    cmd: go test ./cmd/...
+      This task runs all available test files from all child folders
+    cmd: |
+      mkdir pkg_tests
+      go test ./... -c -o pkg_tests
+      
+      ./pkg_tests/server.test
+      ./pkg_tests/handlers.test
+      ./pkg_tests/templates.test
+      ./pkg_tests/parsers.test
+      ./pkg_tests/filters.test
+      ./pkg_tests/types.test
+      ./pkg_tests/validator.test
+
+  test-wind:
+    label: "Run all tests in application on Windows machine"
+    summary: |
+      This task runs all available test files from all child folders
+      [INFO]: Should be used on Windows
+    cmd: |
+      mkdir pkg_tests
+      go test ./... -c -o pkg_tests
+      
+      ./pkg_tests/server.test.exe
+      ./pkg_tests/handlers.test.exe
+      ./pkg_tests/templates.test.exe
+      ./pkg_tests/parsers.test.exe
+      ./pkg_tests/filters.test.exe
+      ./pkg_tests/types.test.exe
+      ./pkg_tests/validator.test.exe
+      
 
   testingDone:
     summary: |

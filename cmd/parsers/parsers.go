@@ -2,6 +2,7 @@ package parsers
 
 import (
 	"io"
+	"log"
 	"newsaggr/cmd/types"
 	"os"
 	"path/filepath"
@@ -120,6 +121,7 @@ func extractFileData(filename string) ([]byte, error) {
 	}
 
 	f := filepath.Join(cwdPath, CmdDir, ParsersDir, DataDir, filename)
+	log.Println(f)
 
 	file, err := os.Open(f)
 	if err != nil {

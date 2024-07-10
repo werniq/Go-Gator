@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"newsaggr/cmd/types"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -16,11 +17,12 @@ var (
 		"formatDate": formatDate,
 		"contains":   contains,
 	}
+
+	BaseTemplatePath = filepath.Join("cmd", "templates", "templates", "article.plain.tmpl")
 )
 
 const (
-	BaseTemplate     = "article.plain.tmpl"
-	BaseTemplatePath = "\\templates\\article.plain.tmpl"
+	BaseTemplate = "article.plain.tmpl"
 )
 
 func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
@@ -31,8 +33,9 @@ func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
 	}
 
 	sortNewsByPubDate(articles)
+	cwdPath = filepath.Join(cwdPath, BaseTemplatePath)
 
-	tmpl := template.Must(template.New(BaseTemplate).Funcs(templateFuncs).ParseFiles(cwdPath + BaseTemplatePath))
+	tmpl := template.Must(template.New(BaseTemplate).Funcs(templateFuncs).ParseFiles(cwdPath))
 
 	data := types.TemplateData{
 		NewsItems:  articles,

@@ -7,6 +7,7 @@ import (
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/server/handlers"
 	"newsaggr/cmd/types"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -19,7 +20,7 @@ var (
 	ErrFetchNewsJob = fmt.Errorf("error while doing fetch news job: ")
 
 	// RelativePathToCertsDir is a path to the folder with OpenSSL Certificate and Key
-	RelativePathToCertsDir = "\\cmd\\server\\certs\\"
+	RelativePathToCertsDir = filepath.Join("cmd", "server", "certs")
 )
 
 const (

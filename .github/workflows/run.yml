@@ -1,0 +1,44 @@
+name: Go-Gator
+
+
+on: [push]
+#    branches: ["feature/httpgator"]
+#  pull_request:
+#    branches: ["feature/httpgator"]
+
+jobs:
+  pre-launch:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: Prepare code for launching
+        run: |
+          echo "Running tests..."
+          mkdir pkg_tests
+          
+          go test ./... -c -o pkg_tests
+          
+          ./pkg_tests/server.test
+          ./pkg_tests/handlers.test
+          ./pkg_tests/templates.test
+          ./pkg_tests/parsers.test
+          ./pkg_tests/filters.test
+          ./pkg_tests/types.test
+          ./pkg_tests/validator.test
+          
+          echo "Format code, clean dependencies and run staticcheck"
+          go fmt ./...
+          go vet ./...
+          go mod tidy
+          staticcheck
+          
+          echo "Build docker image"
+          docker build -t go-gator .
+          
+          echo "Run project"
+          docker run -d -p 8080:8080 go-gator 

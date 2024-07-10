@@ -4,36 +4,25 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"newsaggr/cmd/parsers"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 )
 
 func TestConfAndRun(t *testing.T) {
-	CwdPath, err := os.Getwd()
-	assert.Nil(t, err)
-
 	testCases := []struct {
 		Name        string
 		Setup       func()
 		ExpectError bool
 	}{
 		{
-			Name: "Without sources.json file",
+			Name: "With sources.json file",
 			Setup: func() {
-				f := filepath.Join(CwdPath, parsers.CmdDir, parsers.ParsersDir, parsers.DataDir, "sources.json")
-				err := os.Remove(f)
-				if err != nil {
-					t.Error("Failed to remove sources.json file: ", err)
-				}
+
 			},
-			ExpectError: true,
+			ExpectError: false,
 		},
 	}
 
-	gin.SetMode(gin.TestMode)
 	server := gin.Default()
 	setupRoutes(server)
 

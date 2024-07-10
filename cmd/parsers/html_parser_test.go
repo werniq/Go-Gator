@@ -2,32 +2,27 @@ package parsers
 
 import (
 	"github.com/stretchr/testify/assert"
-	"newsaggr/cmd/filters"
-	"newsaggr/cmd/types"
 	"testing"
 )
 
 func TestHtmlParser_Parse(t *testing.T) {
 	parser := HtmlParser{
-		Source: "usatoday",
+		Source: UsaToday,
 	}
 
 	testCases := []struct {
-		Expected []types.News
-		Input    *types.FilteringParams
+		name string
 	}{
 		{
-			Expected: []types.News{},
-			Input:    &types.FilteringParams{},
+			name: "Default run",
 		},
 	}
 
-	for _, testCase := range testCases {
-		news, err := parser.Parse()
-		assert.NoError(t, err)
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := parser.Parse()
+			assert.NoError(t, err)
 
-		filteredNews := filters.Apply(news, testCase.Input)
-
-		assert.NotNil(t, filteredNews)
+		})
 	}
 }

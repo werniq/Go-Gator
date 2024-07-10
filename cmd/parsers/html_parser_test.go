@@ -9,7 +9,7 @@ import (
 
 func TestHtmlParser_Parse(t *testing.T) {
 	parser := HtmlParser{
-		Source: "usatoday",
+		Source: "https://usatoday.com",
 	}
 
 	testCases := []struct {

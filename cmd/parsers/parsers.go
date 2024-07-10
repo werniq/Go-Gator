@@ -2,7 +2,6 @@ package parsers
 
 import (
 	"io"
-	"log"
 	"newsaggr/cmd/types"
 	"os"
 	"path/filepath"
@@ -39,9 +38,6 @@ var (
 		BBC:             g.XmlParser(BBC),
 		WashingtonTimes: g.XmlParser(WashingtonTimes),
 	}
-
-	// PathToDataDir is used to join path from current working directory to data dir
-	PathToDataDir = "\\cmd\\parsers\\data\\"
 )
 
 // Define Sources
@@ -121,7 +117,6 @@ func extractFileData(filename string) ([]byte, error) {
 	}
 
 	f := filepath.Join(cwdPath, CmdDir, ParsersDir, DataDir, filename)
-	log.Println(f)
 
 	file, err := os.Open(f)
 	if err != nil {

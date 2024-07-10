@@ -13,12 +13,12 @@ type XMLParser struct {
 
 // Parse function is required for XMLParser struct, in order to implement NewsParser interface, for data formatted in xml
 func (xp XMLParser) Parse() ([]types.News, error) {
+	var news []types.RSS
+
 	res, err := http.Get(sourceToEndpoint[xp.Source])
 	if err != nil {
 		return nil, err
 	}
-
-	var news []types.RSS
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {

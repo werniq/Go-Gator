@@ -40,7 +40,6 @@ tasks:
       This task runs all available test files from all child folders
       [INFO]: Should be used on Windows
     cmd: |
-      mkdir pkg_tests
       go test ./... -c -o pkg_tests
       
       ./pkg_tests/server.test.exe

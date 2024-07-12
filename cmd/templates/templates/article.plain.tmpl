@@ -10,13 +10,13 @@
 
 {{- $keywords := .Keywords }}
 {{- range .NewsItems -}}
-
-{{- highlight .Title $keywords | println }}
-{{- highlight .Description $keywords | println }}
-{{- .Link }} {{ println }} {{- .PubDate  }}
+Title: {{- highlight .Title $keywords }}
+Description: {{- highlight .Description $keywords }}
+Link: {{- .Link }}
+Pub Date: {{- .PubDate  }}
 ----------------------------------------------------------------
-        {{end}}
-    {{end}}
+{{ end -}}
+{{- end -}}
 {{end}}
 
 {{- template "header" . -}}

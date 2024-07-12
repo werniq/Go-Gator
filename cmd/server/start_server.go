@@ -8,14 +8,10 @@ import (
 	"newsaggr/cmd/server/handlers"
 	"newsaggr/cmd/types"
 	"path/filepath"
-	"strings"
 	"time"
 )
 
 var (
-	// ErrRunningServer is throws whenever we encounter errors while running our server
-	ErrRunningServer = fmt.Errorf("error while running server on port %s: ", DevAddr)
-
 	// ErrFetchNewsJob is thrown when we have problems while doing fetch news job
 	ErrFetchNewsJob = fmt.Errorf("error while doing fetch news job: ")
 
@@ -51,14 +47,9 @@ func ConfAndRun() error {
 
 	err = parsers.LoadSourcesFile()
 	if err != nil {
-		switch {
-		case strings.Contains(err.Error(), "no such file or directory"):
-			err = parsers.InitSourcesFile()
-			if err != nil {
-				log.Println("Error loading sources file: ", err.Error())
-				return err
-			}
-		default:
+		err = parsers.InitSourcesFile()
+		if err != nil {
+			log.Println("Error initializing sources file: ", err.Error())
 			return err
 		}
 	}
@@ -72,7 +63,7 @@ func ConfAndRun() error {
 
 		err := j.Run()
 		if err != nil {
-			log.Println("Error running fetch news job: ", err.Error())
+			log.Println(ErrFetchNewsJob, err.Error())
 			errChan <- err
 			return
 		}

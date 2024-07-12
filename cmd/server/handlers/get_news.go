@@ -47,17 +47,11 @@ func GetNews(c *gin.Context) {
 	dateFrom := c.Query(DateFromFlag)
 	dateEnd := c.Query(DateEndFlag)
 
-	dateRangeHandler := &validator.DateRangeHandler{}
-	dateValidationHandler := &validator.DateValidationHandler{}
-	sourceValidationHandler := &validator.SourceValidationHandler{}
-
-	dateRangeHandler.SetNext(dateValidationHandler)
-	dateValidationHandler.SetNext(sourceValidationHandler)
-
-	// Start the chain
-	if err := dateRangeHandler.Handle(c); err != nil {
+	v := &validator.Valligator{}
+	err := v.Validate(sources, dateFrom, dateEnd)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"error": "Error validating parameters: " + err.Error(),
 		})
 		return
 	}
@@ -72,12 +66,12 @@ func GetNews(c *gin.Context) {
 		dateEnd = LastFetchedFileDate
 	}
 
-	news, err := parsers.FromFiles(dateFrom, dateEnd)
+	news, err = parsers.FromFiles(dateFrom, dateEnd)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
+			"error": ErrFailedParsing + err.Error(),
 		})
-		log.Println(err.Error())
+		log.Println(ErrFailedParsing + err.Error())
 		return
 	}
 

@@ -16,6 +16,7 @@ var (
 		"highlight":  highlight,
 		"formatDate": formatDate,
 		"contains":   contains,
+		"trim":       strings.TrimSpace,
 	}
 	BaseTemplatePath = filepath.Join("cmd", "templates", "templates", "article.plain.tmpl")
 )
@@ -34,6 +35,16 @@ func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
 	d = filepath.Join(d, BaseTemplatePath)
 
 	tmpl := template.Must(template.New(BaseTemplate).Funcs(templateFuncs).ParseFiles(d))
+
+	for i := 0; i <= len(articles)-1; i++ {
+		articles[i] = types.News{
+			Title:       strings.TrimSpace(articles[i].Title),
+			Description: strings.TrimSpace(articles[i].Description),
+			PubDate:     articles[i].PubDate,
+			Publisher:   articles[i].PubDate,
+			Link:        articles[i].Link,
+		}
+	}
 
 	data := types.TemplateData{
 		NewsItems:  articles,

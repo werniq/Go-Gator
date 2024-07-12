@@ -4,16 +4,16 @@
 {{ end }}
 
 {{- define "content" -}}
-    {{- if eq .TotalItems 0 -}}
-        No news available for this period
-    {{else}}
+{{- if eq .TotalItems 0 -}}
+    No news available for this period
+{{else}}
 
-    {{- $keywords := .Keywords }}
-        {{- range .NewsItems -}}
-            {{- highlight .Title $keywords | println "" }}
-            {{- highlight .Description $keywords  }}
-            {{- .Link }}
-            {{- .PubDate  }}
+{{- $keywords := .Keywords }}
+{{- range .NewsItems -}}
+
+{{- highlight .Title $keywords | println }}
+{{- highlight .Description $keywords | println }}
+{{- .Link }} {{ println }} {{- .PubDate  }}
 ----------------------------------------------------------------
         {{end}}
     {{end}}

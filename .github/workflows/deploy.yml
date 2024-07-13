@@ -6,7 +6,7 @@ on:
 name: build-docker-image
 
 env:
-  REGISTRY: ghcr.io
+  REGISTRY: hub.docker.com
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.PAT }}
+          password: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta

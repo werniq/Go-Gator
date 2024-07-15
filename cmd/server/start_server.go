@@ -17,6 +17,9 @@ var (
 	// ErrFetchNewsJob is thrown when we have problems while doing fetch news job
 	ErrFetchNewsJob = fmt.Errorf("error while doing fetch news job: ")
 
+	// ErrRunningServer is thrown when we have error while running
+	ErrRunningServer = fmt.Errorf("error running server: ")
+
 	// RelativePathToCertsDir is a path to the folder with OpenSSL Certificate and Key
 	RelativePathToCertsDir = filepath.Join("cmd", "server", "certs")
 )
@@ -39,12 +42,12 @@ const (
 // server on the port DevAddr
 func ConfAndRun() error {
 	var (
-		errChan        = make(chan error, 1)
-		server         = gin.Default()
-		err            error
-		updatesFreqStr = os.Getenv("FETCH_NEWS_UPDATES_FREQUENCY")
+		errChan             = make(chan error, 1)
+		server              = gin.Default()
+		err                 error
+		updatesFrequencyStr = os.Getenv("FETCH_NEWS_UPDATES_FREQUENCY")
 	)
-	UpdatesFrequency, err := strconv.Atoi(updatesFreqStr)
+	UpdatesFrequency, err := strconv.Atoi(updatesFrequencyStr)
 	if err != nil {
 		return err
 	}
@@ -77,20 +80,17 @@ func ConfAndRun() error {
 		handlers.LastFetchedFileDate = time.Now().Format(time.DateOnly)
 	}()
 
-	//Cwd, err := os.Getwd()
-	//if err != nil {
-	//	log.Fatalln(err)
-	//}
-	//PathToCertsDir := Cwd + RelativePathToCertsDir
-	//
-	//err = server.RunTLS(ProdAddr, PathToCertsDir+CertFile, PathToCertsDir+KeyFile)
-	//if err != nil {
-	//	log.Fatalln(ErrRunningServer, err)
-	//}
-
-	err = server.Run(DevAddr)
+	Cwd, err := os.Getwd()
 	if err != nil {
-		return err
+		log.Fatalln(err)
+	}
+	PathToCertsDir := filepath.Join(Cwd, RelativePathToCertsDir)
+
+	err = server.RunTLS(ProdAddr,
+		filepath.Join(PathToCertsDir, CertFile),
+		filepath.Join(PathToCertsDir, KeyFile))
+	if err != nil {
+		log.Fatalln(ErrRunningServer, err)
 	}
 
 	close(errChan)

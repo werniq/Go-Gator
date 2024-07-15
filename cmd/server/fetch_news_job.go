@@ -29,7 +29,7 @@ func (j *FetchNewsJob) Run() error {
 
 	f := filepath.Join(CwdPath,
 		parsers.CmdDir, parsers.ParsersDir, parsers.DataDir,
-		j.Filters.StartingTimestamp)
+		j.Filters.StartingTimestamp+".json")
 
 	file, err := os.Create(f)
 	if err != nil {

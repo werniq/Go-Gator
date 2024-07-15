@@ -7,7 +7,9 @@ import (
 	"newsaggr/cmd/parsers"
 	"newsaggr/cmd/server/handlers"
 	"newsaggr/cmd/types"
+	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 )
 
@@ -31,19 +33,21 @@ const (
 
 	// KeyFile is the name of the key for the certificate above
 	KeyFile = "key.pem"
-
-	// UpdatesFrequency is used to update the news every X hours
-	UpdatesFrequency = 4
 )
 
 // ConfAndRun initializes server using gin framework, then attaches routes and handlers to it, and runs
 // server on the port DevAddr
 func ConfAndRun() error {
 	var (
-		errChan = make(chan error, 1)
-		server  = gin.Default()
-		err     error
+		errChan        = make(chan error, 1)
+		server         = gin.Default()
+		err            error
+		updatesFreqStr = os.Getenv("FETCH_NEWS_UPDATES_FREQUENCY")
 	)
+	UpdatesFrequency, err := strconv.Atoi(updatesFreqStr)
+	if err != nil {
+		return err
+	}
 
 	err = parsers.LoadSourcesFile()
 	if err != nil {
@@ -68,7 +72,7 @@ func ConfAndRun() error {
 			return
 		}
 
-		time.Sleep(time.Hour * UpdatesFrequency)
+		time.Sleep(time.Hour * time.Duration(UpdatesFrequency))
 
 		handlers.LastFetchedFileDate = time.Now().Format(time.DateOnly)
 	}()

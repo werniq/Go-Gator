@@ -47,7 +47,7 @@ func GetNews(c *gin.Context) {
 	dateFrom := c.Query(DateFromFlag)
 	dateEnd := c.Query(DateEndFlag)
 
-	v := &validator.Valligator{}
+	v := &validator.ArgValidator{}
 	err := v.Validate(sources, dateFrom, dateEnd)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{

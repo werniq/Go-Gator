@@ -108,9 +108,8 @@ func LoadSourcesFile() error {
 	return nil
 }
 
-// updateSourcesFile is used to update file with information about sources to prevent losing all information if server
-// crashes
-func updateSourcesFile() error {
+// InitSourcesFile is used to initialize file with information about sources
+func InitSourcesFile() error {
 	cwdPath, err := os.Getwd()
 	if err != nil {
 		return err
@@ -120,6 +119,13 @@ func updateSourcesFile() error {
 
 	file, err := os.Create(f)
 	if err != nil {
+		switch {
+		case errors.Is(err, os.ErrExist):
+			file, err = os.Open(f)
+		case err != nil:
+			return err
+		}
+
 		return err
 	}
 
@@ -150,8 +156,9 @@ func updateSourcesFile() error {
 	return nil
 }
 
-// InitSourcesFile is used to initialize file with information about sources
-func InitSourcesFile() error {
+// updateSourcesFile is used to update file with information about sources to prevent losing all information if server
+// crashes
+func updateSourcesFile() error {
 	cwdPath, err := os.Getwd()
 	if err != nil {
 		return err
@@ -161,13 +168,6 @@ func InitSourcesFile() error {
 
 	file, err := os.Create(f)
 	if err != nil {
-		switch {
-		case errors.Is(err, os.ErrExist):
-			file, err = os.Open(f)
-		case err != nil:
-			return err
-		}
-
 		return err
 	}
 

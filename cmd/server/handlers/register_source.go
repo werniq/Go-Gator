@@ -8,14 +8,6 @@ import (
 	"newsaggr/cmd/types"
 )
 
-// sourceInArray checks if sources is already in array
-func sourceInArray(source string) bool {
-	if _, exists := parsers.GetAllSources()[source]; exists {
-		return true
-	}
-	return false
-}
-
 // RegisterSource handler will be used in order to create new source from where
 // we can parse news
 func RegisterSource(c *gin.Context) {
@@ -48,4 +40,12 @@ func RegisterSource(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status": MsgSourceCreated,
 	})
+}
+
+// sourceInArray checks if sources is already in array
+func sourceInArray(source string) bool {
+	if _, exists := parsers.GetAllSources()[source]; exists {
+		return true
+	}
+	return false
 }

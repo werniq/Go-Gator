@@ -25,8 +25,6 @@ var (
 )
 
 const (
-	// DevAddr constant describes the port on which server will operate in Development environment
-	DevAddr = ":8080"
 
 	// ProdAddr is used to run server in production environment
 	ProdAddr = ":443"
@@ -38,18 +36,23 @@ const (
 	KeyFile = "key.pem"
 )
 
-// ConfAndRun initializes server using gin framework, then attaches routes and handlers to it, and runs
-// server on the port DevAddr
+// ConfAndRun initializes HTTPS server using gin framework, then attaches routes and handlers to it, and runs
+// server on the port ProdAddr
 func ConfAndRun() error {
 	var (
 		errChan             = make(chan error, 1)
 		server              = gin.Default()
 		err                 error
 		updatesFrequencyStr = os.Getenv("FETCH_NEWS_UPDATES_FREQUENCY")
+		UpdatesFrequency    int
 	)
-	UpdatesFrequency, err := strconv.Atoi(updatesFrequencyStr)
-	if err != nil {
-		return err
+	if updatesFrequencyStr != "" {
+		UpdatesFrequency, err = strconv.Atoi(updatesFrequencyStr)
+		if err != nil {
+			return err
+		}
+	} else {
+		UpdatesFrequency = 4
 	}
 
 	err = parsers.LoadSourcesFile()

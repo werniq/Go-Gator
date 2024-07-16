@@ -25,7 +25,6 @@ var (
 )
 
 const (
-
 	// ProdAddr is used to run server in production environment
 	ProdAddr = ":443"
 
@@ -64,7 +63,6 @@ func ConfAndRun() error {
 		}
 	}
 
-	setupRoutes(server)
 	go func() {
 		dateTimestamp := time.Now().Format(time.DateOnly)
 		j := FetchNewsJob{
@@ -88,6 +86,8 @@ func ConfAndRun() error {
 		log.Fatalln(err)
 	}
 	PathToCertsDir := filepath.Join(Cwd, RelativePathToCertsDir)
+
+	setupRoutes(server)
 
 	err = server.RunTLS(ProdAddr,
 		filepath.Join(PathToCertsDir, CertFile),

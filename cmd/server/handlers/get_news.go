@@ -71,7 +71,7 @@ func GetNews(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": ErrFailedParsing + err.Error(),
 		})
-		log.Println(ErrFailedParsing + err.Error())
+		log.Println(ErrFailedParsing, err.Error())
 		return
 	}
 

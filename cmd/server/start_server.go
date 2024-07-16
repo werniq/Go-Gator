@@ -1,6 +1,7 @@
 package server
 
 import (
+	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
@@ -9,7 +10,6 @@ import (
 	"newsaggr/cmd/types"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 )
 
@@ -25,34 +25,31 @@ var (
 )
 
 const (
-	// ProdAddr is used to run server in production environment
-	ProdAddr = ":443"
-
-	// CertFile is the name of certificate file
-	CertFile = "certificate.pem"
-
-	// KeyFile is the name of the key for the certificate above
-	KeyFile = "key.pem"
+	// prodAddr is used to run server in production environment
+	prodAddr = ":443"
 )
 
 // ConfAndRun initializes HTTPS server using gin framework, then attaches routes and handlers to it, and runs
-// server on the port ProdAddr
+// server on the port prodAddr
 func ConfAndRun() error {
 	var (
-		errChan             = make(chan error, 1)
-		server              = gin.Default()
-		err                 error
-		updatesFrequencyStr = os.Getenv("FETCH_NEWS_UPDATES_FREQUENCY")
-		UpdatesFrequency    int
+		errChan = make(chan error, 1)
+		server  = gin.Default()
+		err     error
+
+		// UpdatesFrequency means every X hours after which new news will be parsed
+		UpdatesFrequency int
+
+		// certFile is the name of certificate file
+		certFile string
+
+		// keyFile is the name of the key for the certificate above
+		keyFile string
 	)
-	if updatesFrequencyStr != "" {
-		UpdatesFrequency, err = strconv.Atoi(updatesFrequencyStr)
-		if err != nil {
-			return err
-		}
-	} else {
-		UpdatesFrequency = 4
-	}
+	flag.IntVar(&UpdatesFrequency, "f", 4, "How many hours fetch news job will wait after each execution")
+	flag.StringVar(&certFile, "cert", "certificate.pem", "Certificate for the HTTPs server")
+	flag.StringVar(&keyFile, "key", "key.pem", "Private key for the HTTPs server")
+	flag.Parse()
 
 	err = parsers.LoadSourcesFile()
 	if err != nil {
@@ -89,9 +86,9 @@ func ConfAndRun() error {
 
 	setupRoutes(server)
 
-	err = server.RunTLS(ProdAddr,
-		filepath.Join(PathToCertsDir, CertFile),
-		filepath.Join(PathToCertsDir, KeyFile))
+	err = server.RunTLS(prodAddr,
+		filepath.Join(PathToCertsDir, certFile),
+		filepath.Join(PathToCertsDir, keyFile))
 	if err != nil {
 		log.Fatalln(ErrRunningServer, err)
 	}

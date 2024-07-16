@@ -47,8 +47,8 @@ func ConfAndRun() error {
 		keyFile string
 	)
 	flag.IntVar(&UpdatesFrequency, "f", 4, "How many hours fetch news job will wait after each execution")
-	flag.StringVar(&certFile, "cert", "certificate.pem", "Certificate for the HTTPs server")
-	flag.StringVar(&keyFile, "key", "key.pem", "Private key for the HTTPs server")
+	flag.StringVar(&certFile, "c", "certificate.pem", "Certificate for the HTTPs server")
+	flag.StringVar(&keyFile, "k", "key.pem", "Private key for the HTTPs server")
 	flag.Parse()
 
 	err = parsers.LoadSourcesFile()

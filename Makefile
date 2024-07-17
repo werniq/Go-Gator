@@ -4,8 +4,8 @@ build:
 
 run: build
 	@echo "[!] RUNNING GO-GATOR"
-	./bin/go-gator.exe
+	./bin/go-gator.exe fetch
 
 test:
 	@echo "[!] RUNNING GO-GATOR TESTS"
-	go test ./cmd/... -v
+	go test ./cmd/parsers/... -v

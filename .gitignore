@@ -1,6 +1,4 @@
 
-<<<<<<< HEAD
-./bin
-=======
-./bin
->>>>>>> 579d012 (Go-Gator: version: 1.0 | Filtering news by various options)
+./cmd/parsers/data
+./bin/*
+

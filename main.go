@@ -1,23 +1,14 @@
 package main
 
-<<<<<<< HEAD
-func main() {
-  
-=======
 import (
-	"newsAggr/cmd"
-	"newsAggr/logger"
+	"gogator/cmd"
+	"log"
 )
 
-func init() {
-
-}
-
 func main() {
-	rootCmd := cmd.InitRootCmd()
+	rootCmd := cmd.FetchNewsCmd()
 	err := rootCmd.Execute()
 	if err != nil {
-		logger.ErrorLogger.Fatalln(err)
+		log.Fatalln(err)
 	}
->>>>>>> 579d012 (Go-Gator: version: 1.0 | Filtering news by various options)
 }

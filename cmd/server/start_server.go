@@ -24,18 +24,16 @@ var (
 	RelativePathToCertsDir = filepath.Join("cmd", "server", "certs")
 )
 
-const (
-	// prodAddr is used to run server in production environment
-	prodAddr = ":443"
-)
-
 // ConfAndRun initializes HTTPS server using gin framework, then attaches routes and handlers to it, and runs
-// server on the port prodAddr
+// server on the port specified by user, or default - 443
 func ConfAndRun() error {
 	var (
 		errChan = make(chan error, 1)
 		server  = gin.Default()
 		err     error
+
+		// ServerPort identifies port on which Server will be running
+		ServerPort int
 
 		// UpdatesFrequency means every X hours after which new news will be parsed
 		UpdatesFrequency int
@@ -47,6 +45,7 @@ func ConfAndRun() error {
 		keyFile string
 	)
 	flag.IntVar(&UpdatesFrequency, "f", 4, "How many hours fetch news job will wait after each execution")
+	flag.IntVar(&ServerPort, "p", 443, "How many hours fetch news job will wait after each execution")
 	flag.StringVar(&certFile, "c", "certificate.pem", "Certificate for the HTTPs server")
 	flag.StringVar(&keyFile, "k", "key.pem", "Private key for the HTTPs server")
 	flag.Parse()
@@ -86,7 +85,7 @@ func ConfAndRun() error {
 
 	setupRoutes(server)
 
-	err = server.RunTLS(prodAddr,
+	err = server.RunTLS(fmt.Sprintf(":%d", ServerPort),
 		filepath.Join(PathToCertsDir, certFile),
 		filepath.Join(PathToCertsDir, keyFile))
 	if err != nil {

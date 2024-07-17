@@ -1,4 +1,4 @@
-module newsaggr
+module gogator
 
 go 1.21
 

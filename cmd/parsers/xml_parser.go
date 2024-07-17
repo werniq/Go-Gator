@@ -2,9 +2,9 @@ package parsers
 
 import (
 	"encoding/xml"
+	"gogator/cmd/types"
 	"io"
 	"net/http"
-	"newsaggr/cmd/types"
 )
 
 type XMLParser struct {

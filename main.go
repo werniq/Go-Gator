@@ -1,8 +1,8 @@
 package main
 
 import (
+	"gogator/cmd/server"
 	"log"
-	"newsaggr/cmd/server"
 )
 
 func main() {

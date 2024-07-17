@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"gogator/cmd/parsers"
+	"gogator/cmd/types"
 	"log"
 	"net/http"
-	"newsaggr/cmd/parsers"
-	"newsaggr/cmd/types"
 )
 
 // RegisterSource handler will be used in order to create new source from where

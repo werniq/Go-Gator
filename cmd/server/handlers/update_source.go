@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"gogator/cmd/parsers"
+	"gogator/cmd/types"
 	"log"
 	"net/http"
-	"newsaggr/cmd/parsers"
-	"newsaggr/cmd/types"
 )
 
 // UpdateSource updates existent source with given parameters.

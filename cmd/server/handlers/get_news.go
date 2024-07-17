@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"gogator/cmd/filters"
+	"gogator/cmd/parsers"
+	"gogator/cmd/types"
+	"gogator/cmd/validator"
 	"log"
 	"net/http"
-	"newsaggr/cmd/filters"
-	"newsaggr/cmd/parsers"
-	"newsaggr/cmd/types"
-	"newsaggr/cmd/validator"
 	"time"
 )
 

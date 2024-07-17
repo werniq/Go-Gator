@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"gogator/cmd/parsers"
 	"net/http"
-	"newsaggr/cmd/parsers"
 )
 
 // GetSourceDetailed returns detailed information about source

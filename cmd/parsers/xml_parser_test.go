@@ -2,8 +2,8 @@ package parsers
 
 import (
 	"github.com/stretchr/testify/assert"
-	"newsaggr/cmd/filters"
-	"newsaggr/cmd/types"
+	"gogator/cmd/filters"
+	"gogator/cmd/types"
 	"testing"
 )
 

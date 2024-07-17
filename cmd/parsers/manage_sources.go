@@ -3,8 +3,8 @@ package parsers
 import (
 	"encoding/json"
 	"errors"
+	"gogator/cmd/types"
 	"io"
-	"newsaggr/cmd/types"
 	"os"
 	"path/filepath"
 )

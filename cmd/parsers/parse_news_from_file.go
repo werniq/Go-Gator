@@ -3,7 +3,7 @@ package parsers
 import (
 	"errors"
 	"fmt"
-	"newsaggr/cmd/types"
+	types "gogator/cmd/types"
 	"os"
 	"sync"
 	"time"

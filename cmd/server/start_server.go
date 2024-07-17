@@ -4,10 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	parsers "gogator/cmd/parsers"
+	"gogator/cmd/server/handlers"
+	"gogator/cmd/types"
 	"log"
-	"newsaggr/cmd/parsers"
-	"newsaggr/cmd/server/handlers"
-	"newsaggr/cmd/types"
 	"os"
 	"path/filepath"
 	"time"
@@ -88,6 +88,7 @@ func ConfAndRun() error {
 	err = server.RunTLS(fmt.Sprintf(":%d", ServerPort),
 		filepath.Join(PathToCertsDir, certFile),
 		filepath.Join(PathToCertsDir, keyFile))
+
 	if err != nil {
 		log.Fatalln(ErrRunningServer, err)
 	}

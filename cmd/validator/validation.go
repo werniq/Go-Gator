@@ -3,7 +3,7 @@ package validator
 import (
 	"errors"
 	"fmt"
-	"newsaggr/cmd/parsers"
+	parsers "gogator/cmd/parsers"
 	"strings"
 	"time"
 )

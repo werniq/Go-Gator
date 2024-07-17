@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"gogator/cmd/parsers"
 	"net/http"
 	"net/http/httptest"
-	"newsaggr/cmd/parsers"
 	"testing"
 )
 

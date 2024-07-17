@@ -3,9 +3,9 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"newsaggr/cmd/filters"
-	"newsaggr/cmd/parsers"
-	"newsaggr/cmd/types"
+	"gogator/cmd/filters"
+	"gogator/cmd/parsers"
+	"gogator/cmd/types"
 	"os"
 	"path/filepath"
 )

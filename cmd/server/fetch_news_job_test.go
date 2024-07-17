@@ -2,8 +2,8 @@ package server
 
 import (
 	"encoding/json"
-	"newsaggr/cmd/parsers"
-	"newsaggr/cmd/types"
+	"gogator/cmd/parsers"
+	"gogator/cmd/types"
 	"os"
 	"path/filepath"
 	"testing"

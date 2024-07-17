@@ -2,6 +2,6 @@
 
 bin/*
 .idea
-cmd/parsers/data
+cmd/parsers/data/*
 coverage
 cover

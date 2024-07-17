@@ -1,21 +1,24 @@
 package server
 
 import (
+	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"gogator/cmd/parsers"
+	"gogator/cmd/server/handlers"
+	"gogator/cmd/types"
 	"log"
-	"newsaggr/cmd/parsers"
-	"newsaggr/cmd/server/handlers"
-	"newsaggr/cmd/types"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 )
 
 var (
 	// ErrFetchNewsJob is thrown when we have problems while doing fetch news job
 	ErrFetchNewsJob = fmt.Errorf("error while doing fetch news job: ")
+
+	// ErrRunningServer is thrown when we have error while running
+	ErrRunningServer = fmt.Errorf("error running server: ")
 
 	// RelativePathToCertsDir is a path to the folder with OpenSSL Certificate and Key
 	RelativePathToCertsDir = filepath.Join("cmd", "server", "certs")
@@ -35,19 +38,31 @@ const (
 	KeyFile = "key.pem"
 )
 
-// ConfAndRun initializes server using gin framework, then attaches routes and handlers to it, and runs
-// server on the port DevAddr
+// ConfAndRun initializes HTTPS server using gin framework, then attaches routes and handlers to it, and runs
+// server on the port specified by user, or default - 443
 func ConfAndRun() error {
 	var (
-		errChan             = make(chan error, 1)
-		server              = gin.Default()
-		err                 error
-		updatesFrequencyStr = os.Getenv("FETCH_NEWS_UPDATES_FREQUENCY")
+		errChan = make(chan error, 1)
+		server  = gin.Default()
+		err     error
+
+		// ServerPort identifies port on which Server will be running
+		ServerPort int
+
+		// UpdatesFrequency means every X hours after which new news will be parsed
+		UpdatesFrequency int
+
+		// certFile is the name of certificate file
+		certFile string
+
+		// keyFile is the name of the key for the certificate above
+		keyFile string
 	)
-	UpdatesFrequency, err := strconv.Atoi(updatesFrequencyStr)
-	if err != nil {
-		return err
-	}
+	flag.IntVar(&UpdatesFrequency, "f", 4, "How many hours fetch news job will wait after each execution")
+	flag.IntVar(&ServerPort, "p", 443, "On which port server will be running")
+	flag.StringVar(&certFile, "c", "certificate.pem", "Certificate for the HTTPs server")
+	flag.StringVar(&keyFile, "k", "key.pem", "Private key for the HTTPs server")
+	flag.Parse()
 
 	err = parsers.LoadSourcesFile()
 	if err != nil {
@@ -58,7 +73,6 @@ func ConfAndRun() error {
 		}
 	}
 
-	setupRoutes(server)
 	go func() {
 		dateTimestamp := time.Now().Format(time.DateOnly)
 		j := FetchNewsJob{
@@ -77,20 +91,20 @@ func ConfAndRun() error {
 		handlers.LastFetchedFileDate = time.Now().Format(time.DateOnly)
 	}()
 
-	//Cwd, err := os.Getwd()
-	//if err != nil {
-	//	log.Fatalln(err)
-	//}
-	//PathToCertsDir := Cwd + RelativePathToCertsDir
-	//
-	//err = server.RunTLS(ProdAddr, PathToCertsDir+CertFile, PathToCertsDir+KeyFile)
-	//if err != nil {
-	//	log.Fatalln(ErrRunningServer, err)
-	//}
-
-	err = server.Run(DevAddr)
+	Cwd, err := os.Getwd()
 	if err != nil {
-		return err
+		log.Fatalln(err)
+	}
+	PathToCertsDir := filepath.Join(Cwd, RelativePathToCertsDir)
+
+	setupRoutes(server)
+
+	err = server.RunTLS(fmt.Sprintf(":%d", ServerPort),
+		filepath.Join(PathToCertsDir, certFile),
+		filepath.Join(PathToCertsDir, keyFile))
+
+	if err != nil {
+		log.Fatalln(ErrRunningServer, err)
 	}
 
 	close(errChan)

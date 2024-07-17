@@ -2,8 +2,8 @@ package templates
 
 import (
 	"fmt"
+	"gogator/cmd/types"
 	"html/template"
-	"newsaggr/cmd/types"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,6 +16,7 @@ var (
 		"highlight":  highlight,
 		"formatDate": formatDate,
 		"contains":   contains,
+		"trim":       strings.TrimSpace,
 	}
 
 	BaseTemplatePath = filepath.Join("cmd", "templates", "templates", "article.plain.tmpl")
@@ -26,16 +27,25 @@ const (
 )
 
 func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
-	var err error
-	cwdPath, err := os.Getwd()
+	sortNewsByPubDate(articles)
+
+	d, err := os.Getwd()
 	if err != nil {
 		return err
 	}
+	d = filepath.Join(d, BaseTemplatePath)
 
-	sortNewsByPubDate(articles)
-	cwdPath = filepath.Join(cwdPath, BaseTemplatePath)
+	tmpl := template.Must(template.New(BaseTemplate).Funcs(templateFuncs).ParseFiles(d))
 
-	tmpl := template.Must(template.New(BaseTemplate).Funcs(templateFuncs).ParseFiles(cwdPath))
+	for i := 0; i <= len(articles)-1; i++ {
+		articles[i] = types.News{
+			Title:       strings.TrimSpace(articles[i].Title),
+			Description: strings.TrimSpace(articles[i].Description),
+			PubDate:     articles[i].PubDate,
+			Publisher:   articles[i].PubDate,
+			Link:        articles[i].Link,
+		}
+	}
 
 	data := types.TemplateData{
 		NewsItems:  articles,

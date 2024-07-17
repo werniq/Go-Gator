@@ -2,12 +2,12 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"gogator/cmd/filters"
+	"gogator/cmd/parsers"
+	"gogator/cmd/templates"
+	"gogator/cmd/types"
+	"gogator/cmd/validator"
 	"log"
-	"newsaggr/cmd/filters"
-	"newsaggr/cmd/parsers"
-	"newsaggr/cmd/templates"
-	"newsaggr/cmd/types"
-	"newsaggr/cmd/validator"
 	"strings"
 )
 
@@ -22,7 +22,16 @@ var errorMessages = map[string]string{
 	"flag accessed but not defined": "Unsupported flag: ",
 }
 
-// FetchNewsCmd attaches fetchNews command to rootCmd
+// FetchNewsCmd initializes and returns command to fetch news
+// This command opens prepared files and parses their data into an array of articles.
+//
+// It accepts few flags: keywords, date-from, date-end, and sources.
+// All of them will be used to filter retrieved news, if asked:
+// Filtering by keyword will remove all articles that do not contain provided keywords. Should be separated by ','
+// Date-From and Date-End are used to validate article publishing date: it will be included if it falls in range
+// specified ones
+// Sources flag will be defining from what sources you want to get articles from: ABC, BBC, Usa Today, Washington Times
+// or all from above.
 func FetchNewsCmd() *cobra.Command {
 	fetchNews := &cobra.Command{}
 	fetchNews.Flags().String(KeywordFlag, "", "Topic on which news will be fetched (if empty, all news will be fetched, regardless of the theme). Separate them with ',' ")
@@ -33,16 +42,19 @@ func FetchNewsCmd() *cobra.Command {
 	fetchNews.Use = "fetch"
 	fetchNews.Short = "Fetching news from downloaded data"
 	fetchNews.Long = "This command parses HTML, XML and JSON files sorts them by given arguments, and returns list of news" +
-		"based on provided flags"
+		"based on mentioned flags"
 
 	fetchNews.Run = func(cmd *cobra.Command, args []string) {
 		// retrieve optional parameters
 		keywords, err := cmd.Flags().GetString(KeywordFlag)
 		checkFlagErr(err)
+
 		dateFrom, err := cmd.Flags().GetString(DateFromFlag)
 		checkFlagErr(err)
+
 		dateEnd, err := cmd.Flags().GetString(DateEndFlag)
 		checkFlagErr(err)
+
 		sources, err := cmd.Flags().GetString(SourcesFlag)
 		checkFlagErr(err)
 
@@ -53,25 +65,15 @@ func FetchNewsCmd() *cobra.Command {
 			}
 		}
 
-		err = validator.ByDate(dateFrom)
+		v := &validator.ArgValidator{}
+		err = v.Validate(sources, dateFrom, dateEnd)
 		if err != nil {
-			log.Fatalln("Error validating date: ", err)
-		}
-
-		err = validator.ByDate(dateEnd)
-		if err != nil {
-			log.Fatalln("Error validating date: ", err)
-		}
-
-		err = validator.BySources(sources)
-		if err != nil {
-			log.Fatalln("Error validating sources: ", err)
+			log.Fatalln(err)
 		}
 
 		// Split and validate sources
 		f := types.NewFilteringParams(keywords, dateFrom, dateEnd, sources)
 
-		// parsing news by sources and applying params to those news
 		news, err := parsers.ParseBySource(sources)
 		if err != nil {
 			log.Fatalln("Error parsing news: ", err)
@@ -79,12 +81,10 @@ func FetchNewsCmd() *cobra.Command {
 
 		news = filters.Apply(news, f)
 
-		// output using go templates
-		if err = templates.PrintTemplate(f, news); err != nil {
+		err = templates.PrintTemplate(f, news)
+		if err != nil {
 			log.Fatalln(err)
 		}
-
-		log.Println(len(news))
 	}
 
 	return fetchNews

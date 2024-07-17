@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"gogator/cmd/parsers"
 	"log"
 	"net/http"
-	"newsaggr/cmd/parsers"
 )
 
 // DeleteSource handler deletes existing source from registered sources.

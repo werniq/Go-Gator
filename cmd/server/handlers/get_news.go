@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"gogator/cmd/filters"
+	"gogator/cmd/parsers"
+	"gogator/cmd/types"
+	"gogator/cmd/validator"
 	"log"
 	"net/http"
-	"newsaggr/cmd/filters"
-	"newsaggr/cmd/parsers"
-	"newsaggr/cmd/types"
-	"newsaggr/cmd/validator"
 	"time"
 )
 
@@ -47,7 +47,7 @@ func GetNews(c *gin.Context) {
 	dateFrom := c.Query(DateFromFlag)
 	dateEnd := c.Query(DateEndFlag)
 
-	v := &validator.Valligator{}
+	v := &validator.ArgValidator{}
 	err := v.Validate(sources, dateFrom, dateEnd)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -71,7 +71,7 @@ func GetNews(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": ErrFailedParsing + err.Error(),
 		})
-		log.Println(ErrFailedParsing + err.Error())
+		log.Println(ErrFailedParsing, err.Error())
 		return
 	}
 

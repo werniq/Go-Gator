@@ -3,25 +3,13 @@ package validator
 import (
 	"errors"
 	"fmt"
-	"newsaggr/cmd/parsers"
+	parsers "gogator/cmd/parsers"
 	"strings"
 	"time"
 )
 
 const (
-	// KeywordFlag will be used to get the keywords (or empty string) from URL parameter
-	KeywordFlag = "keywords"
-
-	// DateFromFlag will be used to get the date-from (or empty string) from URL parameter
-	DateFromFlag = "date-from"
-
-	// DateEndFlag will be used to get the date-end (or empty string) from URL parameter
-	DateEndFlag = "date-end"
-
-	// SourcesFlag will be used to get the sources (or empty string) from URL parameter
-	SourcesFlag = "sources"
-
-	// ErrDateFromAfter is thrown when user provided dateFrom bigger than dateEnd
+	// ErrDateFromAfter is thrown when user provided date bigger than dateEnd
 	ErrDateFromAfter = "date from can not be after date end"
 
 	// ErrFailedDateValidation is thrown when user submitted date in wrong format
@@ -35,11 +23,12 @@ type Validator interface {
 	Validate(keywords, dateFrom, dateEnd string) error
 }
 
-// Valligator struct is used to validate arguments which user inputs in get-news handler
-type Valligator struct {
+// ArgValidator struct is used to validate arguments which user inputs in get-news handler
+type ArgValidator struct {
 }
 
-func (v *Valligator) Validate(sources, dateFrom, dateEnd string) error {
+// Validate checks if all user-given arguments are correct
+func (v *ArgValidator) Validate(sources, dateFrom, dateEnd string) error {
 	dateFromValidator := &DateValidationHandler{
 		date: dateFrom,
 	}
@@ -50,7 +39,9 @@ func (v *Valligator) Validate(sources, dateFrom, dateEnd string) error {
 		dateFrom: dateFrom,
 		dateEnd:  dateEnd,
 	}
-	sourcesValidator := &SourceValidationHandler{}
+	sourcesValidator := &SourceValidationHandler{
+		sources: sources,
+	}
 
 	dateFromValidator.SetNext(dateEndValidator)
 	dateEndValidator.SetNext(dateRangeValidator)

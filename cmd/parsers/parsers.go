@@ -1,9 +1,8 @@
 package parsers
 
 import (
+	"gogator/cmd/types"
 	"io"
-	"log"
-	"newsaggr/cmd/types"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,6 +10,10 @@ import (
 )
 
 // Parser interface will be used to implement parsers
+//
+// It provides a Parse method, which is used to open json, xml or html file
+// retrieve all data from it, and parse into an array of articles.
+// Returns an error, if file not exists, or error while decoding data.
 type Parser interface {
 	Parse() ([]types.News, error)
 }
@@ -30,10 +33,20 @@ var (
 		//NbcNews:         "nbc-news.json",
 	}
 
+	// sourceToFile maps source names (as strings) to their corresponding filenames
+	sourceToFile = map[string]string{
+		WashingtonTimes: "/washington-times.xml",
+		ABC:             "/abc.xml",
+		BBC:             "/bbc.xml",
+		UsaToday:        "/usa-today.html",
+		NbcNews:         "/nbc-news.json",
+	}
+
 	// sourceToParser maps source names to their corresponding parser instances
 	// The parser are created using ParsingFactory
 	sourceToParser = map[string]Parser{
 		//NbcNews:         g.JsonParser("nbc-news.json"),
+		NbcNews:         g.JsonParser(NbcNews),
 		UsaToday:        g.HtmlParser(UsaToday),
 		ABC:             g.XmlParser(ABC),
 		BBC:             g.XmlParser(BBC),
@@ -121,7 +134,6 @@ func extractFileData(filename string) ([]byte, error) {
 	}
 
 	f := filepath.Join(cwdPath, CmdDir, ParsersDir, DataDir, filename)
-	log.Println(f)
 
 	file, err := os.Open(f)
 	if err != nil {

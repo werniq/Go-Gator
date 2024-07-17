@@ -3,9 +3,9 @@ package parsers
 import (
 	"bytes"
 	"github.com/PuerkitoBio/goquery"
+	"gogator/cmd/types"
 	"io"
 	"net/http"
-	"newsaggr/cmd/types"
 	"strings"
 )
 

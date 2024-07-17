@@ -3,9 +3,9 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"newsaggr/cmd/filters"
-	"newsaggr/cmd/parsers"
-	"newsaggr/cmd/types"
+	"gogator/cmd/filters"
+	"gogator/cmd/parsers"
+	"gogator/cmd/types"
 	"os"
 	"path/filepath"
 )
@@ -29,7 +29,7 @@ func (j *FetchNewsJob) Run() error {
 
 	f := filepath.Join(CwdPath,
 		parsers.CmdDir, parsers.ParsersDir, parsers.DataDir,
-		j.Filters.StartingTimestamp)
+		j.Filters.StartingTimestamp+".json")
 
 	file, err := os.Create(f)
 	if err != nil {

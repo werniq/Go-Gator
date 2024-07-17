@@ -2,7 +2,7 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
-	"newsaggr/cmd/server/handlers"
+	"gogator/cmd/server/handlers"
 )
 
 // setupRoutes attaches routes to *gin.Engine

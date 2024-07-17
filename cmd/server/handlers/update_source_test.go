@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"gogator/cmd/types"
 	"net/http"
 	"net/http/httptest"
-	"newsaggr/cmd/types"
 	"testing"
 )
 

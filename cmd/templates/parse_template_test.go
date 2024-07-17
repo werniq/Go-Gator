@@ -2,7 +2,7 @@ package templates
 
 import (
 	"github.com/stretchr/testify/assert"
-	"newsaggr/cmd/types"
+	"gogator/cmd/types"
 	"testing"
 	"time"
 )

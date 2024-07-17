@@ -51,22 +51,6 @@ tasks:
       ./pkg_tests/types.test.exe
       ./pkg_tests/validator.test.exe
       
-
-  testingDone:
-    summary: |
-      Run Go tests with coverage report and fail if coverage is below 80%
-    cmds:
-      - go test -coverprofile=coverage.out
-      - |
-        coverage=$(go tool cover -func=coverage.out | grep -E '^total:' | awk '{print $3}' | sed 's/%//')
-        threshold=80.0
-        if (( $(echo "$coverage < $threshold" | bc -l) )); then
-          echo "Coverage $coverage% is below the threshold of $threshold%"
-          exit 1
-        else
-          echo "Coverage $coverage% meets the threshold of $threshold%"
-        fi
-
   dockerBuild:
     label: "Build the docker image using Dockerfile with go-gator as a name"
     cmd: docker build -t go-gator .

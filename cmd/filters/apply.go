@@ -1,8 +1,6 @@
 package filters
 
-import (
-	"newsaggr/cmd/types"
-)
+import "gogator/cmd/types"
 
 var (
 	f InstructionFactory

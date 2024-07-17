@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
-	"newsaggr/cmd/parsers"
+	"gogator/cmd/parsers"
 )
 
 const (

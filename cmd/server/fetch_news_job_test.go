@@ -2,8 +2,8 @@ package server
 
 import (
 	"encoding/json"
-	"newsaggr/cmd/parsers"
-	"newsaggr/cmd/types"
+	"gogator/cmd/parsers"
+	"gogator/cmd/types"
 	"os"
 	"path/filepath"
 	"testing"
@@ -34,7 +34,7 @@ func TestFetchNewsJob_Run(t *testing.T) {
 	expectedFilename := filepath.Join(CwdPath, parsers.CmdDir,
 		parsers.ParsersDir,
 		parsers.DataDir,
-		d)
+		d+".json")
 
 	if _, err := os.Stat(expectedFilename); os.IsNotExist(err) {
 		t.Fatalf("expected file %s does not exist", expectedFilename)

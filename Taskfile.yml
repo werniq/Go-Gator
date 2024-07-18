@@ -10,10 +10,10 @@ env:
 
 tasks:
   pre-launch:
-    label: Prepare code for launching
+    label: Prepare code before launching
     desc: This task formats code, optimizes dependencies and runs staticcheck tool
     cmds:
-      - go fmt
+      - go fmt ./...
       - go mod tidy
       - go vet ./...
       - staticcheck ./...

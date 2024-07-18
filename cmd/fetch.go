@@ -17,10 +17,6 @@ const (
 	SourcesFlag  = "sources"
 )
 
-var errorMessages = map[string]string{
-	"flag accessed but not defined": "Unsupported flag: ",
-}
-
 // FetchNewsCmd initializes and returns command to fetch news
 // This command opens prepared files and parses their data into an array of articles.
 //
@@ -36,7 +32,7 @@ func FetchNewsCmd() *cobra.Command {
 	fetchNews.Flags().String(KeywordFlag, "", "Topic on which news will be fetched (if empty, all news will be fetched, regardless of the theme). Separate them with ',' ")
 	fetchNews.Flags().String(DateFromFlag, "", "Retrieve news based on their published date | Format 2024-05-24")
 	fetchNews.Flags().String(DateEndFlag, "", "Retrieve news, where published date is not more then this value | Format 2024-05-24")
-	fetchNews.Flags().String(SourcesFlag, "", "Supported sources: [abc, bbc, nbc, usatoday, washingtontimes]")
+	fetchNews.Flags().String(SourcesFlag, "", "Supported sources: [abc, bbc, nbc, usatoday, washingtontimes, all]")
 
 	fetchNews.Use = "fetch"
 	fetchNews.Short = "Fetching news from downloaded data"
@@ -44,6 +40,7 @@ func FetchNewsCmd() *cobra.Command {
 		"based on mentioned flags"
 
 	fetchNews.Run = func(cmd *cobra.Command, args []string) {
+		// retrieve optional parameters
 		keywords, err := cmd.Flags().GetString(KeywordFlag)
 		err = validator.CheckFlagErr(err)
 		if err != nil {
@@ -54,12 +51,14 @@ func FetchNewsCmd() *cobra.Command {
 		err = validator.CheckFlagErr(err)
 		if err != nil {
 			log.Fatalln(err)
+
 		}
 
 		dateEnd, err := cmd.Flags().GetString(DateEndFlag)
 		err = validator.CheckFlagErr(err)
 		if err != nil {
 			log.Fatalln(err)
+
 		}
 
 		sources, err := cmd.Flags().GetString(SourcesFlag)
@@ -68,13 +67,7 @@ func FetchNewsCmd() *cobra.Command {
 			log.Fatalln(err)
 		}
 
-		if dateEnd != "" && dateFrom != "" {
-			if dateFrom > dateEnd {
-				log.Fatalln("Date from can not be after date end.")
-			}
-		}
-
-		v := &validator.ArgValidator{}
+		v := validator.ArgValidator{}
 		err = v.Validate(sources, dateFrom, dateEnd)
 		if err != nil {
 			log.Fatalln(err)

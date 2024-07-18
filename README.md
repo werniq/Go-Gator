@@ -16,20 +16,18 @@
 ## Documentation
 Here I would like to explain the purpose of each directory.
 <br />
-### 1. Certs 
-Certificates used to run server in secure mode (Enabling HTTPs)
 
-### 2. Cmd
+### 1. Cmd
 Main logic of the application is there. Cmd has few sub folders:
 1. Parsers  - Parsing various data types
-2. Parsing Instructions - Filtering news by various parameters
-3. Types - Types folder is used to avoid cycling imports. Object that are used in multilpe packages (e.g. Parsing Parameters) lives there
-4. Utils - Helper functions, in order to separate them with main logic
-5. Server - server initialization and configuration
-6. Server/handlers - handlers attached to the server
+2. Filters - Filtering news by various parameters
+3. Types - Types folder is used to avoid cycling imports. Object that are used in multiple packages (e.g. Parsing Parameters) lives there
+4. Server - server initialization and configuration
+5. Server/handlers - handlers attached to the server
+6. Validator - Validating layer using chain of responsibility pattern
 
-### 3. Docs 
-Documentation, specfile and C4 model.
+### 2. Docs 
+Documentation, specfile and C4 model, and usage/response examples with images 
 
 ## Server Handlers
 Go-Gator server contains few handlers. Few of them are used by admins to manage list of available
@@ -89,4 +87,9 @@ If were provided not-existing source - will return an error
 ## Usage:
 1. Using Golang: <br />
 > `go build -o ./bin/go-gator` - Build golang binary <br />
-> `./bin/go-gator -upd-freq=4` 
+> `./bin/go-gator`
+You can change default parameters, such as updates frequency, server port and certificates:
+1. -f - Changes news updates frequency
+2. -p - Specify port on which server will be operating
+3. -c and -k - Are used for SSL certificate and key
+

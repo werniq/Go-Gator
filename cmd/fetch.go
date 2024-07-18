@@ -8,7 +8,6 @@ import (
 	"gogator/cmd/types"
 	"gogator/cmd/validator"
 	"log"
-	"strings"
 )
 
 const (
@@ -45,20 +44,30 @@ func FetchNewsCmd() *cobra.Command {
 		"based on mentioned flags"
 
 	fetchNews.Run = func(cmd *cobra.Command, args []string) {
-		// retrieve optional parameters
 		keywords, err := cmd.Flags().GetString(KeywordFlag)
-		checkFlagErr(err)
+		err = validator.CheckFlagErr(err)
+		if err != nil {
+			log.Fatalln(err)
+		}
 
 		dateFrom, err := cmd.Flags().GetString(DateFromFlag)
-		checkFlagErr(err)
+		err = validator.CheckFlagErr(err)
+		if err != nil {
+			log.Fatalln(err)
+		}
 
 		dateEnd, err := cmd.Flags().GetString(DateEndFlag)
-		checkFlagErr(err)
+		err = validator.CheckFlagErr(err)
+		if err != nil {
+			log.Fatalln(err)
+		}
 
 		sources, err := cmd.Flags().GetString(SourcesFlag)
-		checkFlagErr(err)
+		err = validator.CheckFlagErr(err)
+		if err != nil {
+			log.Fatalln(err)
+		}
 
-		// Validate user arguments
 		if dateEnd != "" && dateFrom != "" {
 			if dateFrom > dateEnd {
 				log.Fatalln("Date from can not be after date end.")
@@ -71,7 +80,6 @@ func FetchNewsCmd() *cobra.Command {
 			log.Fatalln(err)
 		}
 
-		// Split and validate sources
 		f := types.NewFilteringParams(keywords, dateFrom, dateEnd, sources)
 
 		news, err := parsers.ParseBySource(sources)
@@ -88,17 +96,4 @@ func FetchNewsCmd() *cobra.Command {
 	}
 
 	return fetchNews
-}
-
-func checkFlagErr(err error) {
-	if err != nil {
-		for substr, msg := range errorMessages {
-			if strings.Contains(err.Error(), substr) {
-				log.Fatalln(msg, err)
-				return
-			}
-		}
-
-		log.Fatalln("Error parsing flags: ", err)
-	}
 }

@@ -5,7 +5,17 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
+COPY ./cmd/filters ./cmd/filters
+COPY ./cmd/parsers ./cmd/parsers
+COPY ./cmd/templates ./cmd/templates
+COPY ./cmd/types ./cmd/types
+COPY ./cmd/validator ./cmd/validator
+COPY ./cmd/server ./cmd/server
+COPY ./main.go ./main.go
+# Questions:
+# Should taskfile be included?
+# COPY Taskfile.yml Taskfile.yml
+# Also, why we can't use `COPY . .` with dockerignore?
 
 RUN go build -o go-gator .
 

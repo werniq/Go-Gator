@@ -20,6 +20,7 @@ func TestDeleteSource(t *testing.T) {
 		name       string
 		source     string
 		setup      func()
+		finish     func()
 		statusCode int
 		response   gin.H
 	}{
@@ -29,7 +30,13 @@ func TestDeleteSource(t *testing.T) {
 			setup: func() {
 				err := parsers.AddNewSource("xml", "source1", "https://source1.com")
 				if err != nil {
-					assert.Equal(t, err, nil)
+					assert.Nil(t, err)
+				}
+			},
+			finish: func() {
+				err := parsers.DeleteSource("source1")
+				if err != nil {
+					assert.Nil(t, err)
 				}
 			},
 			statusCode: http.StatusOK,
@@ -46,6 +53,7 @@ func TestDeleteSource(t *testing.T) {
 					assert.Equal(t, err, nil)
 				}
 			},
+			finish:     func() {},
 			statusCode: http.StatusBadRequest,
 			response: gin.H{
 				"error": ErrSourceNotFound,
@@ -55,6 +63,7 @@ func TestDeleteSource(t *testing.T) {
 			name:       "Invalid JSON",
 			source:     "",
 			setup:      func() {},
+			finish:     func() {},
 			statusCode: http.StatusInternalServerError,
 			response: gin.H{
 				"error": ErrFailedToDecode + "invalid character 'i' looking for beginning of object key string",
@@ -85,6 +94,8 @@ func TestDeleteSource(t *testing.T) {
 			err := json.Unmarshal(w.Body.Bytes(), &response)
 			assert.NoError(t, err)
 			assert.Equal(t, testCase.response, response)
+
+			testCase.finish()
 		})
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"gogator/cmd/filters"
 	"gogator/cmd/parsers"
 	"gogator/cmd/templates"
+	"gogator/cmd/types"
 	"gogator/cmd/validator"
 	"log"
 	"reflect"
@@ -43,10 +44,10 @@ func TestCheckFlagErr(t *testing.T) {
 			log.SetOutput(&buf)
 			defer log.SetOutput(nil)
 
-			checkFlagErr(tt.err)
+			validator.CheckFlagErr(tt.err)
 
 			if got := buf.String(); got != tt.expectedLogs {
-				t.Errorf("checkFlagErr() = %v, want %v", got, tt.expectedLogs)
+				t.Errorf("CheckFlagErr() = %v, want %v", got, tt.expectedLogs)
 			}
 		})
 	}
@@ -56,42 +57,44 @@ func TestAddFetchNewsCmd(t *testing.T) {
 	fetchNews := FetchNewsCmd()
 
 	runFunc := func(cmd *cobra.Command, args []string) {
-		// retrieve optional parameters
 		keywords, err := cmd.Flags().GetString(KeywordFlag)
-		checkFlagErr(err)
-		dateFrom, err := cmd.Flags().GetString(DateFromFlag)
-		checkFlagErr(err)
-		dateEnd, err := cmd.Flags().GetString(DateEndFlag)
-		checkFlagErr(err)
-		sources, err := cmd.Flags().GetString(SourcesFlag)
-		checkFlagErr(err)
+		err = validator.CheckFlagErr(err)
+		if err != nil {
+			log.Fatalln(err)
+		}
 
-		// Validate user arguments
+		dateFrom, err := cmd.Flags().GetString(DateFromFlag)
+		err = validator.CheckFlagErr(err)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		dateEnd, err := cmd.Flags().GetString(DateEndFlag)
+		err = validator.CheckFlagErr(err)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		sources, err := cmd.Flags().GetString(SourcesFlag)
+		err = validator.CheckFlagErr(err)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
 		if dateEnd != "" && dateFrom != "" {
 			if dateFrom > dateEnd {
 				log.Fatalln("Date from can not be after date end.")
 			}
 		}
 
-		err = validator.ByDate(dateFrom)
+		v := &validator.ArgValidator{}
+		err = v.Validate(sources, dateFrom, dateEnd)
 		if err != nil {
-			log.Fatalln("Error validating date: ", err)
+			log.Fatalln(err)
 		}
 
-		err = validator.ByDate(dateEnd)
-		if err != nil {
-			log.Fatalln("Error validating date: ", err)
-		}
-
-		err = validator.BySources(sources)
-		if err != nil {
-			log.Fatalln("Error validating sources: ", err)
-		}
-
-		// Split and validate sources
 		f := types.NewFilteringParams(keywords, dateFrom, dateEnd, sources)
 
-		// parsing news by sources and applying params to those news
 		news, err := parsers.ParseBySource(sources)
 		if err != nil {
 			log.Fatalln("Error parsing news: ", err)
@@ -99,12 +102,10 @@ func TestAddFetchNewsCmd(t *testing.T) {
 
 		news = filters.Apply(news, f)
 
-		// output using go templates
-		if err = templates.PrintTemplate(f, news); err != nil {
+		err = templates.PrintTemplate(f, news)
+		if err != nil {
 			log.Fatalln(err)
 		}
-
-		log.Println(len(news))
 	}
 
 	// Verify the command properties

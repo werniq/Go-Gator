@@ -46,19 +46,15 @@ var (
 	// The parser are created using ParsingFactory
 	sourceToParser = map[string]Parser{
 		//NbcNews:         g.JsonParser("nbc-news.json"),
-		NbcNews:         g.JsonParser(NbcNews),
 		UsaToday:        g.HtmlParser(UsaToday),
 		ABC:             g.XmlParser(ABC),
 		BBC:             g.XmlParser(BBC),
 		WashingtonTimes: g.XmlParser(WashingtonTimes),
 	}
-
-	// PathToDataDir is used to join path from current working directory to data dir
-	PathToDataDir = "\\cmd\\parsers\\data\\"
 )
 
-// Define Sources
 const (
+	// Define Sources
 	NbcNews         = "nbc"
 	UsaToday        = "usatoday"
 	ABC             = "abc"

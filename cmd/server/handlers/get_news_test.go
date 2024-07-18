@@ -3,11 +3,11 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"gogator/cmd/parsers"
+	"gogator/cmd/types"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"newsaggr/cmd/parsers"
-	"newsaggr/cmd/types"
 	"testing"
 )
 

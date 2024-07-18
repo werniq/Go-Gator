@@ -20,6 +20,7 @@ func TestRegisterSource(t *testing.T) {
 		name       string
 		source     string
 		setup      func()
+		finish     func()
 		statusCode int
 		response   gin.H
 	}{
@@ -27,6 +28,7 @@ func TestRegisterSource(t *testing.T) {
 			name:       "Register non-existent source",
 			source:     "source5",
 			setup:      func() {},
+			finish:     func() {},
 			statusCode: http.StatusCreated,
 			response: gin.H{
 				"status": MsgSourceCreated,
@@ -38,7 +40,13 @@ func TestRegisterSource(t *testing.T) {
 			setup: func() {
 				err := parsers.AddNewSource("xml", "source3", "https://source1.com")
 				if err != nil {
-					assert.Equal(t, err, nil)
+					assert.Nil(t, err)
+				}
+			},
+			finish: func() {
+				err := parsers.DeleteSource("source3")
+				if err != nil {
+					assert.Nil(t, err)
 				}
 			},
 			statusCode: http.StatusBadRequest,
@@ -50,6 +58,7 @@ func TestRegisterSource(t *testing.T) {
 			name:       "Invalid JSON",
 			source:     "",
 			setup:      func() {},
+			finish:     func() {},
 			statusCode: http.StatusInternalServerError,
 			response: gin.H{
 				"error": ErrFailedToDecode + "invalid character 't' looking for beginning of object key string",
@@ -80,6 +89,8 @@ func TestRegisterSource(t *testing.T) {
 			err := json.Unmarshal(w.Body.Bytes(), &response)
 			assert.NoError(t, err)
 			assert.Equal(t, testCase.response, response)
+
+			testCase.finish()
 		})
 	}
 }

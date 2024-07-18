@@ -22,9 +22,11 @@ tasks:
     label: "Run all tests in application in MacOS/Linux"
     summary: |
       This task runs all available test files from all child folders
+    # Compiling and running tests separately to handle relative paths correctly
     cmd: |
       mkdir pkg_tests
       go test ./... -c -o pkg_tests
+      
       
       ./pkg_tests/server.test
       ./pkg_tests/handlers.test
@@ -38,14 +40,15 @@ tasks:
     label: "Run all tests in application on Windows machine"
     summary: |
       This task runs all available test files from all child folders
-      [INFO]: Should be used on Windows
+      [INFO]: Should be used on Windows because of .exe extension
+    # Compiling and running tests separately to handle relative paths correctly
     cmd: |
-      mkdir pkg_tests
+      cmd.exe /c mkdir pkg_tests
       go test ./... -c -o pkg_tests
       
       ./pkg_tests/server.test.exe
-      ./pkg_tests/handlers.test.exe
-      ./pkg_tests/templates.test.exe
+      ./pkg_tests/handlers.test.exe 
+      ./pkg_tests/templates.test.exe 
       ./pkg_tests/parsers.test.exe
       ./pkg_tests/filters.test.exe
       ./pkg_tests/types.test.exe
@@ -57,6 +60,8 @@ tasks:
 
   publish:
     label: "Push the image to dockerhub"
+    vars:
+      username: YOUR_USERNAME
     cmds:
       - docker login
-      - docker push werniq/go-gator
+      - docker push {{ .username }}/go-gator

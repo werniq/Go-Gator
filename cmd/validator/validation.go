@@ -27,6 +27,14 @@ type Validator interface {
 type ArgValidator struct {
 }
 
+type UnsupportedFlagError struct {
+	Err error
+}
+
+func (u *UnsupportedFlagError) Error() string {
+	return fmt.Sprintf(u.Err.Error())
+}
+
 // Validate checks if all user-given arguments are correct
 func (v *ArgValidator) Validate(sources, dateFrom, dateEnd string) error {
 	dateFromValidator := &DateValidationHandler{
@@ -164,6 +172,19 @@ func BySources(sources string) error {
 		if _, exists := supportedSources[source]; !exists {
 			return fmt.Errorf("unsupported source: %s. Supported sources are: %v", source, supportedSources)
 		}
+	}
+
+	return nil
+}
+
+// CheckFlagErr enhances flag-related error messages with more user-friendly versions
+func CheckFlagErr(err error) error {
+	if err != nil {
+		if strings.Contains(err.Error(), "flag accessed but not defined") {
+			return &UnsupportedFlagError{Err: errors.New("Unsupported flag: " + err.Error())}
+		}
+
+		return errors.New("error parsing flags: " + err.Error())
 	}
 
 	return nil

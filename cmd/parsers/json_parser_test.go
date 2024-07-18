@@ -8,7 +8,7 @@ import (
 
 func TestJsonParser_ParseWithArgs(t *testing.T) {
 	parser := JsonParser{
-		Source: time.Now().Format(time.DateOnly) + ".json",
+		Source: time.Now().Format(time.DateOnly) + JsonExtension,
 	}
 
 	testCases := []struct {

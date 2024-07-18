@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseWithParams(t *testing.T) {
-	sources := []string{"2024-06-20.json"}
+	sources := []string{"2024-06-20" + JsonExtension}
 	testCases := []struct {
 		Input          *types.FilteringParams
 		ExpectedOutput int

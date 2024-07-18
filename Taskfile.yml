@@ -6,9 +6,9 @@ tasks:
     summary: |
       This task formats code, optimizes dependencies and runs staticcheck tool
     cmds:
-      - gofmt
+      - go fmt
       - go mod tidy
-      - staticcheck
+      - staticcheck ./...
 
   launch:
     label: "Build and launch the code"
@@ -40,7 +40,6 @@ tasks:
     label: "Run all tests in application on Windows machine"
     summary: |
       This task runs all available test files from all child folders
-      [INFO]: Should be used on Windows because of .exe extension
     # Compiling and running tests separately to handle relative paths correctly
     cmd: |
       cmd.exe /c mkdir pkg_tests
@@ -61,7 +60,9 @@ tasks:
   publish:
     label: "Push the image to dockerhub"
     vars:
-      username: YOUR_USERNAME
+      username: qniw984
+      version: 1.0.0
     cmds:
       - docker login
-      - docker push {{ .username }}/go-gator
+      - docker build . -t {{ .username }}/go-gator:{{ .version }}
+      - docker push {{ .username }}/go-gator:{{ .version }}

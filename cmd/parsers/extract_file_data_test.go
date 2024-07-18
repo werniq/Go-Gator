@@ -6,7 +6,7 @@ import (
 )
 
 func Test_extractFileData(t *testing.T) {
-	filename := "sources.json"
+	filename := "sources" + JsonExtension
 
 	data, err := extractFileData(filename)
 

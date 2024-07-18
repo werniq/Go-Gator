@@ -7,7 +7,7 @@ import "gogator/cmd/types"
 func DestroySource(source string, dateRange []string) error {
 	for _, filename := range dateRange {
 		jp := JsonParser{
-			Source: filename + ".json",
+			Source: filename + JsonExtension,
 		}
 
 		n, err := jp.Parse()

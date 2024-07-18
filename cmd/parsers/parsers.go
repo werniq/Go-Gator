@@ -33,15 +33,6 @@ var (
 		//NbcNews:         "nbc-news.json",
 	}
 
-	// sourceToFile maps source names (as strings) to their corresponding filenames
-	sourceToFile = map[string]string{
-		WashingtonTimes: "/washington-times.xml",
-		ABC:             "/abc.xml",
-		BBC:             "/bbc.xml",
-		UsaToday:        "/usa-today.html",
-		NbcNews:         "/nbc-news.json",
-	}
-
 	// sourceToParser maps source names to their corresponding parser instances
 	// The parser are created using ParsingFactory
 	sourceToParser = map[string]Parser{
@@ -69,7 +60,9 @@ const (
 
 	DataDir = "data"
 
-	sourcesFile = "sources.json"
+	sourcesFile = "sources" + JsonExtension
+
+	JsonExtension = ".json"
 )
 
 // ParseBySource returns all news in particular source. If source is equal to "all", news will be

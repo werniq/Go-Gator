@@ -104,7 +104,7 @@ func TestFetchNewsJob_Run(t *testing.T) {
 			expectedFilename := filepath.Join(CwdPath, parsers.CmdDir,
 				parsers.ParsersDir,
 				parsers.DataDir,
-				tt.input.Filters.StartingTimestamp+".json")
+				tt.input.Filters.StartingTimestamp+parsers.JsonExtension)
 
 			if _, err := os.Stat(expectedFilename); os.IsNotExist(err) {
 				t.Fatalf("expected file %s does not exist", expectedFilename)

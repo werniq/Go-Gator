@@ -1,68 +1,78 @@
 version: '3'
 
+env:
+  # this variables can be specified when running task like this
+  # task publish DOCKER_IMAGE_NAME=new-image-title DOCKER_IMAGE_TAG=1.0.1
+  DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "go-gator" }}'
+  DOCKER_USERNAME:   '{{ .DOCKER_USERNAME | default "qniw984" }}'
+  DOCKER_IMAGE_TAG:  '{{ .DOCKER_IMAGE_TAG | default "latest" }}'
+  TESTDIR_NAME:      '{{ .TESTDIR_NAME | default "pkg_tests" }}'
+
 tasks:
   pre-launch:
-    label: "Prepare code for launching"
-    summary: |
-      This task formats code, optimizes dependencies and runs staticcheck tool
+    label: Prepare code for launching
+    desc: This task formats code, optimizes dependencies and runs staticcheck tool
     cmds:
       - go fmt
       - go mod tidy
+      - go vet ./...
       - staticcheck ./...
 
-  launch:
-    label: "Build and launch the code"
-    summary: |
-      This task builds executable file and runs it.
+  build:
+    label: Build and launch go-gator
+    desc: This task builds executable file for the server
     cmds:
-      - go build -o ./bin/server.exe
+      - go build -o ./bin/server.exe .
+
+  run:
+    label: Running executable file to launch server
+    desc: Run executable file
+    deps:
+      - build
+    cmds:
       - ./bin/server.exe
 
   test:
-    label: "Run all tests in application in MacOS/Linux"
-    summary: |
-      This task runs all available test files from all child folders
+    label: Run all tests in application in MacOS/Linux
+    desc: This task runs all available test files from all child folders
     # Compiling and running tests separately to handle relative paths correctly
     cmd: |
-      mkdir pkg_tests
-      go test ./... -c -o pkg_tests
+      mkdir {{ .TESTDIR_NAME }}
+      go test ./... -c -o {{ .TESTDIR_NAME }}
       
-      
-      ./pkg_tests/server.test
-      ./pkg_tests/handlers.test
-      ./pkg_tests/templates.test
-      ./pkg_tests/parsers.test
-      ./pkg_tests/filters.test
-      ./pkg_tests/types.test
-      ./pkg_tests/validator.test
+      ./{{ .TESTDIR_NAME }}/server.test
+      ./{{ .TESTDIR_NAME }}/handlers.test
+      ./{{ .TESTDIR_NAME }}/templates.test
+      ./{{ .TESTDIR_NAME }}/parsers.test
+      ./{{ .TESTDIR_NAME }}/filters.test
+      ./{{ .TESTDIR_NAME }}/types.test
+      ./{{ .TESTDIR_NAME }}/validator.test
 
   test-wind:
-    label: "Run all tests in application on Windows machine"
-    summary: |
-      This task runs all available test files from all child folders
+    label: Run all tests in application on Windows machine
+    desc: This task runs all available test files from all child folders specific for Windows machine
     # Compiling and running tests separately to handle relative paths correctly
     cmd: |
-      cmd.exe /c mkdir pkg_tests
-      go test ./... -c -o pkg_tests
+      cmd.exe /c mkdir {{ .TESTDIR_NAME }}
+      go test ./... -c -o {{ .TESTDIR_NAME }}
       
-      ./pkg_tests/server.test.exe
-      ./pkg_tests/handlers.test.exe 
-      ./pkg_tests/templates.test.exe 
-      ./pkg_tests/parsers.test.exe
-      ./pkg_tests/filters.test.exe
-      ./pkg_tests/types.test.exe
-      ./pkg_tests/validator.test.exe
+      ./{{ .TESTDIR_NAME }}/server.test.exe
+      ./{{ .TESTDIR_NAME }}/handlers.test.exe 
+      ./{{ .TESTDIR_NAME }}/templates.test.exe 
+      ./{{ .TESTDIR_NAME }}/parsers.test.exe
+      ./{{ .TESTDIR_NAME }}/filters.test.exe
+      ./{{ .TESTDIR_NAME }}/types.test.exe
+      ./{{ .TESTDIR_NAME }}/validator.test.exe
       
-  dockerBuild:
-    label: "Build the docker image using Dockerfile with go-gator as a name"
-    cmd: docker build -t go-gator .
+  docker-build:
+    desc: Build the docker image using Dockerfile with go-gator as a name
+    cmd: docker build -t {{ .DOCKER_IMAGE_NAME }} .
 
   publish:
-    label: "Push the image to dockerhub"
-    vars:
-      username: qniw984
-      version: 1.0.0
+    label: Pushing image to dockerhub
+    desc: Push docker image to dockerhub
+    deps:
+     - docker-build
     cmds:
       - docker login
-      - docker build . -t {{ .username }}/go-gator:{{ .version }}
-      - docker push {{ .username }}/go-gator:{{ .version }}
+      - docker push {{ .DOCKER_USERNAME }}/{{ .DOCKER_IMAGE_NAME }}:{{ .DOCKER_IMAGE_TAG }}

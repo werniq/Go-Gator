@@ -37,10 +37,10 @@ P.S. This example assumes that server is running on port :443, however you can c
 
 1. GET: `/news` - Returns list of news, filtering them by parameters.
 - Available parameters: <br/>
-> `ts-from 2024-05-12` News will be retrieved starting from that timestamp <br/>
-> `ts-to 2024-05-18` No news will be retrieved, where publication date is bigger than provided parameter <br/>
-> `sources bbc,washingtontimes` News will be retrieved ONLY from mentioned sources (separated by ',') <br/>
-> `keywords Ukraine,Chine` News will be filtered by existence of keywords in title or description <br/>
+> `ts-from=2024-05-12` News will be retrieved starting from that timestamp <br/>
+> `ts-to=2024-05-18` No news will be retrieved, where publication date is bigger than provided parameter <br/>
+> `sources=bbc,washingtontimes` News will be retrieved ONLY from mentioned sources (separated by ',') <br/>
+> `keywords=Ukraine,Chine` News will be filtered by existence of keywords in title or description <br/>
 
 - Request example: 
 ![img.png](docs/images/get_news_request.png)
@@ -93,3 +93,16 @@ You can change default parameters, such as updates frequency, server port and ce
 2. -p - Specify port on which server will be operating
 3. -c and -k - Are used for SSL certificate and key
 
+2. Using Docker
+> `docker build -t go-gator .`
+> `docker run go-gator -p 443:443`
+You can change your port to anything that you like, but destination port on the container should be 443.
+
+3. With Taskfile
+> Docker: <br />
+> task docker-build DOCKER_IMAGE_NAME={your_image_name} <br />
+> task docker-run DOCKER_IMAGE_NAME={your_image_name} <br />
+>  <br />
+> Golang: <br />
+> task build <br />
+> task run

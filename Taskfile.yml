@@ -68,6 +68,10 @@ tasks:
     desc: Build the docker image using Dockerfile with go-gator as a name
     cmd: docker build -t {{ .DOCKER_IMAGE_NAME }} .
 
+  docker-run:
+    desc: Run docker image
+    cmd: docker run {{ .DOCKER_IMAGE_NAME }}
+
   publish:
     label: Pushing image to dockerhub
     desc: Push docker image to dockerhub

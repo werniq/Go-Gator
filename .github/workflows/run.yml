@@ -1,14 +1,10 @@
 name: Go-Gator
 
-
-
-on: [push]
-#    branches: ["feature/httpgator"]
-#  pull_request:
-#    branches: ["feature/httpgator"]
+on:
+  [push]
 
 jobs:
-  pre-launch:
+  launch:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -17,23 +13,29 @@ jobs:
         with:
           go-version: '1.21'
 
+      - name: Install staticcheck
+        run:
+          - go install honnef.co/go/tools/cmd/staticcheck@2024.1
+
       - name: Prepare code for launching
-        run: |
-          echo "Running tests..."
+        run:
+          go fmt ./...
+          go vet ./...
+          go mod tidy
+          staticcheck ./...
+
+      - name: Test application
+        run:
           mkdir pkg_tests
-          
-          go test ./... -c -o pkg_tests
+          go test ./... -c -o ./pkg_tests
           
           ./pkg_tests/server.test
           ./pkg_tests/handlers.test
           ./pkg_tests/templates.test
+          ./pkg_tests/parsers.test
+          ./pkg_tests/filters.test
           ./pkg_tests/validator.test
-          echo "Format code, clean dependencies and run staticcheck"
-          go fmt ./...
-          go vet ./...
-          go mod tidy
-          
-          echo "Build docker image"
+
+      - name: Build docker image
+        run:
           docker build -t go-gator .
-          echo "Run project"
-          docker run -d -p 8080:8080 go-gator

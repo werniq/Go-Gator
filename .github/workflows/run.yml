@@ -17,7 +17,7 @@ jobs:
 
       - name: Install staticcheck
         run:
-          - go install honnef.co/go/tools/cmd/staticcheck@2024.1
+          go install honnef.co/go/tools/cmd/staticcheck@2024.1
 
       - name: Prepare code for launching
         run:

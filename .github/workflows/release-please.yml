@@ -30,18 +30,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Extract metadata for docker push event
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.IMAGE_NAME }}
-          tags: |
-            type=semver,pattern={{version}}
-
-      - name: Set default tag if no tags generated
-        if: steps.meta.outputs.tags == ''
-        run: echo "TAGS=latest" >> $GITHUB_ENV
-
       - name: Build and push docker image
         uses: docker/build-push-action@v5
         if: ${{ steps.rp.outputs.release_created }}

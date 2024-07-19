@@ -9,28 +9,46 @@ env:
   TESTDIR_NAME:      '{{ .TESTDIR_NAME | default "pkg_tests" }}'
 
 tasks:
-  pre-launch:
-    label: Prepare code before launching
-    desc: This task formats code, optimizes dependencies and runs staticcheck tool
+  fmt:
+    desc: Format all code in all subdirectories
     cmds:
       - go fmt ./...
-      - go mod tidy
+
+  vet:
+    desc: Format all code in all subdirectories
+    cmds:
       - go vet ./...
+
+  clean:
+    desc: Clean go mod dependencies
+    cmds:
+      - go mod tidy
+
+  stch:
+    desc: Run staticcheck
+    cmds:
       - staticcheck ./...
 
+  pre-launch:
+    label: Prepare code before launching
+    desc: Formats code, optimizes dependencies and runs staticcheck tool
+    deps:
+      - fmt
+      - vet
+      - clean
+      - stch
+
   build:
-    label: Build and launch go-gator
-    desc: This task builds executable file for the server
+    label: Build go-gator
+    desc: Builds executable file for the server
     cmds:
-      - go build -o ./bin/server.exe .
+      - go build
 
   run:
-    label: Running executable file to launch server
-    desc: Run executable file
-    deps:
-      - build
+    label: Running go-gator
+    desc: Run the application
     cmds:
-      - ./bin/server.exe
+      - go run .
 
   test:
     label: Run all tests in application in MacOS/Linux

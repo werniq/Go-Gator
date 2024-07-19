@@ -11,7 +11,7 @@ name: release-please
 
 env:
   REGISTRY: hub.docker.com
-  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/some-img-name
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/go-gator
 
 jobs:
   release-please:

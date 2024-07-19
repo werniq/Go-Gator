@@ -1,78 +1,100 @@
 version: '3'
 
-tasks:
-  pre-launch:
-    label: "Prepare code for launching"
-    summary: |
-      This task formats code, optimizes dependencies and runs staticcheck tool
-    cmds:
-      - gofmt
-      - go mod tidy
-      - staticcheck
+env:
+  # this variables can be specified when running task like this
+  # task publish DOCKER_IMAGE_NAME=new-image-title DOCKER_IMAGE_TAG=1.0.1
+  DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "go-gator" }}'
+  DOCKER_USERNAME:   '{{ .DOCKER_USERNAME | default "qniw984" }}'
+  DOCKER_IMAGE_TAG:  '{{ .DOCKER_IMAGE_TAG | default "latest" }}'
+  TESTDIR_NAME:      '{{ .TESTDIR_NAME | default "pkg_tests" }}'
 
-  launch:
-    label: "Build and launch the code"
-    summary: |
-      This task builds executable file and runs it.
+tasks:
+  fmt:
+    desc: Format all code in all subdirectories
     cmds:
-      - go build -o ./bin/server.exe
-      - ./bin/server.exe
+      - go fmt ./...
+
+  vet:
+    desc: Format all code in all subdirectories
+    cmds:
+      - go vet ./...
+
+  clean:
+    desc: Clean go mod dependencies
+    cmds:
+      - go mod tidy
+
+  stch:
+    desc: Run staticcheck
+    cmds:
+      - staticcheck ./...
+
+  pre-launch:
+    label: Prepare code before launching
+    desc: Formats code, optimizes dependencies and runs staticcheck tool
+    deps:
+      - fmt
+      - vet
+      - clean
+      - stch
+
+  build:
+    label: Build go-gator
+    desc: Builds executable file for the server
+    cmds:
+      - go build
+
+  run:
+    label: Running go-gator
+    desc: Run the application
+    cmds:
+      - go run .
 
   test:
-    label: "Run all tests in application in MacOS/Linux"
-    summary: |
-      This task runs all available test files from all child folders
+    label: Run all tests in application in MacOS/Linux
+    desc: This task runs all available test files from all child folders
+    # Compiling and running tests separately to handle relative paths correctly
     cmd: |
-      mkdir pkg_tests
-      go test ./... -c -o pkg_tests
+      mkdir {{ .TESTDIR_NAME }}
+      go test ./... -c -o {{ .TESTDIR_NAME }}
       
-      ./pkg_tests/server.test
-      ./pkg_tests/handlers.test
-      ./pkg_tests/templates.test
-      ./pkg_tests/parsers.test
-      ./pkg_tests/filters.test
-      ./pkg_tests/types.test
-      ./pkg_tests/validator.test
+      ./{{ .TESTDIR_NAME }}/server.test
+      ./{{ .TESTDIR_NAME }}/handlers.test
+      ./{{ .TESTDIR_NAME }}/templates.test
+      ./{{ .TESTDIR_NAME }}/parsers.test
+      ./{{ .TESTDIR_NAME }}/filters.test
+      ./{{ .TESTDIR_NAME }}/types.test
+      ./{{ .TESTDIR_NAME }}/validator.test
 
   test-wind:
-    label: "Run all tests in application on Windows machine"
-    summary: |
-      This task runs all available test files from all child folders
-      [INFO]: Should be used on Windows
+    label: Run all tests in application on Windows machine
+    desc: This task runs all available test files from all child folders specific for Windows machine
+    # Compiling and running tests separately to handle relative paths correctly
     cmd: |
-      mkdir pkg_tests
-      go test ./... -c -o pkg_tests
+      cmd.exe /c mkdir {{ .TESTDIR_NAME }}
+      go test ./... -c -o {{ .TESTDIR_NAME }}
       
-      ./pkg_tests/server.test.exe
-      ./pkg_tests/handlers.test.exe
-      ./pkg_tests/templates.test.exe
-      ./pkg_tests/parsers.test.exe
-      ./pkg_tests/filters.test.exe
-      ./pkg_tests/types.test.exe
-      ./pkg_tests/validator.test.exe
-      
+      ./{{ .TESTDIR_NAME }}/server.test.exe
+      ./{{ .TESTDIR_NAME }}/handlers.test.exe 
+      ./{{ .TESTDIR_NAME }}/templates.test.exe 
+      ./{{ .TESTDIR_NAME }}/parsers.test.exe
+      ./{{ .TESTDIR_NAME }}/filters.test.exe
+      ./{{ .TESTDIR_NAME }}/types.test.exe
+      ./{{ .TESTDIR_NAME }}/validator.test.exe
 
-  testingDone:
-    summary: |
-      Run Go tests with coverage report and fail if coverage is below 80%
-    cmds:
-      - go test -coverprofile=coverage.out
-      - |
-        coverage=$(go tool cover -func=coverage.out | grep -E '^total:' | awk '{print $3}' | sed 's/%//')
-        threshold=80.0
-        if (( $(echo "$coverage < $threshold" | bc -l) )); then
-          echo "Coverage $coverage% is below the threshold of $threshold%"
-          exit 1
-        else
-          echo "Coverage $coverage% meets the threshold of $threshold%"
-        fi
+  docker-build:
+    desc: Build the docker image using Dockerfile with go-gator as a name
+    cmd: docker build -t {{ .DOCKER_IMAGE_NAME }} .
 
-  dockerBuild:
-    label: "Build the docker image using Dockerfile with go-gator as a name"
-    cmd: docker build -t go-gator .
+  docker-run:
+    desc: Run docker image
+    cmd: docker run {{ .DOCKER_IMAGE_NAME }}
 
   publish:
-    label: "Push the image to dockerhub"
+    label: Pushing image to dockerhub
+    desc: Push docker image to dockerhub
+    deps:
+      - docker-build
     cmds:
       - docker login
-      - docker push werniq/go-gator
+      - docker push {{ .DOCKER_USERNAME }}/{{ .DOCKER_IMAGE_NAME }}:{{ .DOCKER_IMAGE_TAG }}

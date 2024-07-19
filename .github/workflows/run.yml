@@ -15,28 +15,32 @@ jobs:
         with:
           go-version: '1.21'
 
-      - name: Install staticcheck
+      - name: Install go-tools
         run:
-          go install honnef.co/go/tools/cmd/staticcheck@2024.1
+          go get -u honnef.co/go/tools
 
-      - name: Prepare code for launching
+      - name: Explicit installment of staticcheck
         run:
-          go fmt ./...
-          go vet ./...
-          go mod tidy
-          staticcheck ./...
+          go install honnef.co/go/tools/cmd/staticcheck@2023.1.7
+
+      - name: Install go-task
+        run:
+          sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
+
+      - name: Format code
+        run: task fmt
+
+      - name: Analyze code for bugs and errors
+        run: task vet
+
+      - name: Clean go.mod dependencies
+        run: task clean
+
+      - name: Run staticcheck
+        run: task stch
 
       - name: Test application
-        run:
-          mkdir pkg_tests
-          go test ./... -c -o ./pkg_tests
-          
-          ./pkg_tests/server.test
-          ./pkg_tests/handlers.test
-          ./pkg_tests/templates.test
-          ./pkg_tests/parsers.test
-          ./pkg_tests/filters.test
-          ./pkg_tests/validator.test
+        run: task test
 
       - name: Build docker image
         run:

@@ -163,7 +163,7 @@ func InitSourcesFile() error {
 	if err != nil {
 		switch {
 		case errors.Is(err, os.ErrExist):
-			file, err = os.Open(f)
+			_, err = os.Open(f)
 		case err != nil:
 			return err
 		}

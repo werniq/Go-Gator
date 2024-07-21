@@ -9,6 +9,11 @@ env:
   TESTDIR_NAME:      '{{ .TESTDIR_NAME | default "pkg_tests" }}'
 
 tasks:
+  fmt-check:
+    desc: Check if files in the project need formatting
+    cmds:
+      - go fmt ./... -l
+
   fmt:
     desc: Format all code in all subdirectories
     cmds:

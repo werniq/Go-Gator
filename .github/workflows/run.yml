@@ -10,12 +10,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Go
+      - name: Set up Golang
         uses: actions/setup-go@v4
         with:
           go-version: '1.21'
 
-      - name: Install go-tools
+      - name: Install go-tools using go get
         run:
           go get -u honnef.co/go/tools
 
@@ -23,12 +23,15 @@ jobs:
         run:
           go install honnef.co/go/tools/cmd/staticcheck@2023.1.7
 
-      - name: Install go-task
+      - name: Install go-task with curl
         run:
           sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
 
-      - name: Format code
+      - name: Format code using go fmt
         run: task fmt
+
+      - name: Check difference after fmt command
+        run:
 
       - name: Analyze code for bugs and errors
         run: task vet
@@ -36,7 +39,7 @@ jobs:
       - name: Clean go.mod dependencies
         run: task clean
 
-      - name: Run staticcheck
+      - name: Run staticcheck on the project
         run: task stch
 
       - name: Test application

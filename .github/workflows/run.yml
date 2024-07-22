@@ -1,7 +1,9 @@
 name: Go-Gator
 
 on:
-  [push]
+  push:
+    branches:
+      - main
 
 jobs:
   launch:
@@ -10,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Golang
+      - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.21'
@@ -33,10 +35,15 @@ jobs:
       - name: Check for differences after fmt
         id: check-diff
         run: |
-          if ! git diff --quiet; then
-            echo "::set-output name=has-diff::true"
+          fmt_output=$(go fmt ./...)
+
+          if [[ -n "$fmt_output" ]]; then
+              echo "Formatting changes detected in the following files:"
+              echo "$fmt_output"
+              echo "has-diff=true" >> $GITHUB_ENV
           else
-            echo "::set-output name=has-diff::false"
+              echo "No formatting changes detected"
+              echo "has-diff=false" >> $GITHUB_ENV 
           fi
 
       - name: Check for differences after fmt

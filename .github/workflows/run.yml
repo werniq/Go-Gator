@@ -30,8 +30,16 @@ jobs:
       - name: Format code using go fmt
         run: task fmt
 
-      - name: Check difference after fmt command
-        run:
+      - name: Run checking differences after task fmt
+        id: git-diff
+        run: echo "::set-output name=git-diff::$(echo $(git diff --quiet HEAD~ || echo true))"
+
+      - name: Check for differences after fmt
+        if: steps.git-diff.outputs.git-diff
+        uses: actions/github-script@v3
+        with:
+          script: |
+            core.setFailed('Go fmt formatted files. Please, prepare files before pushing to the main branch. Exiting...')
 
       - name: Analyze code for bugs and errors
         run: task vet

@@ -30,12 +30,17 @@ jobs:
       - name: Format code using go fmt
         run: task fmt
 
-      - name: Run checking differences after task fmt
-        id: git-diff
-        run: echo "::set-output name=git-diff::$(echo $(git diff --quiet HEAD~ || echo true))"
+      - name: Check for differences after fmt
+        id: check-diff
+        run: |
+          if ! git diff --quiet; then
+            echo "::set-output name=has-diff::true"
+          else
+            echo "::set-output name=has-diff::false"
+          fi
 
       - name: Check for differences after fmt
-        if: steps.git-diff.outputs.git-diff
+        if: steps.check-diff.outputs.has-diff
         uses: actions/github-script@v3
         with:
           script: |

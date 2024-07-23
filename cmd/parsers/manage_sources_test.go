@@ -324,7 +324,7 @@ func TestUpdateSourcesFile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
 
-			err := UpdateSourcesFile()
+			err := UpdateSourceFile()
 
 			if tt.expectedError {
 				assert.NotNil(t, err)

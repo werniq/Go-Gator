@@ -50,18 +50,6 @@ func FromFiles(dateFrom, dateEnd string) ([]types.News, error) {
 		errChannel = make(chan error)
 	)
 
-	collectNews := func(p Parser) {
-		defer wg.Done()
-		n, err := p.Parse()
-		if err != nil {
-			errChannel <- err
-			return
-		}
-		mu.Lock()
-		news = append(news, n...)
-		mu.Unlock()
-	}
-
 	dates, err := GenerateDateRange(dateFrom, dateEnd)
 	if err != nil {
 		return nil, err
@@ -70,7 +58,8 @@ func FromFiles(dateFrom, dateEnd string) ([]types.News, error) {
 	for _, date := range dates {
 		jp := g.JsonParser(date + ".json")
 		wg.Add(1)
-		go collectNews(jp)
+
+		go fetchNews(jp, &news, &wg, &mu, errChannel)
 	}
 
 	wg.Wait()

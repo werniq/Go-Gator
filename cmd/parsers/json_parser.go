@@ -5,6 +5,13 @@ import (
 	"gogator/cmd/types"
 )
 
+// JsonParser struct is used to parse articles data from Json files.
+//
+// It implements Parser interface, which has a method Parse.
+// Firstly ot opens file with name from Source field, then decodes its content into
+// array of articles, and throws an error if something went wrong.
+//
+// Returns a successfully decoded array of news, and nil error.
 type JsonParser struct {
 	Source string
 }

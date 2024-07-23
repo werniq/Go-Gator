@@ -36,8 +36,18 @@ const (
 	DefaultPkey = "key.pem"
 )
 
-// ConfAndRun initializes HTTPS server using gin framework, then attaches routes and handlers to it, and runs
-// server on the port specified by user, or default - 443
+// ConfAndRun initializes and runs an HTTPS server using the Gin framework.
+// This function sets up server routes and handlers, and starts the server
+// on a user-specified port or defaults to port 443. It also launches a concurrent job
+// which is fetching news feeds at a specified frequency.
+//
+// Optional parameters (specified via flags):
+// / -f (updatesFrequency): Specifies the interval in hours at which the program
+// /   will fetch and parse news feeds. Default value is used if not specified.
+// / -p (serverPort): Specifies the port on which the server will run. Defaults to 443 if not specified.
+// / -c (certFile): Specifies the absolute path to the certificate file for the HTTPS server. Defaults to a predefined path if not specified.
+// / -k (keyFile): Specifies the absolute path to the private key file for the HTTPS server. Defaults to a predefined path if not specified.
+// / -fs (storagePath): Specifies the path to the directory where all data will be stored. Defaults to a predefined path if not specified.
 func ConfAndRun() error {
 	var (
 		errChan = make(chan error, 1)
@@ -58,7 +68,6 @@ func ConfAndRun() error {
 
 		storagePath string
 	)
-
 	cwdPath, err := os.Getwd()
 	if err != nil {
 		log.Fatalln(err)
@@ -80,7 +89,7 @@ func ConfAndRun() error {
 
 	err = parsers.LoadSourcesFile()
 	if err != nil {
-		err = parsers.UpdateSourcesFile()
+		err = parsers.UpdateSourceFile()
 		if err != nil {
 			log.Println("Error initializing sources file: ", err.Error())
 			return err

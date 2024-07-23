@@ -65,8 +65,11 @@ const (
 	JsonExtension = ".json"
 )
 
-// ParseBySource returns all news in particular source. If source is equal to "all", news will be
-// retrieved from all sources
+// ParseBySource retrieves all news from a particular source.
+//
+// If the source parameter is equal to "all", news will be retrieved from all sources specified in sourceToParser.
+//
+// The function returns a slice of news items and an error if any occurred during the parsing process.
 func ParseBySource(source string) ([]types.News, error) {
 	var (
 		news       []types.News
@@ -75,32 +78,17 @@ func ParseBySource(source string) ([]types.News, error) {
 		errChannel = make(chan error, 1)
 	)
 
-	collectNews := func(p Parser) {
-		defer wg.Done()
-		n, err := p.Parse()
-		if err != nil {
-			select {
-			case errChannel <- err:
-			default:
-			}
-			return
-		}
-		mu.Lock()
-		news = append(news, n...)
-		mu.Unlock()
-	}
-
 	if source == "" {
 		for _, p := range sourceToParser {
 			wg.Add(1)
-			go collectNews(p)
+			go fetchNews(p, &news, &wg, &mu, errChannel)
 		}
 	} else {
 		sources := strings.Split(source, ",")
 		for _, s := range sources {
 			if p, exists := sourceToParser[s]; exists {
 				wg.Add(1)
-				go collectNews(p)
+				go fetchNews(p, &news, &wg, &mu, errChannel)
 			}
 		}
 	}
@@ -113,6 +101,29 @@ func ParseBySource(source string) ([]types.News, error) {
 	}
 
 	return news, nil
+}
+
+// fetchNews is a helper function to parse news from a given parser.
+//
+// # It updates the news slice in a concurrency-safe manner and sends any errors to errChannel
+//
+// We use pointers to all variables from function ParseBySource and FromFiles.
+// It will cause a panic if we will call wg.Done() without passing a pointer:
+// / each goroutine would receive its own copy of the WaitGroup, which leads to incorrect synchronization:
+// / because the Add, Done, and Wait calls would affect separate WaitGroup instances,
+// / and most likely causing the Wait() function to never return or behave unpredictably.
+func fetchNews(p Parser, news *[]types.News, wg *sync.WaitGroup, mu *sync.Mutex, errChannel chan<- error) {
+	defer wg.Done()
+
+	n, err := p.Parse()
+	if err != nil {
+		errChannel <- err
+		return
+	}
+
+	mu.Lock()
+	*news = append(*news, n...)
+	mu.Unlock()
 }
 
 // extractFileData reads data from file $filename and returns its content

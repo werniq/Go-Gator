@@ -11,14 +11,21 @@ import (
 
 const (
 	ErrNoSource = "no source was detected. please, create source first"
+
+	ErrSourceExists = "this source already exists"
 )
 
 // AddNewSource inserts new source to available sources list and determines the appropriate Parser for it
+//
+// Throws an error, if the source was already registered previously.
 func AddNewSource(format, source, endpoint string) error {
+	if _, exists := sourceToEndpoint[source]; exists {
+		return errors.New(ErrSourceExists)
+	}
 	sourceToEndpoint[source] = endpoint
 	sourceToParser[source] = determineParser(format, source)
 
-	err := UpdateSourcesFile()
+	err := UpdateSourceFile()
 	if err != nil {
 		return err
 	}
@@ -41,13 +48,15 @@ func GetSourceDetailed(source string) types.Source {
 }
 
 // UpdateSourceEndpoint updates endpoint for the given source
+//
+// Throws an error, if provided source not exists
 func UpdateSourceEndpoint(source, newEndpoint string) error {
 	if _, exists := sourceToParser[source]; exists {
 		return errors.New(ErrNoSource)
 	}
 
 	sourceToEndpoint[source] = newEndpoint
-	err := UpdateSourcesFile()
+	err := UpdateSourceFile()
 	if err != nil {
 		return err
 	}
@@ -56,13 +65,15 @@ func UpdateSourceEndpoint(source, newEndpoint string) error {
 }
 
 // UpdateSourceFormat updates format for the given source
+//
+// Throws an error, if provided source not exists
 func UpdateSourceFormat(source, format string) error {
 	if _, exists := sourceToParser[source]; exists {
 		return errors.New(ErrNoSource)
 	}
 
 	sourceToParser[source] = determineParser(format, source)
-	err := UpdateSourcesFile()
+	err := UpdateSourceFile()
 	if err != nil {
 		return err
 	}
@@ -76,7 +87,7 @@ func DeleteSource(source string) error {
 		delete(sourceToEndpoint, source)
 		delete(sourceToParser, source)
 
-		err := UpdateSourcesFile()
+		err := UpdateSourceFile()
 		if err != nil {
 			return err
 		}
@@ -86,7 +97,8 @@ func DeleteSource(source string) error {
 	return nil
 }
 
-// LoadSourcesFile initializes sourceToParser and sourceToEndpoint with data from sources.json file
+// LoadSourcesFile initializes sourceToParser and sourceToEndpoint with data stored in
+// sources.json file.
 func LoadSourcesFile() error {
 	cwdPath, err := os.Getwd()
 	if err != nil {
@@ -122,8 +134,13 @@ func LoadSourcesFile() error {
 	return nil
 }
 
-// UpdateSourcesFile is used to initialize file with information about sources
-func UpdateSourcesFile() error {
+// UpdateSourceFile initializes or updates a file with all information about sources.
+// It creates the file if it doesn't exist, and updates its content if it does.
+//
+// Returns an error if the current working directory cannot be retrieved,
+// the file cannot be created or opened,
+// or if the file content cannot be written or closed properly.
+func UpdateSourceFile() error {
 	cwdPath, err := os.Getwd()
 	if err != nil {
 		return err

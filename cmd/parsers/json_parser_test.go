@@ -40,7 +40,7 @@ func TestJsonParser_ParseWithArgs(t *testing.T) {
 		{
 			Name: "Invalid JSON format",
 			setupMock: func() {
-				mockFileContent := `[{Title: "Test News", "Description": "Invalid JSON", "PubDate": "2024-07-23", "Publisher": "Test Source", "Link": "http://example.com"}]`
+				mockFileContent := `[{-----.....-------]`
 				mockExtractFileData := func(filename string) ([]byte, error) {
 					return []byte(mockFileContent), nil
 				}
@@ -68,7 +68,7 @@ func TestJsonParser_ParseWithArgs(t *testing.T) {
 				}
 				openFile = mockExtractFileData
 			},
-			expectError: false,
+			expectError: true,
 		},
 	}
 

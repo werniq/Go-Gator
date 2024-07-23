@@ -59,9 +59,15 @@ func TestFromFiles(t *testing.T) {
 			dateFrom: "2024-07-19",
 			dateEnd:  "2024-07-21",
 			want: []types.News{
-				{Title: "News 1 on 2024-07-19"},
-				{Title: "News 2 on 2024-07-20"},
-				{Title: "News 3 on 2024-07-21"},
+				{
+					Title: "News 1 on 2024-07-19",
+				},
+				{
+					Title: "News 2 on 2024-07-20",
+				},
+				{
+					Title: "News 3 on 2024-07-21",
+				},
 			},
 			setup: func(t *testing.T) {
 				newsData := [][]types.News{
@@ -126,12 +132,14 @@ func TestFromFiles(t *testing.T) {
 				filename := "2024-07-23.json"
 				file, err := os.Create(filename)
 				assert.Nil(t, err)
-				defer file.Close()
 
 				out, err := json.Marshal(data)
 				assert.Nil(t, err)
 
 				_, err = file.Write(out)
+				assert.Nil(t, err)
+
+				err = file.Close()
 				assert.Nil(t, err)
 			},
 			expectErr: false,

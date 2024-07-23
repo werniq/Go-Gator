@@ -80,11 +80,10 @@ func TestHtmlParser_Parse(t *testing.T) {
 				httpmock.Activate()
 				defer httpmock.DeactivateAndReset()
 
-				// Mock the response with missing attributes
 				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
 					httpmock.NewStringResponder(200, `<!DOCTYPE html><html><head><title>Test</title></head><body><div class="news-item"><h1 class="title">Test News</h1><p>Description</p></div></body></html>`))
 			},
-			expectError: false, // No error expected, but parsed news items will have missing fields
+			expectError: false,
 		},
 	}
 

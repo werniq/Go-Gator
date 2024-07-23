@@ -5,6 +5,6 @@
 // Handlers are used to manage sources, and automatically update file storing them, or
 // in order to retrieve latest news.
 //
-// FetchNewsJob makes request to feeds with latest news data, then parses it to the array of types.News
+// FetchNewsJob makes request to news feeds with latest articles, then parses it to the array of types.News
 // and writes that data to a filename with current data into user-defined or default data folder.
 package server

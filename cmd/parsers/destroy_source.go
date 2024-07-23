@@ -1,6 +1,10 @@
 package parsers
 
-import "gogator/cmd/types"
+import (
+	"encoding/json"
+	"gogator/cmd/types"
+	"os"
+)
 
 // DestroySource will be called whenever we delete source from database
 // All articles with this source as publisher will be deleted
@@ -16,6 +20,26 @@ func DestroySource(source string, dateRange []string) error {
 		}
 
 		n, err = removeNewsBySource(n, source)
+		if err != nil {
+			return err
+		}
+
+		file, err := os.Open(filename + JsonExtension)
+		if err != nil {
+			return err
+		}
+
+		out, err := json.Marshal(n)
+		if err != nil {
+			return err
+		}
+
+		_, err = file.Write(out)
+		if err != nil {
+			return err
+		}
+
+		err = file.Close()
 		if err != nil {
 			return err
 		}

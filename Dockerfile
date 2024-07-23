@@ -7,6 +7,7 @@ RUN go mod download
 
 COPY ./cmd/filters ./cmd/filters
 COPY ./cmd/parsers ./cmd/parsers
+COPY ./cmd/parsers/data ./cmd/parsers/datag
 COPY ./cmd/templates ./cmd/templates
 COPY ./cmd/types ./cmd/types
 COPY ./cmd/validator ./cmd/validator
@@ -26,7 +27,6 @@ ENV UPDATES_FREQUENCY=4
 ENV CERT_FILE="/app/cmd/server/certs/certificate.pem"
 ENV CERT_KEY="/app/cmd/server/certs/key.pem"
 ENV STORAGE_PATH="/app/cmd/parsers/data"
-
 
 COPY --from=build /app/go-gator .
 COPY --from=build /app/cmd/server/certs/certificate.pem ./cmd/server/certs/certificate.pem

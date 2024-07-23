@@ -25,10 +25,13 @@ func TestRegisterSource(t *testing.T) {
 		response   gin.H
 	}{
 		{
-			name:       "Register non-existent source",
-			source:     "source5",
-			setup:      func() {},
-			finish:     func() {},
+			name:   "Register non-existent source",
+			source: "source5",
+			setup:  func() {},
+			finish: func() {
+				err := parsers.DeleteSource("source5")
+				assert.Nil(t, err)
+			},
 			statusCode: http.StatusCreated,
 			response: gin.H{
 				"status": MsgSourceCreated,
@@ -45,9 +48,7 @@ func TestRegisterSource(t *testing.T) {
 			},
 			finish: func() {
 				err := parsers.DeleteSource("source3")
-				if err != nil {
-					assert.Nil(t, err)
-				}
+				assert.Nil(t, err)
 			},
 			statusCode: http.StatusBadRequest,
 			response: gin.H{

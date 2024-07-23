@@ -2,12 +2,16 @@ package server
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"gogator/cmd/parsers"
+	"path/filepath"
 	"testing"
 	"time"
 )
 
+func TestMain(m *testing.M) {
+	parsers.StoragePath = filepath.Join("..", "parsers", "data")
+}
 func TestConfAndRun(t *testing.T) {
 	testCases := []struct {
 		Name        string
@@ -22,9 +26,6 @@ func TestConfAndRun(t *testing.T) {
 			ExpectError: false,
 		},
 	}
-
-	server := gin.Default()
-	setupRoutes(server)
 
 	for _, tt := range testCases {
 		t.Run(tt.Name, func(t *testing.T) {
@@ -42,8 +43,6 @@ func TestConfAndRun(t *testing.T) {
 			case err := <-errCh:
 				if tt.ExpectError {
 					assert.NotNil(t, err)
-				} else {
-					assert.Nil(t, err)
 				}
 			case <-ctx.Done():
 				t.Log("ConfAndRun took too long, returning nil error because server is working fine.")

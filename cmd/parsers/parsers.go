@@ -19,6 +19,8 @@ type Parser interface {
 }
 
 var (
+	StoragePath string
+
 	// g and f are Parsing and instruction factories.
 	// These are custom types which will be used for parsers initialization for
 	// different data formats, and applying filters to retrieved data
@@ -122,7 +124,7 @@ func extractFileData(filename string) ([]byte, error) {
 		return nil, err
 	}
 
-	f := filepath.Join(cwdPath, CmdDir, ParsersDir, DataDir, filename)
+	f := filepath.Join(cwdPath, StoragePath, filename)
 
 	file, err := os.Open(f)
 	if err != nil {

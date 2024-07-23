@@ -22,13 +22,13 @@ var (
 // Run is a function that fetches news, parses it, and writes the parsed data
 // to a JSON file named with the current date in the format YYYY-MM-DD.
 func (j *FetchNewsJob) Run() error {
-	CwdPath, err := os.Getwd()
+	cwdPath, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 
-	f := filepath.Join(CwdPath,
-		parsers.CmdDir, parsers.ParsersDir, parsers.DataDir,
+	f := filepath.Join(cwdPath,
+		parsers.StoragePath,
 		j.Filters.StartingTimestamp+parsers.JsonExtension)
 
 	file, err := os.Create(f)

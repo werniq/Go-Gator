@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine AS build
+FROM golang:1.22-alpine AS build
 
 WORKDIR /app
 
@@ -12,10 +12,6 @@ COPY ./cmd/types ./cmd/types
 COPY ./cmd/validator ./cmd/validator
 COPY ./cmd/server ./cmd/server
 COPY ./main.go ./main.go
-# Questions:
-# Should taskfile be included?
-# COPY Taskfile.yml Taskfile.yml
-# Also, why we can't use `COPY . .` with dockerignore?
 
 RUN go build -o go-gator .
 
@@ -25,9 +21,21 @@ WORKDIR /app
 
 RUN mkdir -p ./cmd/parsers/data/ && mkdir -p ./cmd/server/certs/
 
+ENV PORT=443
+ENV UPDATES_FREQUENCY=4
+ENV CERT_FILE="/app/cmd/server/certs/certificate.pem"
+ENV CERT_KEY="/app/cmd/server/certs/key.pem"
+ENV STORAGE_PATH="/app/cmd/parsers/data"
+
+
 COPY --from=build /app/go-gator .
 COPY --from=build /app/cmd/server/certs/certificate.pem ./cmd/server/certs/certificate.pem
 COPY --from=build /app/cmd/server/certs/key.pem ./cmd/server/certs/key.pem
 COPY --from=build /app/cmd/parsers/data ./cmd/parsers/data
 
-ENTRYPOINT ["/app/go-gator"]
+ENTRYPOINT ["/app/go-gator", \
+            "-p", "$PORT", \
+            "-f", "$UPDATES_FREQUENCY", \
+            "-c", "$CERT_FILE", \
+            "-k", "$CERT_KEY", \
+            "-fs", "$STORAGE_PATH"]

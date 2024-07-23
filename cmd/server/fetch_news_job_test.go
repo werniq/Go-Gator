@@ -92,18 +92,18 @@ func TestFetchNewsJob_Run(t *testing.T) {
 				return
 			} else {
 				if err != nil {
-					t.Fatalf("Run() returned an error: %v", err)
+					t.Fatalf("runFetchNewsJob() returned an error: %v", err)
 				}
 			}
 
-			CwdPath, err := os.Getwd()
+			cwdPath, err := os.Getwd()
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			expectedFilename := filepath.Join(CwdPath, parsers.CmdDir,
-				parsers.ParsersDir,
-				parsers.DataDir,
+			expectedFilename := filepath.Join(
+				cwdPath,
+				parsers.StoragePath,
 				tt.input.Filters.StartingTimestamp+parsers.JsonExtension)
 
 			if _, err := os.Stat(expectedFilename); os.IsNotExist(err) {

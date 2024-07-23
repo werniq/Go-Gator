@@ -3,12 +3,11 @@ package parsers
 import (
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"time"
 )
 
 func TestJsonParser_ParseWithArgs(t *testing.T) {
 	parser := JsonParser{
-		Source: time.Now().Format(time.DateOnly) + JsonExtension,
+		Source: "sources.json",
 	}
 
 	testCases := []struct {
@@ -22,8 +21,8 @@ func TestJsonParser_ParseWithArgs(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.Name, func(t *testing.T) {
 			news, err := parser.Parse()
-			assert.NoError(t, err)
 
+			assert.NoError(t, err)
 			assert.NotNil(t, news)
 		})
 	}

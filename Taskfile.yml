@@ -55,33 +55,8 @@ tasks:
     desc: This task runs all available test files from all child folders
     # Compiling and running tests separately to handle relative paths correctly
     cmd: |
-      mkdir {{ .TESTDIR_NAME }}
-      go test ./... -c -o {{ .TESTDIR_NAME }}
-      
-      ./{{ .TESTDIR_NAME }}/server.test
-      ./{{ .TESTDIR_NAME }}/handlers.test
-      ./{{ .TESTDIR_NAME }}/templates.test
-      ./{{ .TESTDIR_NAME }}/parsers.test
-      ./{{ .TESTDIR_NAME }}/filters.test
-      ./{{ .TESTDIR_NAME }}/types.test
-      ./{{ .TESTDIR_NAME }}/validator.test
+      go test ./... -v
 
-  test-wind:
-    label: Run all tests in application on Windows machine
-    desc: This task runs all available test files from all child folders specific for Windows machine
-    # Compiling and running tests separately to handle relative paths correctly
-    cmd: |
-      cmd.exe /c mkdir {{ .TESTDIR_NAME }}
-      go test ./... -c -o {{ .TESTDIR_NAME }}
-      
-      ./{{ .TESTDIR_NAME }}/server.test.exe
-      ./{{ .TESTDIR_NAME }}/handlers.test.exe 
-      ./{{ .TESTDIR_NAME }}/templates.test.exe 
-      ./{{ .TESTDIR_NAME }}/parsers.test.exe
-      ./{{ .TESTDIR_NAME }}/filters.test.exe
-      ./{{ .TESTDIR_NAME }}/types.test.exe
-      ./{{ .TESTDIR_NAME }}/validator.test.exe
-      
   docker-build:
     desc: Build the docker image using Dockerfile with go-gator as a name
     cmd: docker build -t {{ .DOCKER_IMAGE_NAME }} .

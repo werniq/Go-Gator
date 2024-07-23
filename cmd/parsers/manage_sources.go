@@ -79,7 +79,7 @@ func LoadSourcesFile() error {
 		return err
 	}
 
-	f := filepath.Join(cwdPath, CmdDir, ParsersDir, DataDir, sourcesFile)
+	f := filepath.Join(cwdPath, StoragePath, sourcesFile)
 
 	file, err := os.Open(f)
 	if err != nil {
@@ -115,7 +115,7 @@ func InitSourcesFile() error {
 		return err
 	}
 
-	f := filepath.Join(cwdPath, CmdDir, ParsersDir, DataDir, sourcesFile)
+	f := filepath.Join(cwdPath, StoragePath, sourcesFile)
 
 	file, err := os.Create(f)
 	if err != nil {
@@ -164,7 +164,7 @@ func updateSourcesFile() error {
 		return err
 	}
 
-	f := filepath.Join(cwdPath, CmdDir, ParsersDir, DataDir, sourcesFile)
+	f := filepath.Join(cwdPath, StoragePath, sourcesFile)
 
 	file, err := os.Create(f)
 	if err != nil {

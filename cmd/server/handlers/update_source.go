@@ -8,6 +8,20 @@ import (
 	"net/http"
 )
 
+const (
+
+	// MsgSourceUpdated returns a successful message after changing source information
+	MsgSourceUpdated = "Source was successfully updated"
+
+	// ErrSourceNotFound displays when we try to delete not-existent source
+	ErrSourceNotFound = "Source is not found in available sources. Please, check the name and try again."
+
+	// ErrUpdateSource is thrown whenever we encounter error while updating new source (Admin API)
+	ErrUpdateSource = "Failed to update source: "
+
+	ErrNoSourceName = "No source name detected. Please, provide source name."
+)
+
 // UpdateSource updates existent source with given parameters.
 // If not-existent source is going to be updated - throws an error.
 func UpdateSource(c *gin.Context) {

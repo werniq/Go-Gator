@@ -22,6 +22,18 @@ var (
 
 	// RelativePathToCertsDir is a path to the folder with OpenSSL Certificate and Key
 	RelativePathToCertsDir = filepath.Join("cmd", "server", "certs")
+
+	DefaultCertPaths = filepath.Join("cmd", "server", "certs")
+)
+
+const (
+	DefaultUpdatesFrequency = 4
+
+	DefaultServerPort = 443
+
+	DefaultCertName = "certificate.pem"
+
+	DefaultPkey = "key.pem"
 )
 
 // ConfAndRun initializes HTTPS server using gin framework, then attaches routes and handlers to it, and runs
@@ -32,23 +44,33 @@ func ConfAndRun() error {
 		server  = gin.Default()
 		err     error
 
-		// ServerPort identifies port on which Server will be running
-		ServerPort int
+		// serverPort identifies port on which Server will be running
+		serverPort int
 
-		// UpdatesFrequency means every X hours after which new news will be parsed
-		UpdatesFrequency int
+		// updatesFrequency means every X hours after which new news will be parsed
+		updatesFrequency int
 
 		// certFile is the name of certificate file
 		certFile string
 
 		// keyFile is the name of the key for the certificate above
 		keyFile string
+
+		storagePath string
 	)
-	flag.IntVar(&UpdatesFrequency, "f", 4, "How many hours fetch news job will wait after each execution")
-	flag.IntVar(&ServerPort, "p", 443, "On which port server will be running")
-	flag.StringVar(&certFile, "c", "certificate.pem", "Certificate for the HTTPs server")
-	flag.StringVar(&keyFile, "k", "key.pem", "Private key for the HTTPs server")
+	flag.IntVar(&updatesFrequency, "f", DefaultUpdatesFrequency,
+		"How many hours fetch news job will wait after each execution")
+	flag.IntVar(&serverPort, "p", DefaultServerPort,
+		"On which port server will be running")
+	flag.StringVar(&certFile, "c", filepath.Join(DefaultCertPaths, DefaultCertName),
+		"Path to the certificate for the HTTPs server")
+	flag.StringVar(&keyFile, "k", filepath.Join(DefaultCertPaths, DefaultPkey),
+		"Path to the private key for the HTTPs server")
+	flag.StringVar(&storagePath, "fs", filepath.Join(parsers.CmdDir, parsers.ParsersDir, parsers.DataDir),
+		"Path to directory where all data will be stored")
 	flag.Parse()
+
+	parsers.StoragePath = storagePath
 
 	err = parsers.LoadSourcesFile()
 	if err != nil {
@@ -59,35 +81,21 @@ func ConfAndRun() error {
 		}
 	}
 
-	go func() {
-		dateTimestamp := time.Now().Format(time.DateOnly)
-		j := FetchNewsJob{
-			Filters: types.NewFilteringParams("", dateTimestamp, "", ""),
-		}
+	go runFetchNewsJob(updatesFrequency, errChan)
 
-		err := j.Run()
-		if err != nil {
-			log.Println(ErrFetchNewsJob, err.Error())
-			errChan <- err
-			return
-		}
-
-		time.Sleep(time.Hour * time.Duration(UpdatesFrequency))
-
-		handlers.LastFetchedFileDate = time.Now().Format(time.DateOnly)
-	}()
-
-	Cwd, err := os.Getwd()
+	cwdPath, err := os.Getwd()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	PathToCertsDir := filepath.Join(Cwd, RelativePathToCertsDir)
+
+	certPath := filepath.Join(cwdPath, certFile)
+	keyPath := filepath.Join(cwdPath, keyFile)
 
 	setupRoutes(server)
 
-	err = server.RunTLS(fmt.Sprintf(":%d", ServerPort),
-		filepath.Join(PathToCertsDir, certFile),
-		filepath.Join(PathToCertsDir, keyFile))
+	err = server.RunTLS(fmt.Sprintf(":%d", serverPort),
+		certPath,
+		keyPath)
 
 	if err != nil {
 		log.Fatalln(ErrRunningServer, err)
@@ -102,4 +110,23 @@ func ConfAndRun() error {
 	}
 
 	return nil
+}
+
+// runFetchNewsJob initializes and runs FetchNewsJob, which will parse data from feeds into respective files
+func runFetchNewsJob(updatesFrequency int, errChan chan error) {
+	dateTimestamp := time.Now().Format(time.DateOnly)
+	j := FetchNewsJob{
+		Filters: types.NewFilteringParams("", dateTimestamp, "", ""),
+	}
+
+	err := j.Run()
+	if err != nil {
+		log.Println(ErrFetchNewsJob, err.Error())
+		errChan <- err
+		return
+	}
+
+	time.Sleep(time.Hour * time.Duration(updatesFrequency))
+
+	handlers.LastFetchedFileDate = time.Now().Format(time.DateOnly)
 }

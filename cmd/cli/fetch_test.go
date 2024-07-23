@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"bytes"
-	"errors"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"gogator/cmd/filters"
@@ -14,44 +12,6 @@ import (
 	"reflect"
 	"testing"
 )
-
-func TestCheckFlagErr(t *testing.T) {
-	tests := []struct {
-		name         string
-		err          error
-		expectedLogs string
-	}{
-		{
-			name:         "Defined error message",
-			err:          errors.New("flag accessed but not defined"),
-			expectedLogs: "Unsupported flag: flag accessed but not defined\n",
-		},
-		{
-			name:         "Undefined error message",
-			err:          errors.New("some other error"),
-			expectedLogs: "Error parsing flags: some other error\n",
-		},
-		{
-			name:         "Nil error",
-			err:          nil,
-			expectedLogs: "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var buf bytes.Buffer
-			log.SetOutput(&buf)
-			defer log.SetOutput(nil)
-
-			validator.CheckFlagErr(tt.err)
-
-			if got := buf.String(); got != tt.expectedLogs {
-				t.Errorf("CheckFlagErr() = %v, want %v", got, tt.expectedLogs)
-			}
-		})
-	}
-}
 
 func TestAddFetchNewsCmd(t *testing.T) {
 	fetchNews := FetchNewsCmd()

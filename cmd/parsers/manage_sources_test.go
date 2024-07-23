@@ -2,51 +2,12 @@ package parsers
 
 import (
 	"github.com/stretchr/testify/assert"
+	"path/filepath"
 	"testing"
 )
 
-func TestDetermineParser(t *testing.T) {
-	tests := []struct {
-		format   string
-		source   string
-		expected Parser
-	}{
-		{"json", "source1", JsonParser{Source: "source1"}},
-		{"xml", "source2", XMLParser{Source: "source2"}},
-		{"html", "source3", HtmlParser{Source: "source3"}},
-		{"invalid", "source4", nil},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.format, func(t *testing.T) {
-			got := determineParser(tt.format, tt.source)
-			if got != tt.expected {
-				t.Errorf("determineParser(%s, %s) = %v, expected %v", tt.format, tt.source, got, tt.expected)
-			}
-		})
-	}
-}
-
-func TestDetermineFormat(t *testing.T) {
-	tests := []struct {
-		parser   Parser
-		source   string
-		expected string
-	}{
-		{JsonParser{Source: "source1"}, "source1", "json"},
-		{XMLParser{Source: "source2"}, "source2", "xml"},
-		{HtmlParser{Source: "source3"}, "source3", "html"},
-		{nil, "source4", ""},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.expected, func(t *testing.T) {
-			got := determineFormat(tt.parser, tt.source)
-			if got != tt.expected {
-				t.Errorf("determineFormat(%v, %s) = %v, expected %v", tt.parser, tt.source, got, tt.expected)
-			}
-		})
-	}
+func TestMain(m *testing.M) {
+	StoragePath = filepath.Join("..", "parsers", "data")
 }
 
 func TestAddNewSource(t *testing.T) {
@@ -54,12 +15,41 @@ func TestAddNewSource(t *testing.T) {
 		format             string
 		source             string
 		endpoint           string
+		finish             func()
 		expectedEndpoint   string
 		expectedParserType string
 	}{
-		{"json", "NewSourceJSON", "https://newsample.com/json", "https://newsample.com/json", "JsonParser"},
-		{"xml", "NewSourceXML", "https://newsample.com/xml", "https://newsample.com/xml", "XMLParser"},
-		{"html", "NewSourceHTML", "https://newsample.com/html", "https://newsample.com/html", "HtmlParser"},
+		{
+			format: "json",
+			finish: func() {
+				err := DeleteSource("NewSourceJSON")
+				assert.Nil(t, err)
+			},
+			source:             "NewSourceJSON",
+			endpoint:           "https://newsample.com/json",
+			expectedEndpoint:   "https://newsample.com/json",
+			expectedParserType: "JsonParser",
+		},
+		{
+			format: "xml",
+			finish: func() {
+				err := DeleteSource("NewSourceXML")
+				assert.Nil(t, err)
+			},
+			source:             "NewSourceXML",
+			endpoint:           "https://newsample.com/xml",
+			expectedEndpoint:   "https://newsample.com/xml",
+			expectedParserType: "XMLParser"},
+		{
+			format: "html",
+			finish: func() {
+				err := DeleteSource("NewSourceHTML")
+				assert.Nil(t, err)
+			},
+			source:             "NewSourceHTML",
+			endpoint:           "https://newsample.com/html",
+			expectedEndpoint:   "https://newsample.com/html",
+			expectedParserType: "HtmlParser"},
 	}
 
 	for _, tt := range tests {
@@ -115,7 +105,8 @@ func TestUpdateSourceEndpoint(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		UpdateSourceEndpoint(tt.source, tt.newEndpoint)
+		err := UpdateSourceEndpoint(tt.source, tt.newEndpoint)
+		assert.Nil(t, err)
 
 		if sourceToEndpoint[tt.source] != tt.expectedEndpoint {
 			t.Errorf("for source %s, expected endpoint %s, got %s", tt.source, tt.expectedEndpoint, sourceToEndpoint[tt.source])
@@ -134,7 +125,8 @@ func TestUpdateSourceFormat(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		UpdateSourceFormat(tt.source, tt.format)
+		err := UpdateSourceFormat(tt.source, tt.format)
+		assert.Nil(t, err)
 
 		parser := sourceToParser[tt.source]
 		switch tt.expectedParserType {
@@ -147,5 +139,49 @@ func TestUpdateSourceFormat(t *testing.T) {
 				t.Errorf("expected HtmlParser, got %T", parser)
 			}
 		}
+	}
+}
+
+func TestDetermineParser(t *testing.T) {
+	tests := []struct {
+		format   string
+		source   string
+		expected Parser
+	}{
+		{"json", "source1", JsonParser{Source: "source1"}},
+		{"xml", "source2", XMLParser{Source: "source2"}},
+		{"html", "source3", HtmlParser{Source: "source3"}},
+		{"invalid", "source4", nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.format, func(t *testing.T) {
+			got := determineParser(tt.format, tt.source)
+			if got != tt.expected {
+				t.Errorf("determineParser(%s, %s) = %v, expected %v", tt.format, tt.source, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestDetermineFormat(t *testing.T) {
+	tests := []struct {
+		parser   Parser
+		source   string
+		expected string
+	}{
+		{JsonParser{Source: "source1"}, "source1", "json"},
+		{XMLParser{Source: "source2"}, "source2", "xml"},
+		{HtmlParser{Source: "source3"}, "source3", "html"},
+		{nil, "source4", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expected, func(t *testing.T) {
+			got := determineFormat(tt.parser, tt.source)
+			if got != tt.expected {
+				t.Errorf("determineFormat(%v, %s) = %v, expected %v", tt.parser, tt.source, got, tt.expected)
+			}
+		})
 	}
 }

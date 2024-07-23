@@ -58,14 +58,20 @@ func ConfAndRun() error {
 
 		storagePath string
 	)
+
+	cwdPath, err := os.Getwd()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	flag.IntVar(&updatesFrequency, "f", DefaultUpdatesFrequency,
 		"How many hours fetch news job will wait after each execution")
 	flag.IntVar(&serverPort, "p", DefaultServerPort,
 		"On which port server will be running")
-	flag.StringVar(&certFile, "c", filepath.Join(DefaultCertPaths, DefaultCertName),
-		"Path to the certificate for the HTTPs server")
-	flag.StringVar(&keyFile, "k", filepath.Join(DefaultCertPaths, DefaultPkey),
-		"Path to the private key for the HTTPs server")
+	flag.StringVar(&certFile, "c", filepath.Join(cwdPath, DefaultCertPaths, DefaultCertName),
+		"Absolute path to the certificate for the HTTPs server")
+	flag.StringVar(&keyFile, "k", filepath.Join(cwdPath, DefaultCertPaths, DefaultPkey),
+		"Absolute path to the private key for the HTTPs server")
 	flag.StringVar(&storagePath, "fs", filepath.Join(parsers.CmdDir, parsers.ParsersDir, parsers.DataDir),
 		"Path to directory where all data will be stored")
 	flag.Parse()
@@ -83,19 +89,11 @@ func ConfAndRun() error {
 
 	go runFetchNewsJob(updatesFrequency, errChan)
 
-	cwdPath, err := os.Getwd()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	certPath := filepath.Join(cwdPath, certFile)
-	keyPath := filepath.Join(cwdPath, keyFile)
-
 	setupRoutes(server)
 
 	err = server.RunTLS(fmt.Sprintf(":%d", serverPort),
-		certPath,
-		keyPath)
+		certFile,
+		keyFile)
 
 	if err != nil {
 		log.Fatalln(ErrRunningServer, err)

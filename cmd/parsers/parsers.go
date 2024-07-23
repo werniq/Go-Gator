@@ -18,12 +18,8 @@ type Parser interface {
 	Parse() ([]types.News, error)
 }
 
-type getFileData func(f string) ([]byte, error)
-
 var (
 	StoragePath string
-
-	openFile getFileData = extractFileData
 
 	// g and f are Parsing and instruction factories.
 	// These are custom types which will be used for parsers initialization for

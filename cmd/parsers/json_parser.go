@@ -9,6 +9,16 @@ type JsonParser struct {
 	Source string
 }
 
+// getFileData
+//
+// This type defines a function which open path by given filename, and returns its
+// content, and errors of any occur.
+//
+// I defined a variable openFile with this type, to mock parsing data in JsonParser
+type getFileData func(f string) ([]byte, error)
+
+var openFile getFileData = extractFileData
+
 // Parse function is required for JsonParser struct, in order to implement NewsParser interface, for data formatted in json
 func (jp JsonParser) Parse() ([]types.News, error) {
 	var news []types.News

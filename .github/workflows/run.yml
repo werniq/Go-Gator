@@ -36,27 +36,6 @@ jobs:
       - name: Format code using go fmt
         run: task fmt
 
-      - name: Check for differences after fmt
-        id: check-diff
-        run: |
-          fmt_output=$(go fmt ./...)
-
-          if [[ -n "$fmt_output" ]]; then
-              echo "Formatting changes detected in the following files:"
-              echo "$fmt_output"
-              echo "has-diff=true" >> $GITHUB_ENV
-          else
-              echo "No formatting changes detected"
-              echo "has-diff=false" >> $GITHUB_ENV 
-          fi
-
-      - name: Check for differences after fmt
-        if: steps.check-diff.outputs.has-diff
-        uses: actions/github-script@v3
-        with:
-          script: |
-            core.setFailed('Go fmt formatted files. Please, prepare files before pushing to the main branch. Exiting...')
-
       - name: Analyze code for bugs and errors
         run: task vet
 
@@ -65,6 +44,18 @@ jobs:
 
       - name: Run staticcheck on the project
         run: task stch
+
+      - name: Check for differences with git diff
+        id: check-diff
+        run: |
+          git diff --exit-code || echo "has-diff=true" >> $GITHUB_ENV
+
+      - name: Fail if changes were detected
+        if: env.has-diff == 'true'
+        uses: actions/github-script@v3
+        with:
+          script: |
+            core.setFailed('Go fmt formatted files. Please, prepare files before pushing to the main branch. Exiting...')
 
       - name: Test application
         run: task test

@@ -6,6 +6,8 @@ env:
   DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "go-gator" }}'
   DOCKER_USERNAME:   '{{ .DOCKER_USERNAME | default "qniw984" }}'
   DOCKER_IMAGE_TAG:  '{{ .DOCKER_IMAGE_TAG | default "latest" }}'
+  DOCKERHUB_USERNAME: '{{ .DOCKER_LOGIN_USERNAME }}'
+  DOCKERHUB_PASSWORD: '{{ .DOCKERHUB_PASSWORD }}'
   TESTDIR_NAME:      '{{ .TESTDIR_NAME | default "pkg_tests" }}'
 
 tasks:
@@ -71,5 +73,5 @@ tasks:
     deps:
      - docker-build
     cmds:
-      - docker login
+      - docker login -u {{ .DOCKERHUB_USERNAME }} -p {{ .DOCKERHUB_PASSWORD }}
       - docker push {{ .DOCKER_USERNAME }}/{{ .DOCKER_IMAGE_NAME }}:{{ .DOCKER_IMAGE_TAG }}

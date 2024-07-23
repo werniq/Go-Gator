@@ -74,7 +74,7 @@ func ConfAndRun() error {
 
 	err = parsers.LoadSourcesFile()
 	if err != nil {
-		err = parsers.InitSourcesFile()
+		err = parsers.UpdateSourcesFile()
 		if err != nil {
 			log.Println("Error initializing sources file: ", err.Error())
 			return err

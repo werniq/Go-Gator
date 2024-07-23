@@ -9,12 +9,16 @@ import (
 	"path/filepath"
 )
 
+const (
+	ErrNoSource = "no source was detected. please, create source first"
+)
+
 // AddNewSource inserts new source to available sources list and determines the appropriate Parser for it
 func AddNewSource(format, source, endpoint string) error {
 	sourceToEndpoint[source] = endpoint
 	sourceToParser[source] = determineParser(format, source)
 
-	err := updateSourcesFile()
+	err := UpdateSourcesFile()
 	if err != nil {
 		return err
 	}
@@ -38,8 +42,12 @@ func GetSourceDetailed(source string) types.Source {
 
 // UpdateSourceEndpoint updates endpoint for the given source
 func UpdateSourceEndpoint(source, newEndpoint string) error {
+	if _, exists := sourceToParser[source]; exists {
+		return errors.New(ErrNoSource)
+	}
+
 	sourceToEndpoint[source] = newEndpoint
-	err := updateSourcesFile()
+	err := UpdateSourcesFile()
 	if err != nil {
 		return err
 	}
@@ -49,8 +57,12 @@ func UpdateSourceEndpoint(source, newEndpoint string) error {
 
 // UpdateSourceFormat updates format for the given source
 func UpdateSourceFormat(source, format string) error {
+	if _, exists := sourceToParser[source]; exists {
+		return errors.New(ErrNoSource)
+	}
+
 	sourceToParser[source] = determineParser(format, source)
-	err := updateSourcesFile()
+	err := UpdateSourcesFile()
 	if err != nil {
 		return err
 	}
@@ -64,10 +76,12 @@ func DeleteSource(source string) error {
 		delete(sourceToEndpoint, source)
 		delete(sourceToParser, source)
 
-		err := updateSourcesFile()
+		err := UpdateSourcesFile()
 		if err != nil {
 			return err
 		}
+	} else {
+		return errors.New(ErrNoSource)
 	}
 	return nil
 }
@@ -108,8 +122,8 @@ func LoadSourcesFile() error {
 	return nil
 }
 
-// InitSourcesFile is used to initialize file with information about sources
-func InitSourcesFile() error {
+// UpdateSourcesFile is used to initialize file with information about sources
+func UpdateSourcesFile() error {
 	cwdPath, err := os.Getwd()
 	if err != nil {
 		return err
@@ -126,48 +140,6 @@ func InitSourcesFile() error {
 			return err
 		}
 
-		return err
-	}
-
-	var sources []types.Source
-	for key, val := range sourceToEndpoint {
-		sources = append(sources, types.Source{
-			Name:     key,
-			Format:   determineFormat(sourceToParser[key], key),
-			Endpoint: val,
-		})
-	}
-
-	out, err := json.Marshal(sources)
-	if err != nil {
-		return err
-	}
-
-	_, err = file.Write(out)
-	if err != nil {
-		return err
-	}
-
-	err = file.Close()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// updateSourcesFile is used to update file with information about sources to prevent losing all information if server
-// crashes
-func updateSourcesFile() error {
-	cwdPath, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	f := filepath.Join(cwdPath, StoragePath, sourcesFile)
-
-	file, err := os.Create(f)
-	if err != nil {
 		return err
 	}
 

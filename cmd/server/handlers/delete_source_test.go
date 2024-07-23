@@ -8,8 +8,13 @@ import (
 	"gogator/cmd/parsers"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	parsers.StoragePath = filepath.Join("..", "..", "parsers", "data")
+}
 
 func TestDeleteSource(t *testing.T) {
 	// Initialize Gin engine

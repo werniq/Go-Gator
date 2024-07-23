@@ -51,7 +51,7 @@ tasks:
       - go run .
 
   test:
-    label: Run all tests in application in MacOS/Linux
+    label: Run all tests in application
     desc: This task runs all available test files from all child folders
     # Compiling and running tests separately to handle relative paths correctly
     cmd: |

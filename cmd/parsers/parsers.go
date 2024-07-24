@@ -45,21 +45,34 @@ var (
 )
 
 const (
-	UsaToday        = "usatoday"
-	ABC             = "abc"
-	BBC             = "bbc"
+	// UsaToday represents the identifier for USA Today source
+	UsaToday = "usatoday"
+
+	// ABC represents the identifier for ABC source
+	ABC = "abc"
+
+	// BBC represents the identifier for BBC source
+	BBC = "bbc"
+
+	// WashingtonTimes represents the identifier for Washington Times source
 	WashingtonTimes = "washingtontimes"
 
+	// AllSources is an empty string used to indicate all sources
 	AllSources = ""
 
+	// CmdDir is a directory where ParsersDir is located
 	CmdDir = "cmd"
 
+	// ParsersDir is a directory where DataDir is located
 	ParsersDir = "parsers"
 
+	// DataDir is the directory name where data files are stored
 	DataDir = "data"
 
+	// sourcesFile is the filename for the sources JSON file
 	sourcesFile = "sources" + JsonExtension
 
+	// JsonExtension is the file extension used for JSON files
 	JsonExtension = ".json"
 )
 

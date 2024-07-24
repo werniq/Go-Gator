@@ -10,13 +10,23 @@ import (
 )
 
 const (
+	// UsaTodayKeySelector is the CSS selector for the main content block on the USA Today page
 	UsaTodayKeySelector = "a.section-helper-flex.section-helper-row.ten-column.spacer-small.p1-container"
-	TitleSelector       = "div.p1-title-spacer"
-	TimestampSelector   = "lit-timestamp"
-	TimestampAttribute  = "publishdate"
-	LinkAttribute       = "href"
+
+	// TitleSelector is the CSS selector used to extract the title of an article
+	TitleSelector = "div.p1-title-spacer"
+
+	// TimestampSelector is the CSS selector used to get the article's timestamp
+	TimestampSelector = "lit-timestamp"
+
+	// TimestampAttribute is the name of the element's Attribute used to extract the publication date from the timestamp element
+	TimestampAttribute = "publishdate"
+
+	// LinkAttribute is the attribute name used to get the URL link from the element
+	LinkAttribute = "href"
 )
 
+// HtmlParser is a struct implementing a Parser for HTML content from a specific source
 type HtmlParser struct {
 	Source string
 }

@@ -9,6 +9,30 @@ import (
 	"path/filepath"
 )
 
+var (
+	// g is Parsing factory.
+	// These are custom types which will be used for parsers initialization for
+	// different data formats
+	g ParsingFactory
+
+	// sourceToEndpoint maps source names (as strings) to their corresponding filenames
+	sourceToEndpoint = map[string]string{
+		WashingtonTimes: "https://www.washingtontimes.com/rss/headlines/news/world",
+		ABC:             "https://abcnews.go.com/abcnews/internationalheadlines",
+		BBC:             "https://feeds.bbci.co.uk/news/rss.xml",
+		UsaToday:        "https://usatoday.com",
+	}
+
+	// sourceToParser maps source names to their corresponding parser instances
+	// The parser are created using ParsingFactory
+	sourceToParser = map[string]Parser{
+		UsaToday:        g.HtmlParser(UsaToday),
+		ABC:             g.XmlParser(ABC),
+		BBC:             g.XmlParser(BBC),
+		WashingtonTimes: g.XmlParser(WashingtonTimes),
+	}
+)
+
 const (
 	ErrNoSource = "no source was detected. please, create source first"
 

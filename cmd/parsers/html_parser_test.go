@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
+	"net/http"
 	"testing"
 )
 
@@ -25,7 +26,7 @@ func TestHtmlParser_Parse(t *testing.T) {
 
 				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
 					httpmock.NewStringResponder(
-						200,
+						http.StatusOK,
 						`<!DOCTYPE html><html><head><title>Test</title></head><body><div class="news-item"><h1 class="title">Test News</h1><time datetime="2024-07-23">July 23, 2024</time><a href="/test-link">Link</a><p>Description</p></div></body></html>`))
 			},
 			expectError: false,
@@ -48,7 +49,7 @@ func TestHtmlParser_Parse(t *testing.T) {
 				defer httpmock.DeactivateAndReset()
 
 				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
-					httpmock.NewStringResponder(200, ""))
+					httpmock.NewStringResponder(http.StatusOK, ""))
 			},
 			expectError: true,
 		},
@@ -59,7 +60,7 @@ func TestHtmlParser_Parse(t *testing.T) {
 				defer httpmock.DeactivateAndReset()
 
 				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
-					httpmock.NewStringResponder(200, "<html><head><title>Test</title></head><body><div><h1>Invalid HTML</h1></div>"))
+					httpmock.NewStringResponder(http.StatusOK, "<html><head><title>Test</title></head><body><div><h1>Invalid HTML</h1></div>"))
 			},
 			expectError: true,
 		},
@@ -70,7 +71,7 @@ func TestHtmlParser_Parse(t *testing.T) {
 				defer httpmock.DeactivateAndReset()
 
 				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
-					httpmock.NewStringResponder(200, `<!DOCTYPE html><html><head><title>Test</title></head><body><div><h1>No News Item</h1></div></body></html>`))
+					httpmock.NewStringResponder(http.StatusOK, `<!DOCTYPE html><html><head><title>Test</title></head><body><div><h1>No News Item</h1></div></body></html>`))
 			},
 			expectError: false,
 		},
@@ -81,7 +82,7 @@ func TestHtmlParser_Parse(t *testing.T) {
 				defer httpmock.DeactivateAndReset()
 
 				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
-					httpmock.NewStringResponder(200, `<!DOCTYPE html><html><head><title>Test</title></head><body><div class="news-item"><h1 class="title">Test News</h1><p>Description</p></div></body></html>`))
+					httpmock.NewStringResponder(http.StatusOK, `<!DOCTYPE html><html><head><title>Test</title></head><body><div class="news-item"><h1 class="title">Test News</h1><p>Description</p></div></body></html>`))
 			},
 			expectError: false,
 		},

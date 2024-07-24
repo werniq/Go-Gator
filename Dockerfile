@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY ./cmd/filters ./cmd/filters
 COPY ./cmd/parsers ./cmd/parsers
-COPY ./cmd/parsers/data ./cmd/parsers/datag
+COPY ./cmd/parsers/data ./cmd/parsers/data
 COPY ./cmd/templates ./cmd/templates
 COPY ./cmd/types ./cmd/types
 COPY ./cmd/validator ./cmd/validator

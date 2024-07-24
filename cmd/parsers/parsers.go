@@ -18,10 +18,6 @@ type Parser interface {
 	Parse() ([]types.News, error)
 }
 
-var (
-	StoragePath string
-)
-
 const (
 	// UsaToday represents the identifier for USA Today source
 	UsaToday = "usatoday"

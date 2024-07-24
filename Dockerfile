@@ -18,8 +18,6 @@ RUN go build -o go-gator .
 
 FROM alpine:3.20
 
-WORKDIR /app
-
 ENV PORT=443
 ENV UPDATES_FREQUENCY=4
 ENV CERT_FILE="/app/cmd/server/certs/certificate.pem"
@@ -29,13 +27,8 @@ ENV STORAGE_PATH="/app/cmd/parsers/data"
 RUN mkdir -p $STORAGE_PATH && mkdir -p ./cmd/server/certs
 
 COPY --from=build /app/go-gator .
-COPY --from=build $CERT_FILE ./cmd/server/certs/certificate.pem
-COPY --from=build $CERT_KEY ./cmd/server/certs/key.pem
+COPY --from=build $CERT_FILE $CERT_FILE
+COPY --from=build $CERT_KEY $CERT_KEY
 COPY --from=build /app/cmd/parsers/data ./cmd/parsers/data
 
-ENTRYPOINT ["/app/go-gator", \
-            "-p", "$PORT", \
-            "-f", "$UPDATES_FREQUENCY", \
-            "-c", "$CERT_FILE", \
-            "-k", "$CERT_KEY", \
-            "-fs", "$STORAGE_PATH"]
+ENTRYPOINT /go-gator -p=$PORT -f=$UPDATES_FREQUENCY -c=$CERT_FILE -k=$CERT_KEY -fs=$STORAGE_PATH

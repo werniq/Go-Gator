@@ -15,6 +15,8 @@ var (
 	// different data formats
 	g ParsingFactory
 
+	StoragePath string
+
 	// sourceToEndpoint maps source names (as strings) to their corresponding filenames
 	sourceToEndpoint = map[string]string{
 		WashingtonTimes: "https://www.washingtontimes.com/rss/headlines/news/world",

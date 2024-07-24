@@ -20,7 +20,6 @@ FROM alpine:3.20
 
 WORKDIR /app
 
-RUN mkdir -p ./cmd/parsers/data/ && mkdir -p ./cmd/server/certs/
 
 ENV PORT=443
 ENV UPDATES_FREQUENCY=4
@@ -28,9 +27,11 @@ ENV CERT_FILE="/app/cmd/server/certs/certificate.pem"
 ENV CERT_KEY="/app/cmd/server/certs/key.pem"
 ENV STORAGE_PATH="/app/cmd/parsers/data"
 
+RUN mkdir -p $STORAGE_PATH && mkdir -p ./cmd/server/certs
+
 COPY --from=build /app/go-gator .
-COPY --from=build /app/cmd/server/certs/certificate.pem ./cmd/server/certs/certificate.pem
-COPY --from=build /app/cmd/server/certs/key.pem ./cmd/server/certs/key.pem
+COPY --from=build $CERT_FILE ./cmd/server/certs/certificate.pem
+COPY --from=build $CERT_KEY ./cmd/server/certs/key.pem
 COPY --from=build /app/cmd/parsers/data ./cmd/parsers/data
 
 ENTRYPOINT ["/app/go-gator", \

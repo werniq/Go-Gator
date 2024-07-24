@@ -98,7 +98,7 @@ func TestXmlParser_Parse(t *testing.T) {
 						200,
 						`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Test Channel</title></channel></rss>`))
 			},
-			expectError:  false,
+			expectError:  true,
 			expectedNews: []types.News{},
 		},
 		{

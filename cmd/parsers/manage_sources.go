@@ -94,6 +94,7 @@ func DeleteSource(source string) error {
 	} else {
 		return errors.New(ErrNoSource)
 	}
+
 	return nil
 }
 

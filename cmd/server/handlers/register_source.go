@@ -32,6 +32,7 @@ func RegisterSource(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": ErrFailedToDecode + err.Error(),
 		})
+		log.Println(ErrFailedToDecode + err.Error())
 		return
 	}
 

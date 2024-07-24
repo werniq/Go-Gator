@@ -32,6 +32,7 @@ func UpdateSource(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": ErrFailedToDecode + err.Error(),
 		})
+		log.Println(ErrFailedToDecode + err.Error())
 		return
 	}
 

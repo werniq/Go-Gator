@@ -20,7 +20,6 @@ FROM alpine:3.20
 
 WORKDIR /app
 
-
 ENV PORT=443
 ENV UPDATES_FREQUENCY=4
 ENV CERT_FILE="/app/cmd/server/certs/certificate.pem"

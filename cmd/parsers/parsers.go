@@ -45,8 +45,6 @@ var (
 )
 
 const (
-	// Define Sources
-	NbcNews         = "nbc"
 	UsaToday        = "usatoday"
 	ABC             = "abc"
 	BBC             = "bbc"

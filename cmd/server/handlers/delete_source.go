@@ -46,6 +46,24 @@ func DeleteSource(c *gin.Context) {
 		return
 	}
 
+	dates, err := parsers.GenerateDateRange(FirstFetchedFileDate, LastFetchedFileDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": ErrDeleteSource + err.Error(),
+		})
+		log.Println(ErrDeleteSource + err.Error())
+		return
+	}
+
+	err = parsers.DestroySource(reqBody.Source, dates)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": ErrDeleteSource + err.Error(),
+		})
+		log.Println(ErrDeleteSource + err.Error())
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"status": MsgSourceDeleted,
 	})

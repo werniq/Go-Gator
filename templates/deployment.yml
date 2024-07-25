@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-namespace
+  namespace: my-namespace
+  labels:
+    app: go-gator
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: go-gator
+  template:
+    metadata:
+      labels:
+        app: go-gator
+    spec:
+      containers:
+        - name: go-gator
+          image: qniw984/go-gator:latest
+          ports:
+            - containerPort: 443
+          resources:
+            requests:
+              cpu: 500m
+              memory: 400Mi
+            limits:
+              cpu: 1
+              memory: 1024Mi

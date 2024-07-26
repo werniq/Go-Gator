@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: go-gator
-          image: qniw984/go-gator:1.0.0
+          image: qniw984/go-gator:1.1.0
           ports:
             - containerPort: 443
           resources:

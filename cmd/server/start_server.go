@@ -110,17 +110,14 @@ func ConfAndRun() error {
 
 	setupRoutes(server)
 
-	err = server.RunTLS(fmt.Sprintf(":%d", serverPort),
-		certFile,
-		keyFile)
+	go func() {
+		errChan <- server.RunTLS(fmt.Sprintf(":%d", serverPort),
+			certFile,
+			keyFile)
+	}()
 
-	if err != nil {
-		log.Fatalln(ErrRunningServer, err)
-	}
-
-	close(errChan)
-
-	for err := range errChan {
+	select {
+	case err := <-errChan:
 		if err != nil {
 			return err
 		}

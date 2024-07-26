@@ -45,17 +45,13 @@ jobs:
       - name: Run staticcheck on the project
         run: task stch
 
-      - name: Check for differences with git diff
-        id: check-diff
+      - name: Check for differences and fail if changes were detected
         run: |
           git diff --exit-code || echo "has-diff=true" >> $GITHUB_ENV
-
-      - name: Fail if changes were detected
-        if: env.has-diff == 'true'
-        uses: actions/github-script@v3
-        with:
-          script: |
-            core.setFailed('Go fmt formatted files. Please, prepare files before pushing to the main branch. Exiting...')
+          if [ "$has-diff" = "true" ]; then
+            echo 'Go fmt formatted files. Please, prepare files before pushing to the main branch. Exiting...'
+            exit 1
+          fi
 
       - name: Test application
         run: task test

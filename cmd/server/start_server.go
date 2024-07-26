@@ -1,13 +1,13 @@
 package server
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	parsers "gogator/cmd/parsers"
 	"gogator/cmd/server/handlers"
 	"gogator/cmd/types"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,17 +16,14 @@ import (
 
 var (
 	// ErrFetchNewsJob is thrown when we have problems while doing fetch news job
-	ErrFetchNewsJob = fmt.Errorf("error while doing fetch news job: ")
-
-	// ErrRunningServer is thrown when we have error while running
-	ErrRunningServer = fmt.Errorf("error running server: ")
+	ErrFetchNewsJob = "error while doing fetch news job: "
 
 	// defaultCertsPath is default path to server
 	defaultCertsPath = filepath.Join("cmd", "server", "certs")
 )
 
 const (
-	// defaultUpdateFrequency is amount of hours used to fetch and parser article feeds
+	// defaultUpdateFrequency is an interval in hours of hours used to fetch and parse article feeds
 	defaultUpdateFrequency = 4
 
 	// defaultServerPort is a default port on which this server will be running
@@ -38,8 +35,11 @@ const (
 	// defaultPrivateKey identifies the default name of server's private key
 	defaultPrivateKey = "key.pem"
 
-	// ErrNotSpecified helps us to check if error was related to initializing sources file
-	ErrNotSpecified = "The system cannot find the file specified."
+	// errNotSpecified helps us to check if error was related to initializing sources file
+	errNotSpecified = "The system cannot find the file specified."
+
+	// errInitializingSources is thrown when func responsible for initialization of sources fails
+	errInitializingSources = "Error initializing sources file:"
 )
 
 // ConfAndRun initializes and runs an HTTPS server using the Gin framework.
@@ -95,11 +95,10 @@ func ConfAndRun() error {
 
 	err = parsers.LoadSourcesFile()
 	if err != nil {
-		if strings.Contains(err.Error(), ErrNotSpecified) {
+		if strings.Contains(err.Error(), errNotSpecified) {
 			err = parsers.UpdateSourceFile()
 			if err != nil {
-				log.Println("Error initializing sources file: ", err.Error())
-				return err
+				return errors.New(errInitializingSources + err.Error())
 			}
 		} else {
 			return err
@@ -135,8 +134,7 @@ func runFetchNewsJob(updatesFrequency int, errChan chan error) {
 
 	err := j.Run()
 	if err != nil {
-		log.Println(ErrFetchNewsJob, err.Error())
-		errChan <- err
+		errChan <- errors.New(ErrFetchNewsJob + err.Error())
 		return
 	}
 

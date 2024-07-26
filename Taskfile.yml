@@ -79,11 +79,9 @@ tasks:
   deploy:
     desc: Deploy news aggregator app on the Kubernetes cluster
     cmds:
-      - kubectl apply -f templates/namespace.yml
-      - kubectl apply -f templates/deployment.yml
+      - kubectl apply -f templates/
 
   undeploy:
     desc: Remove go-gator from kubernetes Cluster
     cmds:
-      - kubectl delete -f templates/deployment.yml
-      - kubectl delete -f templates/namespace.yml
+      - kubectl delete -f templates/

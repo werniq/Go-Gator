@@ -34,10 +34,13 @@ const (
 	// defaultServerPort is a default port on which this server will be running
 	defaultServerPort = 443
 
+	// defaultCertName represents default name of server's certificate file
 	defaultCertName = "certificate.pem"
 
+	// defaultPrivateKey identifies the default name of server's private key
 	defaultPrivateKey = "key.pem"
 
+	// ErrNotSpecified helps us to check if error was related to initializing sources file
 	ErrNotSpecified = "The system cannot find the file specified."
 )
 

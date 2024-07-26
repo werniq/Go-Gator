@@ -2,10 +2,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: go-gator
+  namespace: go-gator
 spec:
   selector:
     app: go-gator
   ports:
     - protocol: TCP
-      port: 7432
+      port: 443
       targetPort: 443

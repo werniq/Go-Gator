@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -27,13 +28,17 @@ var (
 )
 
 const (
-	DefaultUpdatesFrequency = 4
+	// defaultUpdateFrequency is amount of hours used to fetch and parser article feeds
+	defaultUpdateFrequency = 4
 
-	DefaultServerPort = 443
+	// defaultServerPort is a default port on which this server will be running
+	defaultServerPort = 443
 
-	DefaultCertName = "certificate.pem"
+	defaultCertName = "certificate.pem"
 
-	DefaultPkey = "key.pem"
+	defaultPrivateKey = "key.pem"
+
+	ErrNotSpecified = "The system cannot find the file specified."
 )
 
 // ConfAndRun initializes and runs an HTTPS server using the Gin framework.
@@ -70,16 +75,16 @@ func ConfAndRun() error {
 	)
 	cwdPath, err := os.Getwd()
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
-	flag.IntVar(&updatesFrequency, "f", DefaultUpdatesFrequency,
+	flag.IntVar(&updatesFrequency, "f", defaultUpdateFrequency,
 		"How many hours fetch news job will wait after each execution")
-	flag.IntVar(&serverPort, "p", DefaultServerPort,
+	flag.IntVar(&serverPort, "p", defaultServerPort,
 		"On which port server will be running")
-	flag.StringVar(&certFile, "c", filepath.Join(cwdPath, DefaultCertPaths, DefaultCertName),
+	flag.StringVar(&certFile, "c", filepath.Join(cwdPath, DefaultCertPaths, defaultCertName),
 		"Absolute path to the certificate for the HTTPs server")
-	flag.StringVar(&keyFile, "k", filepath.Join(cwdPath, DefaultCertPaths, DefaultPkey),
+	flag.StringVar(&keyFile, "k", filepath.Join(cwdPath, DefaultCertPaths, defaultPrivateKey),
 		"Absolute path to the private key for the HTTPs server")
 	flag.StringVar(&storagePath, "fs", filepath.Join(parsers.CmdDir, parsers.ParsersDir, parsers.DataDir),
 		"Path to directory where all data will be stored")
@@ -89,9 +94,13 @@ func ConfAndRun() error {
 
 	err = parsers.LoadSourcesFile()
 	if err != nil {
-		err = parsers.UpdateSourceFile()
-		if err != nil {
-			log.Println("Error initializing sources file: ", err.Error())
+		if strings.Contains(err.Error(), ErrNotSpecified) {
+			err = parsers.UpdateSourceFile()
+			if err != nil {
+				log.Println("Error initializing sources file: ", err.Error())
+				return err
+			}
+		} else {
 			return err
 		}
 	}

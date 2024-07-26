@@ -15,9 +15,6 @@ import (
 )
 
 var (
-	// ErrFetchNewsJob is thrown when we have problems while doing fetch news job
-	ErrFetchNewsJob = "error while doing fetch news job: "
-
 	// defaultCertsPath is default path to server
 	defaultCertsPath = filepath.Join("cmd", "server", "certs")
 )
@@ -34,6 +31,9 @@ const (
 
 	// defaultPrivateKey identifies the default name of server's private key
 	defaultPrivateKey = "key.pem"
+
+	// errRunFetchNews is thrown when we have problems while doing fetch news job
+	errRunFetchNews = "error while doing fetch news job: "
 
 	// errNotSpecified helps us to check if error was related to initializing sources file
 	errNotSpecified = "The system cannot find the file specified."
@@ -134,7 +134,7 @@ func runFetchNewsJob(updatesFrequency int, errChan chan error) {
 
 	err := j.Run()
 	if err != nil {
-		errChan <- errors.New(ErrFetchNewsJob + err.Error())
+		errChan <- errors.New(errRunFetchNews + err.Error())
 		return
 	}
 

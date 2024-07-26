@@ -21,10 +21,8 @@ var (
 	// ErrRunningServer is thrown when we have error while running
 	ErrRunningServer = fmt.Errorf("error running server: ")
 
-	// RelativePathToCertsDir is a path to the folder with OpenSSL Certificate and Key
-	RelativePathToCertsDir = filepath.Join("cmd", "server", "certs")
-
-	DefaultCertPaths = filepath.Join("cmd", "server", "certs")
+	// defaultCertsPath is default path to server
+	defaultCertsPath = filepath.Join("cmd", "server", "certs")
 )
 
 const (
@@ -85,9 +83,9 @@ func ConfAndRun() error {
 		"How many hours fetch news job will wait after each execution")
 	flag.IntVar(&serverPort, "p", defaultServerPort,
 		"On which port server will be running")
-	flag.StringVar(&certFile, "c", filepath.Join(cwdPath, DefaultCertPaths, defaultCertName),
+	flag.StringVar(&certFile, "c", filepath.Join(cwdPath, defaultCertsPath, defaultCertName),
 		"Absolute path to the certificate for the HTTPs server")
-	flag.StringVar(&keyFile, "k", filepath.Join(cwdPath, DefaultCertPaths, defaultPrivateKey),
+	flag.StringVar(&keyFile, "k", filepath.Join(cwdPath, defaultCertsPath, defaultPrivateKey),
 		"Absolute path to the private key for the HTTPs server")
 	flag.StringVar(&storagePath, "fs", filepath.Join(parsers.CmdDir, parsers.ParsersDir, parsers.DataDir),
 		"Path to directory where all data will be stored")

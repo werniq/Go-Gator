@@ -39,7 +39,7 @@ const (
 	errNotSpecified = "The system cannot find the file specified."
 
 	// errInitializingSources is thrown when func responsible for initialization of sources fails
-	errInitializingSources = "Error initializing sources file:"
+	errInitializingSources = "Error initializing sources file: "
 )
 
 // ConfAndRun initializes and runs an HTTPS server using the Gin framework.
@@ -72,6 +72,7 @@ func ConfAndRun() error {
 		// keyFile is the name of the key for the certificate above
 		keyFile string
 
+		// storagePath is a path where all data from application will be stored (sources and files with articles)
 		storagePath string
 	)
 	cwdPath, err := os.Getwd()

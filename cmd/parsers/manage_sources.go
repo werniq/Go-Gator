@@ -15,6 +15,7 @@ var (
 	// different data formats
 	g ParsingFactory
 
+	// StoragePath is the path to folder with all data from application
 	StoragePath string
 
 	// sourceToEndpoint maps source names (as strings) to their corresponding filenames
@@ -36,8 +37,10 @@ var (
 )
 
 const (
+	// ErrNoSource is thrown when wrong source name was provided
 	ErrNoSource = "no source was detected. please, create source first"
 
+	// ErrSourceExists is thrown when were provided source name that already exists
 	ErrSourceExists = "this source already exists"
 )
 
@@ -132,23 +135,23 @@ func LoadSourcesFile() error {
 		return err
 	}
 
-	f := filepath.Join(cwdPath, StoragePath, sourcesFile)
+	sourcesFilepath := filepath.Join(cwdPath, StoragePath, sourcesFile)
 
-	file, err := os.Open(f)
+	file, err := os.Open(sourcesFilepath)
 	if err != nil {
 		return err
 	}
 
-	data, err := io.ReadAll(file)
+	sourcesFileData, err := io.ReadAll(file)
 	if err != nil {
 		return err
 	}
-	if data == nil {
+	if sourcesFileData == nil {
 		return nil
 	}
 
 	var sources []types.Source
-	err = json.Unmarshal(data, &sources)
+	err = json.Unmarshal(sourcesFileData, &sources)
 	if err != nil {
 		return err
 	}
@@ -173,13 +176,13 @@ func UpdateSourceFile() error {
 		return err
 	}
 
-	f := filepath.Join(cwdPath, StoragePath, sourcesFile)
+	sourcesFilePath := filepath.Join(cwdPath, StoragePath, sourcesFile)
 
-	file, err := os.Create(f)
+	file, err := os.Create(sourcesFilePath)
 	if err != nil {
 		switch {
 		case errors.Is(err, os.ErrExist):
-			file, err = os.Open(f)
+			file, err = os.Open(sourcesFilePath)
 		case err != nil:
 			return err
 		}
@@ -196,12 +199,12 @@ func UpdateSourceFile() error {
 		})
 	}
 
-	out, err := json.Marshal(sources)
+	sourcesFileData, err := json.Marshal(sources)
 	if err != nil {
 		return err
 	}
 
-	_, err = file.Write(out)
+	_, err = file.Write(sourcesFileData)
 	if err != nil {
 		return err
 	}

@@ -2,11 +2,8 @@
 
 #### Checklist before submitting a PR for a review
 - [ ] PR title conforms to Conventional Commit pattern
-- [ ] Build & test locally
-- [ ] Tested changes
+- [ ] Build and test locally 
 - [ ] Update documentation
-- [ ] Review all documentation 
-- [ ] Review variable & func names 
-- [ ] Test all scenarios 
-- [ ] Run all tests 
 - [ ] Ensure all errors are handled properly
+- [ ] Check variable & func names
+- [ ] Verify that tested positive and negative scenarios in all tests 

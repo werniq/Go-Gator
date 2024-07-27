@@ -109,11 +109,14 @@ func ConfAndRun() error {
 
 	setupRoutes(server)
 
-	go func() {
-		errChan <- server.RunTLS(fmt.Sprintf(":%d", serverPort),
+	go func(serverPort int, certFile, keyFile string) {
+		err := server.RunTLS(fmt.Sprintf(":%d", serverPort),
 			certFile,
 			keyFile)
-	}()
+		if err != nil {
+			errChan <- err
+		}
+	}(serverPort, certFile, keyFile)
 
 	select {
 	case err := <-errChan:

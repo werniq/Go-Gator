@@ -20,7 +20,7 @@ var (
 )
 
 const (
-	// defaultUpdateFrequency is an interval in hours of hours used to fetch and parse article feeds
+	// defaultUpdateFrequency is an interval in hours at which program will fetch and parse article feeds
 	defaultUpdateFrequency = 4
 
 	// defaultServerPort is a default port on which this server will be running

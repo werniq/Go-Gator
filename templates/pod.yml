@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: go-gator-pod
+  namespace: go-gator
+spec:
+  volumes:
+    - name: go-gator-storage
+      persistentVolumeClaim:
+        claimName: go-gator-pvc
+  containers:
+    - name: go-gator
+      image: qniw984/go-gator:1.1.0
+      ports:
+        - containerPort: 80
+          name: "go-gator-server"
+      volumeMounts:
+        - mountPath: "/root/data"
+          name: go-gator-storage
+
+

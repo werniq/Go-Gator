@@ -1,13 +1,27 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: user-role-binding
+  name: user-viewer-binding
   namespace: go-gator
 subjects:
   - kind: User
-    name: user1
+    name: user-viewer
     apiGroup: rbac.authorization.k8s.io
 roleRef:
-  apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: user1-role
+  name: user-viewer
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: user-developer-binding
+  namespace: go-gator
+subjects:
+  - kind: User
+    name: user-dev
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: user-developer
+  apiGroup: rbac.authorization.k8s.io

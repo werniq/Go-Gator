@@ -17,5 +17,6 @@ spec:
       volumeMounts:
         - mountPath: "/root/data"
           name: go-gator-storage
+      args: ["-fs=/root/data"]
 
 

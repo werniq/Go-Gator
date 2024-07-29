@@ -23,4 +23,4 @@ Functions:
 
 with the current date in the format YYYY-MM-DD.
 */
-package fetchnews
+package news_fetcher

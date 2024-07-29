@@ -6,12 +6,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	parsers "gogator/cmd/parsers"
-	"gogator/cmd/server/handlers"
-	"gogator/cmd/types"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 var (
@@ -20,9 +17,6 @@ var (
 )
 
 const (
-	// defaultUpdateFrequency is an interval in hours of hours used to fetch and parse article feeds
-	defaultUpdateFrequency = 4
-
 	// defaultServerPort is a default port on which this server will be running
 	defaultServerPort = 443
 
@@ -31,9 +25,6 @@ const (
 
 	// defaultPrivateKey identifies the default name of server's private key
 	defaultPrivateKey = "key.pem"
-
-	// errRunFetchNews is thrown when we have problems while doing fetch news job
-	errRunFetchNews = "error while doing fetch news job: "
 
 	// errNotSpecified helps us to check if error was related to initializing sources file
 	errNotSpecified = "The system cannot find the file specified."
@@ -63,9 +54,6 @@ func ConfAndRun() error {
 		// serverPort identifies port on which Server will be running
 		serverPort int
 
-		// updatesFrequency means every X hours after which new news will be parsed
-		updatesFrequency int
-
 		// certFile is the name of certificate file
 		certFile string
 
@@ -80,8 +68,6 @@ func ConfAndRun() error {
 		return err
 	}
 
-	flag.IntVar(&updatesFrequency, "f", defaultUpdateFrequency,
-		"How many hours fetch news job will wait after each execution")
 	flag.IntVar(&serverPort, "p", defaultServerPort,
 		"On which port server will be running")
 	flag.StringVar(&certFile, "c", filepath.Join(cwdPath, defaultCertsPath, defaultCertName),
@@ -106,8 +92,6 @@ func ConfAndRun() error {
 		}
 	}
 
-	go runFetchNewsJob(updatesFrequency, errChan)
-
 	setupRoutes(server)
 
 	go func(serverPort int, certFile, keyFile string) {
@@ -127,22 +111,4 @@ func ConfAndRun() error {
 	}
 
 	return nil
-}
-
-// runFetchNewsJob initializes and runs FetchNewsJob, which will parse data from feeds into respective files
-func runFetchNewsJob(updatesFrequency int, errChan chan error) {
-	dateTimestamp := time.Now().Format(time.DateOnly)
-	j := FetchNewsJob{
-		Filters: types.NewFilteringParams("", dateTimestamp, "", ""),
-	}
-
-	err := j.Run()
-	if err != nil {
-		errChan <- errors.New(errRunFetchNews + err.Error())
-		return
-	}
-
-	time.Sleep(time.Hour * time.Duration(updatesFrequency))
-
-	handlers.LastFetchedFileDate = time.Now().Format(time.DateOnly)
 }

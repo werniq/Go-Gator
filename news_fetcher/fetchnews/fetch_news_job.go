@@ -5,6 +5,7 @@ import (
 	"errors"
 	"gogator/cmd/filters"
 	"gogator/cmd/parsers"
+	"gogator/cmd/server/handlers"
 	"gogator/cmd/types"
 	"os"
 	"path/filepath"
@@ -20,12 +21,6 @@ type FetchingJob struct {
 }
 
 const (
-	// defaultUpdateFrequency is an interval in hours of hours used to fetch and parse article feeds
-	defaultUpdateFrequency = 4
-
-	// errRunFetchNews is thrown when we have problems while doing fetch news job
-	errRunFetchNews = "error while doing fetch news job: "
-
 	// errCreatingFile is thrown when there was an error while creating sources file
 	errCreatingFile = "Error while creating a file: "
 
@@ -42,7 +37,7 @@ const (
 	errClosingFile = "Error closing file: "
 )
 
-// RunJob initializes and runs FetchNewsJob, which will parse data from feeds into respective files
+// RunJob initializes and runs FetchingJob, which will parse data from feeds into respective files
 func RunJob() error {
 	dateTimestamp := time.Now().Format(time.DateOnly)
 	j := FetchingJob{
@@ -56,6 +51,8 @@ func RunJob() error {
 	if err != nil {
 		return err
 	}
+
+	handlers.LastFetchedFileDate = dateTimestamp
 
 	return nil
 }

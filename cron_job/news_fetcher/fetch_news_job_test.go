@@ -1,4 +1,4 @@
-package fetchnews
+package news_fetcher
 
 import (
 	"github.com/stretchr/testify/assert"

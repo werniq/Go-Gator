@@ -1,11 +1,10 @@
-package fetchnews
+package news_fetcher
 
 import (
 	"encoding/json"
 	"errors"
 	"gogator/cmd/filters"
 	"gogator/cmd/parsers"
-	"gogator/cmd/server/handlers"
 	"gogator/cmd/types"
 	"os"
 	"path/filepath"
@@ -52,8 +51,6 @@ func RunJob() error {
 		return err
 	}
 
-	handlers.LastFetchedFileDate = dateTimestamp
-
 	return nil
 }
 
@@ -69,7 +66,7 @@ func (j *FetchingJob) Execute() error {
 		parsers.StoragePath,
 		j.filters.StartingTimestamp+".json")
 
-	file, err := os.Create(articleFilepath)
+	articlesFile, err := os.Create(articleFilepath)
 	if err != nil {
 		return errors.New(errCreatingFile + err.Error())
 	}
@@ -86,12 +83,12 @@ func (j *FetchingJob) Execute() error {
 		return errors.New(errMarshalData + err.Error())
 	}
 
-	_, err = file.Write(articlesData)
+	_, err = articlesFile.Write(articlesData)
 	if err != nil {
 		return errors.New(errWritingData + err.Error())
 	}
 
-	err = file.Close()
+	err = articlesFile.Close()
 	if err != nil {
 		return errors.New(errClosingFile + err.Error())
 	}

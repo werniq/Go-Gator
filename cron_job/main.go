@@ -1,12 +1,12 @@
 package main
 
 import (
-	"gogator/news_fetcher/fetchnews"
+	"gogator/cron_job/news_fetcher"
 	"log"
 )
 
 func main() {
-	err := fetchnews.RunJob()
+	err := news_fetcher.RunJob()
 	if err != nil {
 		log.Fatalln(err)
 	}

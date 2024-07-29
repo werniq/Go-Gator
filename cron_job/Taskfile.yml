@@ -28,7 +28,7 @@ tasks:
 
   docker-build:
     desc: Build the docker image using Dockerfile with go-gator as a name
-    cmd: docker build -t {{ .DOCKER_IMAGE_NAME }} .
+    cmd: docker build -t {{ .DOCKER_IMAGE_NAME }} -f ./Dockerfile ..
 
   docker-run:
     desc: Run docker image

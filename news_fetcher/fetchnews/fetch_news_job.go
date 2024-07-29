@@ -40,14 +40,14 @@ const (
 // RunJob initializes and runs FetchingJob, which will parse data from feeds into respective files
 func RunJob() error {
 	dateTimestamp := time.Now().Format(time.DateOnly)
-	j := FetchingJob{
+	job := FetchingJob{
 		filters: types.NewFilteringParams("",
 			dateTimestamp,
 			"",
 			""),
 	}
 
-	err := j.Run()
+	err := job.Execute()
 	if err != nil {
 		return err
 	}
@@ -57,9 +57,9 @@ func RunJob() error {
 	return nil
 }
 
-// Run is a function that fetches news, parses it, and writes the parsed data
+// Execute is a function that fetches news, parses it, and writes the parsed data
 // to a JSON file named with the current date in the format YYYY-MM-DD.
-func (j *FetchingJob) Run() error {
+func (j *FetchingJob) Execute() error {
 	cwdPath, err := os.Getwd()
 	if err != nil {
 		return err

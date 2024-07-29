@@ -19,7 +19,7 @@ Functions:
 
 	RunJob - Initializes and runs a FetchingJob, which parses data from feeds into respective files.
 
-	(j *FetchingJob) Run - Fetches news, parses it, and writes the parsed data to a JSON file named
+	(j *FetchingJob) Execute - Fetches news, parses it, and writes the parsed data to a JSON file named
 
 with the current date in the format YYYY-MM-DD.
 */

@@ -17,5 +17,6 @@ spec:
               image: qniw984/news-fetching-job:1.0.0
               imagePullPolicy: IfNotPresent
               command:
-                - go run .
+                - go build -o ./fetch-news-job .
+                - ./fetch-news-job
           restartPolicy: OnFailure

@@ -15,8 +15,8 @@ spec:
         - containerPort: 80
           name: "go-gator-server"
       volumeMounts:
-        - mountPath: "/root/data"
+        - mountPath: /tmp/data/
           name: go-gator-storage
-      args: ["-fs=/root/data"]
+      args: ["-fs=/tmp/data/"]
 
 

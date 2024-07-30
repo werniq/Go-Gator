@@ -19,7 +19,7 @@ metadata:
   namespace: go-gator
 subjects:
   - kind: User
-    name: user-dev
+    name: user-developer
     apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: Role

@@ -1,4 +1,4 @@
-# news_fetcher
+# news_fetcher - Cron Job for fetching news
 
 ## Overview
 
@@ -18,6 +18,12 @@ current date in the format `YYYY-MM-DD`.
 
 ### Using Golang
 
-1. Build the Go binary:
    ```sh
    go build -o ./bin/news_fetcher
+   ```
+
+### Using docker
+
+```sh
+docker build -t {IMAGE_TAG_TITLE} .
+```

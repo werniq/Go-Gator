@@ -4,7 +4,7 @@ metadata:
   name: user-viewer
   namespace: go-gator
 rules:
-  - apiGroups: [""]
+  - apiGroups: ["v1"]
     resources: ["pods", "services", "configmaps"]
     verbs: ["get", "list", "watch"]
 ---
@@ -14,7 +14,7 @@ metadata:
   name: user-developer
   namespace: go-gator
 rules:
-  - apiGroups: [""]
+  - apiGroups: ["v1"]
     resources: ["pods", "services", "configmaps", "secrets", "persistentvolumes", "persistentvolumeclaims", "ingresses"]
     verbs: ["create", "get", "list", "delete", "update"]
 ---

@@ -2,17 +2,19 @@ FROM golang:1.22-alpine as build
 
 WORKDIR /app
 
-COPY ./go.mod go.mod
+COPY ./go.mod ./go.sum ./
 RUN go mod download
-RUN go get github.com/PuerkitoBio/goquery
 
 COPY ./cmd/parsers ./cmd/parsers
 COPY ./cmd/filters ./cmd/filters
 COPY ./cmd/types ./cmd/types
+COPY ./cmd/server/handlers ./cmd/server/handlers
+COPY ./cmd/validator ./cmd/validator
 COPY ./cron_job/news_fetcher/ ./cron_job/news_fetcher
 COPY ./cron_job/main.go main.go
 
-RUN go build -o ./cron_job/job
+
+RUN go build -o ./cron_job/job .
 
 FROM alpine:3.20
 

@@ -5,18 +5,19 @@ import (
 	"errors"
 	"gogator/cmd/filters"
 	"gogator/cmd/parsers"
+	"gogator/cmd/server/handlers"
 	"gogator/cmd/types"
 	"os"
 	"path/filepath"
 	"time"
 )
 
-// FetchingJob struct is used to fetch and parse articles feeds,
+// NewsFetchingJob struct is used to fetch and parse articles feeds,
 // and then writes the parsed data to a JSON file named with the current date
 //
 // Using Kubernetes CronJob object, it will run once in a day, to parse
-type FetchingJob struct {
-	filters *types.FilteringParams
+type NewsFetchingJob struct {
+	params *types.FilteringParams
 }
 
 const (
@@ -36,11 +37,11 @@ const (
 	errClosingFile = "Error closing file: "
 )
 
-// RunJob initializes and runs FetchingJob, which will parse data from feeds into respective files
+// RunJob initializes and runs NewsFetchingJob, which will parse data from feeds into respective files
 func RunJob() error {
 	dateTimestamp := time.Now().Format(time.DateOnly)
-	job := FetchingJob{
-		filters: types.NewFilteringParams("",
+	job := &NewsFetchingJob{
+		params: types.NewFilteringParams("",
 			dateTimestamp,
 			"",
 			""),
@@ -51,12 +52,14 @@ func RunJob() error {
 		return err
 	}
 
+	handlers.LastFetchedFileDate = dateTimestamp
+
 	return nil
 }
 
 // Execute is a function that fetches news, parses it, and writes the parsed data
 // to a JSON file named with the current date in the format YYYY-MM-DD.
-func (j *FetchingJob) Execute() error {
+func (j *NewsFetchingJob) Execute() error {
 	cwdPath, err := os.Getwd()
 	if err != nil {
 		return err
@@ -64,7 +67,7 @@ func (j *FetchingJob) Execute() error {
 
 	articleFilepath := filepath.Join(cwdPath,
 		parsers.StoragePath,
-		j.filters.StartingTimestamp+".json")
+		j.params.StartingTimestamp+".json")
 
 	articlesFile, err := os.Create(articleFilepath)
 	if err != nil {
@@ -76,7 +79,7 @@ func (j *FetchingJob) Execute() error {
 		return errors.New(errParsingSources + err.Error())
 	}
 
-	news = filters.Apply(news, j.filters)
+	news = filters.Apply(news, j.params)
 
 	articlesData, err := json.Marshal(news)
 	if err != nil {

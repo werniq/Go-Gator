@@ -1,5 +1,5 @@
 /*
-Package fetchnews provides functionality to fetch and parse news articles from various sources.
+Package news_fetcher provides functionality to fetch and parse news articles from various sources.
 
 This package is created to run a job that fetches news articles at a regular interval,
 parses them, and stores them in JSON files. The main job is performed by the NewsFetchingJob type.

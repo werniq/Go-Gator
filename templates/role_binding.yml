@@ -18,9 +18,10 @@ metadata:
   name: user-developer-binding
   namespace: go-gator
 subjects:
-  - kind: User
+  - kind: ServiceAccount
     name: user-developer
-    apiGroup: rbac.authorization.k8s.io
+    apiGroup: ""
+    namespace: go-gator
 roleRef:
   kind: Role
   name: user-developer

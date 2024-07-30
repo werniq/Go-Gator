@@ -24,7 +24,7 @@ tasks:
     label: Run all tests in application
     desc: This task runs all available test files from all child folders
     cmd: |
-      go test ./... -v
+      go test ./...
 
   docker-build:
     desc: Build the docker image using Dockerfile with go-gator as a name

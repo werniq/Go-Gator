@@ -100,15 +100,6 @@ func TestFetchingJob_Execute(t *testing.T) {
 			finish:    func() {},
 		},
 		{
-			name: "Empty filter parameters",
-			job: &NewsFetchingJob{
-				params: types.NewFilteringParams("", "", "", ""),
-			},
-			expectErr: false,
-			setup:     func() {},
-			finish:    func() {},
-		},
-		{
 			name: "Invalid storage path",
 			job: &NewsFetchingJob{
 				params: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),

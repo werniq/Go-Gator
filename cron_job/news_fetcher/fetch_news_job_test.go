@@ -14,15 +14,15 @@ func TestRunJob(t *testing.T) {
 	storagePath := parsers.StoragePath
 	tests := []struct {
 		name      string
-		job       *FetchingJob
+		job       *NewsFetchingJob
 		expectErr bool
 		setup     func()
 		finish    func()
 	}{
 		{
 			name: "Successful job execution",
-			job: &FetchingJob{
-				filters: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
+			job: &NewsFetchingJob{
+				params: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
 			},
 			expectErr: false,
 			setup:     func() {},
@@ -30,8 +30,8 @@ func TestRunJob(t *testing.T) {
 		},
 		{
 			name: "Invalid storage path",
-			job: &FetchingJob{
-				filters: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
+			job: &NewsFetchingJob{
+				params: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
 			},
 			expectErr: true,
 			setup: func() {
@@ -76,15 +76,15 @@ func TestFetchingJob_Execute(t *testing.T) {
 
 	testCases := []struct {
 		name      string
-		job       *FetchingJob
+		job       *NewsFetchingJob
 		expectErr bool
 		setup     func()
 		finish    func()
 	}{
 		{
 			name: "Default job run",
-			job: &FetchingJob{
-				filters: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
+			job: &NewsFetchingJob{
+				params: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
 			},
 			expectErr: false,
 			setup:     func() {},
@@ -92,8 +92,8 @@ func TestFetchingJob_Execute(t *testing.T) {
 		},
 		{
 			name: "Invalid date format",
-			job: &FetchingJob{
-				filters: types.NewFilteringParams("", time.Now().Format(time.ANSIC), "", ""),
+			job: &NewsFetchingJob{
+				params: types.NewFilteringParams("", time.Now().Format(time.ANSIC), "", ""),
 			},
 			expectErr: true,
 			setup:     func() {},
@@ -101,8 +101,8 @@ func TestFetchingJob_Execute(t *testing.T) {
 		},
 		{
 			name: "Empty filter parameters",
-			job: &FetchingJob{
-				filters: types.NewFilteringParams("", "", "", ""),
+			job: &NewsFetchingJob{
+				params: types.NewFilteringParams("", "", "", ""),
 			},
 			expectErr: false,
 			setup:     func() {},
@@ -110,8 +110,8 @@ func TestFetchingJob_Execute(t *testing.T) {
 		},
 		{
 			name: "Invalid storage path",
-			job: &FetchingJob{
-				filters: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
+			job: &NewsFetchingJob{
+				params: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
 			},
 			expectErr: true,
 			setup: func() {

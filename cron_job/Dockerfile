@@ -8,8 +8,6 @@ RUN go mod download
 COPY ./cmd/parsers ./cmd/parsers
 COPY ./cmd/filters ./cmd/filters
 COPY ./cmd/types ./cmd/types
-COPY ./cmd/server/handlers ./cmd/server/handlers
-COPY ./cmd/validator ./cmd/validator
 COPY ./cron_job/news_fetcher/ ./cron_job/news_fetcher
 COPY ./cron_job/main.go main.go
 

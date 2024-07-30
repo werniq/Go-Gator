@@ -5,7 +5,6 @@ import (
 	"errors"
 	"gogator/cmd/filters"
 	"gogator/cmd/parsers"
-	"gogator/cmd/server/handlers"
 	"gogator/cmd/types"
 	"os"
 	"path/filepath"
@@ -51,8 +50,6 @@ func RunJob() error {
 	if err != nil {
 		return err
 	}
-
-	handlers.LastFetchedFileDate = dateTimestamp
 
 	return nil
 }

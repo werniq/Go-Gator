@@ -1,29 +1,9 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: user-viewer
-  namespace: go-gator
-rules:
-  - apiGroups: ["v1"]
-    resources: ["pods", "services", "configmaps"]
-    verbs: ["get", "list", "watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
   name: user-developer
   namespace: go-gator
 rules:
   - apiGroups: ["v1"]
     resources: ["pods", "services", "configmaps", "secrets", "persistentvolumes", "persistentvolumeclaims", "ingresses"]
-    verbs: ["create", "get", "list", "delete", "update"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: user-deployer
-  namespace: go-gator
-rules:
-  - apiGroups: ["apps/v1"]
-    resources: ["deployments"]
-    verbs: ["create"]
+    verbs: ["create", "get", "list", "update", "delete"]

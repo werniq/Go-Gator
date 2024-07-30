@@ -94,7 +94,7 @@ You can change default parameters, such as updates frequency, server port and ce
 3. -c and -k - Are used for SSL certificate and key
 
 2. Using Docker
-> `docker build -t go-gator .`
+> `docker build -t go-gator .` <br />
 > `docker run go-gator -p 443:443`
 You can change your port to anything that you like, but destination port on the container should be 443.
 

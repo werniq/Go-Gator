@@ -1,3 +1,8 @@
+# As I've noticed, command kubectl apply -f ./templates/ always applies files in order, so
+# I've numbered namespace file as 1_namespace.yml to apply it first. This is important because
+# other resources are dependent on namespace.
+# Question:
+# Is this name ok? I thought about numbering all files, so that they follow same pattern, but I am not sure about it
 apiVersion: v1
 kind: Namespace
 metadata:

@@ -5,7 +5,7 @@ metadata:
   namespace: go-gator
 spec:
   volumes:
-    - name: go-gator-storage
+    - name: go-gator-pv
       persistentVolumeClaim:
         claimName: go-gator-pvc
   containers:
@@ -17,5 +17,5 @@ spec:
           name: "go-gator-server"
       volumeMounts:
         - mountPath: /tmp/data/
-          name: go-gator-storage
+          name: go-gator-pv
       args: ["-fs=/tmp/data/"]

@@ -1,10 +1,10 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.12.0/.schema/devbox.schema.json",
   "packages": [
-    "go@1.22.0",
     "docker@24.0.9",
     "git@2.45.2",
-    "go-task@3.38.0"
+    "go-task@3.38.0",
+    "go@1.21.11"
   ],
   "shell": {
     "init_hook": [

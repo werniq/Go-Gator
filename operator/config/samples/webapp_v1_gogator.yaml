@@ -1,0 +1,9 @@
+apiVersion: webapp.teamdev.com/v1
+kind: GoGator
+metadata:
+  labels:
+    app.kubernetes.io/name: ops
+    app.kubernetes.io/managed-by: kustomize
+  name: gogator-sample
+spec:
+  # TODO(user): Add fields here

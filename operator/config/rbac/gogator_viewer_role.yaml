@@ -1,0 +1,23 @@
+# permissions for end users to view gogators.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: ops
+    app.kubernetes.io/managed-by: kustomize
+  name: gogator-viewer-role
+rules:
+- apiGroups:
+  - webapp.teamdev.com
+  resources:
+  - gogators
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - webapp.teamdev.com
+  resources:
+  - gogators/status
+  verbs:
+  - get

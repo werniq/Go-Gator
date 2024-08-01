@@ -18,10 +18,11 @@ type FilteringParams struct {
 }
 
 // NewFilteringParams creates an instance of FilteringParams
-func NewFilteringParams(keywords, start, end string) *FilteringParams {
+func NewFilteringParams(keywords, start, end, sources string) *FilteringParams {
 	return &FilteringParams{
 		Keywords:          keywords,
 		StartingTimestamp: start,
 		EndingTimestamp:   end,
+		Sources:           sources,
 	}
 }

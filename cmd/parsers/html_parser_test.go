@@ -1,59 +1,102 @@
 package parsers
 
 import (
+	"errors"
+	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
-	"gogator/cmd/types"
+	"net/http"
 	"testing"
 )
 
 func TestHtmlParser_Parse(t *testing.T) {
 	parser := HtmlParser{
-		Source: "usatoday",
+		Source: UsaToday,
 	}
 
 	testCases := []struct {
-		Expected []types.News
-		Input    *types.FilteringParams
+		name        string
+		setupMock   func()
+		expectError bool
 	}{
 		{
-			Expected: []types.News{},
-			Input: &types.FilteringParams{
-				Keywords: "Mac address",
+			name: "Default run",
+			setupMock: func() {
+				httpmock.Activate()
+				defer httpmock.DeactivateAndReset()
+
+				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
+					httpmock.NewStringResponder(
+						http.StatusOK,
+						`<!DOCTYPE html><html><head><title>Test</title></head><body><div class="news-item"><h1 class="title">Test News</h1><time datetime="2024-07-23">July 23, 2024</time><a href="/test-link">Link</a><p>Description</p></div></body></html>`))
 			},
+			expectError: false,
 		},
 		{
-			Expected: []types.News{
-				{
-					Title:       "The Taizhou Zoo in Jiangsu, China dyed two chow chow dogs and advertised them as \"panda dogs\" in the exhibit that opened on May 1..",
-					Description: "Zoo in China criticized for dyeing dogs for 'panda dog' exhibit",
-				},
+			name: "HTTP request failure",
+			setupMock: func() {
+				httpmock.Activate()
+				defer httpmock.DeactivateAndReset()
+
+				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
+					httpmock.NewErrorResponder(errors.New("http request failed")))
 			},
-			Input: &types.FilteringParams{
-				Keywords: "Zoo in China criticized for dyeing dogs for 'panda dog' exhibit",
-			},
+			expectError: true,
 		},
 		{
-			Expected: []types.News{},
-			Input: &types.FilteringParams{
-				Keywords: "definitely not-existent sequence of keywords",
+			name: "Empty response body",
+			setupMock: func() {
+				httpmock.Activate()
+				defer httpmock.DeactivateAndReset()
+
+				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
+					httpmock.NewStringResponder(http.StatusOK, ""))
 			},
+			expectError: true,
+		},
+		{
+			name: "Invalid HTML",
+			setupMock: func() {
+				httpmock.Activate()
+				defer httpmock.DeactivateAndReset()
+
+				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
+					httpmock.NewStringResponder(http.StatusOK, "<html><head><title>Test</title></head><body><div><h1>Invalid HTML</h1></div>"))
+			},
+			expectError: true,
+		},
+		{
+			name: "Missing selectors",
+			setupMock: func() {
+				httpmock.Activate()
+				defer httpmock.DeactivateAndReset()
+
+				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
+					httpmock.NewStringResponder(http.StatusOK, `<!DOCTYPE html><html><head><title>Test</title></head><body><div><h1>No News Item</h1></div></body></html>`))
+			},
+			expectError: false,
+		},
+		{
+			name: "Attributes missing",
+			setupMock: func() {
+				httpmock.Activate()
+				defer httpmock.DeactivateAndReset()
+
+				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
+					httpmock.NewStringResponder(http.StatusOK, `<!DOCTYPE html><html><head><title>Test</title></head><body><div class="news-item"><h1 class="title">Test News</h1><p>Description</p></div></body></html>`))
+			},
+			expectError: false,
 		},
 	}
 
-	for _, testCase := range testCases {
-		news, err := parser.Parse()
-		assert.NoError(t, err)
-
-		filteredNews := ApplyFilters(news, testCase.Input)
-
-		if len(testCase.Expected) == 0 {
-			assert.Empty(t, filteredNews)
-		} else {
-			assert.Equal(t, len(filteredNews), len(testCase.Expected))
-			for i, expectedNews := range testCase.Expected {
-				assert.Equal(t, filteredNews[i].Title, expectedNews.Title)
-				assert.Equal(t, filteredNews[i].Description, expectedNews.Description)
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupMock()
+			_, err := parser.Parse()
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
-		}
+		})
 	}
 }

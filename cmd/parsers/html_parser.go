@@ -4,25 +4,43 @@ import (
 	"bytes"
 	"github.com/PuerkitoBio/goquery"
 	"gogator/cmd/types"
+	"io"
+	"net/http"
 	"strings"
 )
 
+const (
+	// UsaTodayKeySelector is the CSS selector for the main content block on the USA Today page
+	UsaTodayKeySelector = "a.section-helper-flex.section-helper-row.ten-column.spacer-small.p1-container"
+
+	// TitleSelector is the CSS selector used to extract the title of an article
+	TitleSelector = "div.p1-title-spacer"
+
+	// TimestampSelector is the CSS selector used to get the article's timestamp
+	TimestampSelector = "lit-timestamp"
+
+	// TimestampAttribute is the name of the element's Attribute used to extract the publication date from the timestamp element
+	TimestampAttribute = "publishdate"
+
+	// LinkAttribute is the attribute name used to get the URL link from the element
+	LinkAttribute = "href"
+)
+
+// HtmlParser is a struct implementing a Parser for HTML content from a specific source
 type HtmlParser struct {
 	Source string
 }
 
-const (
-	UsaTodayKeySelector = "div.gnt_m_flm a"
-	TitleTag            = "data-c-br"
-	TimestampTag        = "div.gnt_m_flm_sbt"
-	TimestampAttribute  = "data-c-dt"
-)
-
-// Parse function is required for HtmlParser struct, in order to implement NewsParser interface, for data formatted in html
+// Parse function for HtmlParser struct
 func (hp HtmlParser) Parse() ([]types.News, error) {
 	var news []types.News
 
-	data, err := extractFileData(sourceToFile[hp.Source])
+	res, err := http.Get(sourceToEndpoint[hp.Source])
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -33,15 +51,17 @@ func (hp HtmlParser) Parse() ([]types.News, error) {
 	}
 
 	doc.Find(UsaTodayKeySelector).Each(func(i int, selection *goquery.Selection) {
-		title, _ := selection.Attr(TitleTag)
-		title = strings.TrimSpace(title)
-		description := strings.TrimSpace(selection.Text())
-		pubDate := strings.TrimSpace(selection.Find(TimestampTag).AttrOr(TimestampAttribute, ""))
+		title := strings.TrimSpace(selection.Find(TitleSelector).Text())
+		timestamp := strings.TrimSpace(selection.Find(TimestampSelector).AttrOr(TimestampAttribute, ""))
+		link := strings.TrimSpace(selection.AttrOr(LinkAttribute, ""))
+		description := selection.Text()
 
 		news = append(news, types.News{
 			Title:       title,
 			Description: description,
-			PubDate:     pubDate,
+			PubDate:     timestamp,
+			Publisher:   hp.Source,
+			Link:        link,
 		})
 	})
 

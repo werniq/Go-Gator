@@ -3,51 +3,28 @@ package validator
 import (
 	"errors"
 	"fmt"
+	parsers "gogator/cmd/parsers"
 	"strings"
 	"time"
 )
 
-var (
-	// errorMessages maps specific flag access errors to user-friendly error messages
-	errorMessages = map[string]string{
-		"flag accessed but not defined": "Unsupported flag: ",
-	}
+const (
+	// ErrDateFromAfter is thrown when user provided date bigger than dateEnd
+	ErrDateFromAfter = "date from can not be after date end"
 
-	// supportedSources defines the list of valid source values.
-	supportedSources = []string{"abc", "bbc", "nbc", "usatoday", "washingtontimes", "all"}
+	// ErrFailedDateValidation is thrown when user submitted date in wrong format
+	ErrFailedDateValidation = "error while validating date. correct format is YYYY-mm-dd - 2024-05-15"
 
-	// ErrWrongSource is the error message for invalid source input.
-	ErrWrongSource = fmt.Sprintf("Supported sources are: %v. Please, check spelling of inputed source: ", supportedSources)
-
-	ErrInvalidDateRange = "invalid date range: make sure that date from is before date end"
+	// ErrFailedSourceValidation is thrown when user submitted wrong source
+	ErrFailedSourceValidation = "error while validating source "
 )
 
-// Validate checks if all mentioned flags are in correct format and
-func Validate(dateFrom, dateEnd, sources string) error {
-	sourcesValidationHandler := &SourcesValidationHandler{
-		sources: sources,
-	}
-	dateFromValidationHandler := &DateValidationHandler{
-		Date: dateFrom,
-	}
-	dateEndValidationHandler := &DateValidationHandler{
-		Date: dateEnd,
-	}
-	dateRangeValidationHandler := &DateRangeValidatorHandler{
-		DateFrom: dateFrom,
-		DateEnd:  dateEnd,
-	}
+type Validator interface {
+	Validate(keywords, dateFrom, dateEnd string) error
+}
 
-	sourcesValidationHandler.SetNext(dateFromValidationHandler)
-	dateFromValidationHandler.SetNext(dateEndValidationHandler)
-	dateEndValidationHandler.SetNext(dateRangeValidationHandler)
-
-	err := sourcesValidationHandler.Handle()
-	if err != nil {
-		return err
-	}
-
-	return nil
+// ArgValidator struct is used to validate arguments which user inputs in get-news handler
+type ArgValidator struct {
 }
 
 type UnsupportedFlagError struct {
@@ -58,86 +35,119 @@ func (u *UnsupportedFlagError) Error() string {
 	return fmt.Sprintf(u.Err.Error())
 }
 
-// Handler interface defines the methods required for implementing a validation handler
-type Handler interface {
-	// Handle verifies if given string is following rules of this handler
-	Handle() error
+// Validate checks if all user-given arguments are correct
+func (v *ArgValidator) Validate(sources, dateFrom, dateEnd string) error {
+	dateFromValidator := &DateValidationHandler{
+		date: dateFrom,
+	}
+	dateEndValidator := &DateValidationHandler{
+		date: dateEnd,
+	}
+	dateRangeValidator := &DateRangeHandler{
+		dateFrom: dateFrom,
+		dateEnd:  dateEnd,
+	}
+	sourcesValidator := &SourceValidationHandler{
+		sources: sources,
+	}
 
-	// SetNext sets the next handler in the chain
-	SetNext(handler Handler)
-}
+	dateFromValidator.SetNext(dateEndValidator)
+	dateEndValidator.SetNext(dateRangeValidator)
+	dateRangeValidator.SetNext(sourcesValidator)
 
-// BaseHandler provides functionality to set and handle next handler
-type BaseHandler struct {
-	next Handler
-}
-
-// HandleNext passes the command to the next handler in the chain if it exists
-func (b *BaseHandler) HandleNext() error {
-	if b.next != nil {
-		return b.next.Handle()
+	if err := dateFromValidator.Handle(); err != nil {
+		return err
 	}
 
 	return nil
 }
 
+// Handler interface defines the methods required for implementing a validation handler
+type Handler interface {
+	// SetNext sets the next handler in the chain
+	SetNext(handler Handler)
+
+	// Handle processes the request and performs validation
+	Handle() error
+}
+
+// BaseHandler provides a base implementation for chaining handlers
+type BaseHandler struct {
+	next Handler
+}
+
 // SetNext sets the next handler in the chain
-func (b *BaseHandler) SetNext(handler Handler) {
-	b.next = handler
+func (h *BaseHandler) SetNext(handler Handler) {
+	h.next = handler
 }
 
-// DateValidationHandler is used to validate dates format: it has to be YYYY-MM-DD
-type DateValidationHandler struct {
+// HandleNext calls the next handler in the chain, if it exists
+func (h *BaseHandler) HandleNext() error {
+	if h.next != nil {
+		return h.next.Handle()
+	}
+	return nil
+}
+
+// DateRangeHandler validates that the date-from parameter is not after the date-end parameter
+type DateRangeHandler struct {
 	BaseHandler
-	Date string
+	dateFrom string
+	dateEnd  string
 }
 
-// Handle validates the date flags and checks their logical consistency
-func (h *DateValidationHandler) Handle() error {
-	err := validateDate(h.Date)
-	if err != nil {
+// Handle validates the date range and calls the next handler in the chain
+func (h *DateRangeHandler) Handle() error {
+	if err := ByDateRange(h.dateFrom, h.dateEnd); err != nil {
 		return err
 	}
 
 	return h.HandleNext()
 }
 
-// DateRangeValidatorHandler
-// after validating dates by format, we will check if date range is correct: dateFrom should be before dateEnd
-type DateRangeValidatorHandler struct {
+// DateValidationHandler checks if the date parameters are in the correct format (YYYY-MM-DD)
+type DateValidationHandler struct {
 	BaseHandler
-	DateFrom string
-	DateEnd  string
+	date string
 }
 
-func (h *DateRangeValidatorHandler) Handle() error {
-	if h.DateFrom == "" || h.DateEnd == "" {
-		return h.HandleNext()
+// Handle validates the date format and calls the next handler in the chain
+func (h *DateValidationHandler) Handle() error {
+	if err := ByDate(h.date); err != nil {
+		return errors.New(ErrFailedDateValidation)
 	}
-
-	if h.DateFrom > h.DateEnd {
-		return errors.New(ErrInvalidDateRange)
-	}
-	// if dateEnd > dateFrom it will be just , so nil will be returned
 
 	return h.HandleNext()
 }
 
-// CheckFlagErr enhances flag-related error messages with more user-friendly versions
-func CheckFlagErr(err error) error {
-	if err != nil {
-		if strings.Contains(err.Error(), "flag accessed but not defined") {
-			return &UnsupportedFlagError{Err: errors.New("Unsupported flag: " + err.Error())}
-		}
+// SourceValidationHandler checks if the provided sources are within the supported list
+type SourceValidationHandler struct {
+	BaseHandler
+	sources string
+}
 
-		return errors.New("error parsing flags: " + err.Error())
+// Handle validates the sources and calls the next handler in the chain
+func (h *SourceValidationHandler) Handle() error {
+	if err := BySources(h.sources); err != nil {
+		return errors.New(ErrFailedSourceValidation + err.Error())
+	}
+
+	return h.HandleNext()
+}
+
+// ByDateRange verifies if date range is correct: date from should be before date end
+func ByDateRange(dateFrom, dateEnd string) error {
+	if dateFrom != "" && dateEnd != "" {
+		if dateFrom > dateEnd {
+			return errors.New(ErrDateFromAfter)
+		}
 	}
 
 	return nil
 }
 
-// validateDate checks if the date string is in the correct format YYYY-MM-DD
-func validateDate(dateStr string) error {
+// ByDate checks if the date string is in the correct format (YYYY-MM-DD)
+func ByDate(dateStr string) error {
 	if dateStr == "" {
 		return nil
 	}
@@ -150,32 +160,33 @@ func validateDate(dateStr string) error {
 	return nil
 }
 
-type SourcesValidationHandler struct {
-	BaseHandler
-	sources string
-}
-
-// Handle validates the sources flag and checks if the provided sources are within the supported list
-func (h *SourcesValidationHandler) Handle() error {
-	err := validateSources(h.sources)
-	if err != nil {
-		return err
-	}
-
-	return h.HandleNext()
-}
-
-// validateSources checks if the provided sources are within the supported list
-func validateSources(sources string) error {
+// BySources checks if the provided sources are within the supported list
+func BySources(sources string) error {
 	if sources == "" {
 		return nil
 	}
 
+	supportedSources := parsers.GetAllSources()
+
 	for _, source := range strings.Split(sources, ",") {
-		if !contains(supportedSources, source) {
-			return errors.New(ErrWrongSource + source)
+		if _, exists := supportedSources[source]; !exists {
+			return fmt.Errorf("unsupported source: %s. Supported sources are: %v", source, supportedSources)
 		}
 	}
+
+	return nil
+}
+
+// CheckFlagErr enhances flag-related error messages with more user-friendly versions
+func CheckFlagErr(err error) error {
+	if err != nil {
+		if strings.Contains(err.Error(), "flag accessed but not defined") {
+			return &UnsupportedFlagError{Err: errors.New("Unsupported flag: " + err.Error())}
+		}
+
+		return errors.New("error parsing flags: " + err.Error())
+	}
+
 	return nil
 }
 

@@ -1,4 +1,6 @@
 
-./cmd/parsers/data
-./bin/*
 
+bin/*
+.idea
+coverage
+cover

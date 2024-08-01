@@ -10,17 +10,24 @@ var (
 func Apply(articles []types.News, params *types.FilteringParams) []types.News {
 	var filteredArticles []types.News
 
-	keywordInstruction := f.CreateApplyKeywordInstruction()
-	dateRangeInstruction := f.CreateApplyDataRangeInstruction()
+	filters := []func(article types.News, params *types.FilteringParams) bool{
+		f.CreateSourcesInstruction().Apply,
+		f.CreateApplyDataRangeInstruction().Apply,
+		f.CreateApplyKeywordInstruction().Apply,
+	}
 
 	for _, article := range articles {
-		if !keywordInstruction.Apply(article, params) {
-			continue
+		applyAllFilters := true
+
+		for _, filter := range filters {
+			if !filter(article, params) {
+				applyAllFilters = false
+				break
+			}
 		}
-		if !dateRangeInstruction.Apply(article, params) {
-			continue
+		if applyAllFilters {
+			filteredArticles = append(filteredArticles, article)
 		}
-		filteredArticles = append(filteredArticles, article)
 	}
 
 	return filteredArticles

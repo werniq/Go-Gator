@@ -1,14 +1,13 @@
 package main
 
 import (
-	"gogator/cmd"
+	"gogator/cmd/server"
 	"log"
 )
 
 func main() {
-	rootCmd := cmd.FetchNewsCmd()
-	err := rootCmd.Execute()
+	err := server.ConfAndRun()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error running and configuring the server: ", err)
 	}
 }

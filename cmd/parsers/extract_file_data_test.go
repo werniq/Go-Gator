@@ -6,10 +6,34 @@ import (
 )
 
 func Test_extractFileData(t *testing.T) {
-	filename := "bbc.xml"
 
-	data, err := extractFileData(filename)
+	testCases := []struct {
+		name        string
+		filename    string
+		expectedNil bool
+	}{
+		{
+			name:        "Successful execution",
+			filename:    "sources" + JsonExtension,
+			expectedNil: false,
+		},
+		{
+			name:        "Invalid filename",
+			filename:    "not-file",
+			expectedNil: true,
+		},
+	}
 
-	assert.Equal(t, len(data), 41350)
-	assert.Equal(t, err, nil, "Expected err to be nil. Got: ", err)
+	for _, tt := range testCases {
+		data, err := extractFileData(tt.filename)
+
+		if tt.expectedNil {
+			assert.Nil(t, err)
+			assert.Equal(t, 0, len(data))
+		} else {
+			assert.NotEqual(t, 0, len(data))
+			assert.Equal(t, err, nil, "Expected err to be nil. Got: ", err)
+		}
+	}
+
 }

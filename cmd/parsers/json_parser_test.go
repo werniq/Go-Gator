@@ -1,49 +1,88 @@
 package parsers
 
 import (
+	"errors"
 	"github.com/stretchr/testify/assert"
-	"gogator/cmd/types"
 	"testing"
 )
 
 func TestJsonParser_ParseWithArgs(t *testing.T) {
 	parser := JsonParser{
-		Source: "nbc",
+		Source: "sources.json",
 	}
 
 	testCases := []struct {
-		Expected []types.News
-		Input    *types.FilteringParams
+		Name        string
+		setupMock   func()
+		expectError bool
 	}{
 		{
-			Expected: []types.News{
-				{
-					Title:       "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena",
-					Description: "The Vatican has issued new rules radically reforming its process for evaluating faith-based supernatural phenomena like visions of the Virgin Mary or stigmata.",
-					PubDate:     "2024-05-17T14:58:52Z",
-				},
+			Name: "Default parse",
+			setupMock: func() {
+				mockFileContent := `[{"Title":"Test News","Description":"This is a test news.","PubDate":"2024-07-23","Publisher":"Test Source","Link":"http://example.com"}]`
+				mockExtractFileData := func(filename string) ([]byte, error) {
+					return []byte(mockFileContent), nil
+				}
+				openFile = mockExtractFileData
 			},
-			Input: &types.FilteringParams{
-				Keywords: "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena",
+			expectError: false,
+		},
+		{
+			Name: "File read failure",
+			setupMock: func() {
+				mockExtractFileData := func(filename string) ([]byte, error) {
+					return nil, errors.New("file read error")
+				}
+				openFile = mockExtractFileData
 			},
+			expectError: true,
+		},
+		{
+			Name: "Invalid JSON format",
+			setupMock: func() {
+				mockFileContent := `[{-----.....-------]`
+				mockExtractFileData := func(filename string) ([]byte, error) {
+					return []byte(mockFileContent), nil
+				}
+				openFile = mockExtractFileData
+			},
+			expectError: true,
+		},
+		{
+			Name: "Empty JSON",
+			setupMock: func() {
+				mockFileContent := `[]`
+				mockExtractFileData := func(filename string) ([]byte, error) {
+					return []byte(mockFileContent), nil
+				}
+				openFile = mockExtractFileData
+			},
+			expectError: false,
+		},
+		{
+			Name: "JSON with unexpected structure",
+			setupMock: func() {
+				mockFileContent := `[{"UnexpectedField":"Some value"}]`
+				mockExtractFileData := func(filename string) ([]byte, error) {
+					return []byte(mockFileContent), nil
+				}
+				openFile = mockExtractFileData
+			},
+			expectError: true,
 		},
 	}
 
 	for _, testCase := range testCases {
-		news, err := parser.Parse()
-		assert.NoError(t, err)
+		t.Run(testCase.Name, func(t *testing.T) {
+			testCase.setupMock()
+			news, err := parser.Parse()
 
-		filteredNews := ApplyFilters(news, testCase.Input)
-
-		if len(testCase.Expected) == 0 {
-			assert.Empty(t, filteredNews)
-		} else {
-			assert.Equal(t, len(filteredNews), len(testCase.Expected))
-			for i, expectedNews := range testCase.Expected {
-				assert.Equal(t, filteredNews[i].Title, expectedNews.Title)
-				assert.Equal(t, filteredNews[i].Description, expectedNews.Description)
-				assert.Equal(t, filteredNews[i].PubDate, expectedNews.PubDate)
+			if testCase.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, news)
 			}
-		}
+		})
 	}
 }

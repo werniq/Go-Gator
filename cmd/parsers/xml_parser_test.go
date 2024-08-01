@@ -1,8 +1,11 @@
 package parsers
 
 import (
+	"errors"
+	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"gogator/cmd/types"
+	"net/http"
 	"testing"
 )
 
@@ -12,45 +15,120 @@ func TestXmlParser_Parse(t *testing.T) {
 	}
 
 	testCases := []struct {
-		Expected []types.News
-		Input    *types.FilteringParams
+		name         string
+		setupMock    func()
+		expectError  bool
+		expectedNews []types.News
 	}{
 		{
-			Expected: []types.News{
-				{
-					Title:       "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena",
-					Description: "The Vatican has issued new rules radically reforming its process for evaluating faith-based supernatural phenomena like visions of the Virgin Mary or stigmata.",
-					PubDate:     "2024-05-17T14:58:52Z",
-				},
+			name: "Default parse",
+			setupMock: func() {
+				httpmock.Activate()
+				defer httpmock.DeactivateAndReset()
+
+				mockXML := `<?xml version="1.0" encoding="UTF-8"?>
+				<rss version="2.0">
+					<channel>
+						<title>Test Channel</title>
+						<item>
+							<title>Test News</title>
+							<description>This is a test news.</description>
+							<pubDate>2024-07-23</pubDate>
+							<link>http://example.com</link>
+						</item>
+					</channel>
+				</rss>`
+
+				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
+					httpmock.NewStringResponder(http.StatusOK, mockXML))
 			},
-			Input: &types.FilteringParams{
-				Keywords: "Ukraine and Russia exchange drone attacks while Russia continues its push in the east",
+			expectError: false,
+			expectedNews: []types.News{
+				{
+					Title:       "Test News",
+					Description: "This is a test news.",
+					PubDate:     "2024-07-23",
+					Publisher:   "abc",
+					Link:        "http://example.com",
+				},
 			},
 		},
 		{
-			Expected: []types.News{
-				{
-					Title:       "Statue weeping blood? Visions of the Virgin Mary? Vatican has new advice on supernatural phenomena",
-					Description: "The Vatican has issued new rules radically reforming its process for evaluating faith-based supernatural phenomena like visions of the Virgin Mary or stigmata.",
-					PubDate:     "2024-05-17T14:58:52Z",
-				},
+			name: "HTTP request failure",
+			setupMock: func() {
+				httpmock.Activate()
+				defer httpmock.DeactivateAndReset()
+
+				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
+					httpmock.NewErrorResponder(errors.New("http request failed")))
 			},
-			Input: &types.FilteringParams{
-				Keywords: "Definitely not existen sequence of keywords",
+			expectError: true,
+		},
+		{
+			name: "Empty response body",
+			setupMock: func() {
+				httpmock.Activate()
+				defer httpmock.DeactivateAndReset()
+
+				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
+					httpmock.NewStringResponder(http.StatusOK, ""))
 			},
+			expectError: true,
+		},
+		{
+			name: "Invalid XML format",
+			setupMock: func() {
+				httpmock.Activate()
+				defer httpmock.DeactivateAndReset()
+
+				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
+					httpmock.NewStringResponder(
+						http.StatusOK,
+						`<rss><channel><item><title>Test</title></item></channel></rss>`))
+			},
+			expectError: true,
+		},
+		{
+			name: "Unexpected XML structure",
+			setupMock: func() {
+				httpmock.Activate()
+				defer httpmock.DeactivateAndReset()
+
+				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
+					httpmock.NewStringResponder(
+						http.StatusOK,
+						`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Test Channel</title></channel></rss>`))
+			},
+			expectError:  true,
+			expectedNews: []types.News{},
+		},
+		{
+			name: "Empty XML document",
+			setupMock: func() {
+				httpmock.Activate()
+				defer httpmock.DeactivateAndReset()
+
+				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
+					httpmock.NewStringResponder(
+						http.StatusOK,
+						`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel></channel></rss>`))
+			},
+			expectError:  false,
+			expectedNews: []types.News{},
 		},
 	}
 
-	for _, testCase := range testCases {
-		news, err := parser.Parse()
-		assert.NoError(t, err)
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupMock()
+			news, err := parser.Parse()
 
-		filteredNews := ApplyFilters(news, testCase.Input)
-
-		if len(testCase.Expected) == 0 {
-			assert.Empty(t, filteredNews)
-		} else {
-			assert.Equal(t, len(testCase.Expected), len(filteredNews))
-		}
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.ElementsMatch(t, tt.expectedNews, news)
+			}
+		})
 	}
 }

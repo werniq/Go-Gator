@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"github.com/spf13/cobra"
@@ -67,12 +67,13 @@ func FetchNewsCmd() *cobra.Command {
 			log.Fatalln(err)
 		}
 
-		err = validator.Validate(dateFrom, dateEnd, sources)
+		v := validator.ArgValidator{}
+		err = v.Validate(sources, dateFrom, dateEnd)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		f := types.NewFilteringParams(keywords, dateFrom, dateEnd)
+		f := types.NewFilteringParams(keywords, dateFrom, dateEnd, sources)
 
 		news, err := parsers.ParseBySource(sources)
 		if err != nil {

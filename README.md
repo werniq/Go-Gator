@@ -1,53 +1,108 @@
 ## Go Gator
-### News Aggregator CLI App, implemented in golang
+### News Aggregator Server
 <hr>
 
 ## Implemented:
-1. Reading from .xml, .json, .html files
-2. Parsing that data into structures
-3. Filtering news by parameters (provided by user, handling user input)
-4. Logging
+1. Handlers for managing sources (Admin API)
+2. Handler for retrieving news by given parameters:
+3. Verifying user input, displaying appropriate messages/errors
+4. Dynamic fetching news from external APIs:
+    - Making requests to external APIs (ABC,BBC, etc.), and store it. Not from static files as were before
+5. Covered code with unit and integration tests
+6. Made server secure with HTTPS
+7. Added logging
+8. Containerized application with docker
 
 ## Documentation
 Here I would like to explain the purpose of each directory.
 <br />
+
 ### 1. Cmd
 Main logic of the application is there. Cmd has few sub folders:
 1. Parsers  - Parsing various data types
-2. Parsing Instructions - Filtering news by various parameters
-3. Types - Types folder is used to avoid cycling imports. Object that are used in multilpe packages (e.g. Parsing Parameters) lives there
-4. Utils - Helper functions, in order to separate them with main logic
+2. Filters - Filtering news by various parameters
+3. Types - Types folder is used to avoid cycling imports. Object that are used in multiple packages (e.g. Parsing Parameters) lives there
+4. Server - server initialization and configuration
+5. Server/handlers - handlers attached to the server
+6. Validator - Validating layer using chain of responsibility pattern
 
-### 2. Data
-Files from where data is retrieved are located in this folder
+### 2. Docs 
+Documentation, specfile and C4 model, and usage/response examples with images 
 
-### 3. Logger
-Better logging functionality. I saw it on one project, and from that moment always use this practice.
+## Server Handlers
+Go-Gator server contains few handlers. Few of them are used by admins to manage list of available
+sources. <br />
+News handler is used by clients to fetch news.
+P.S. This example assumes that server is running on port :443, however you can change it any time.
 
-### 4. Usage
-GoGator has only root and fetch commands. Root just prints simple message, and fetch performs actual
-news retrieval and filtering.
+1. GET: `/news` - Returns list of news, filtering them by parameters.
+- Available parameters: <br/>
+> `ts-from=2024-05-12` News will be retrieved starting from that timestamp <br/>
+> `ts-to=2024-05-18` No news will be retrieved, where publication date is bigger than provided parameter <br/>
+> `sources=bbc,washingtontimes` News will be retrieved ONLY from mentioned sources (separated by ',') <br/>
+> `keywords=Ukraine,Chine` News will be filtered by existence of keywords in title or description <br/>
 
-You can run this application, by running:
-<br />
-> `go build -o ./bin/go-gator.exe` <br/><br/>
-> `./bin/go-gator fetch` <br/>
+- Request example: 
+![img.png](docs/images/get_news_request.png)
 
-P.S. I am using windows, if You are using Linux just miss the .exe extension.  <br />
-I am not sure how use it in the Mac, but I suppose also miss .exe part.
+- Response example:
+  ![img_2.png](docs/images/get_news_response.png)
 
-Available parameters: <br/>
-> `--ts-from 2024-05-12` News will be retrieved starting from that timestamp <br/>
-> `--ts-to 2024-05-18` No news will be retrieved, where publication date is bigger than provided parameter <br/>
-> `--sources bbc,washingtontimes` News will be retrieved ONLY from mentioned sources (separated by ',') <br/> 
-> `--keywords Ukraine,Chine` News will be filtered by existence of keywords in title or description <br/>
+2. GET: `/admin/sources` - Returns list of available sources
 
-## 5. Examples:
-`.\bin\go-gator.exe fetch --ts-from 2024-05-18 --keywords Ukraine --ts-to 2024-05-20 --sources bbc`
+- Request example: 
+![get_sources_request.png](docs/images/get_sources_request.png)
 
-![img.png](docs/images/example_1.png)
-<hr/>
+- Response example:
+![img_1.png](docs/images/get_sources_response.png)
 
-`.\bin\go-gator.exe fetch --ts-from 2024-05-18 --keywords Ukraine --ts-to 2024-05-20 --sources washingtontimes,abc,usatoday`
+3. POST `/admin/sources` - Add new sources to the list <br />
+If were provided already existing source - will return an error.
 
-![img.png](docs/images/example_2.png)
+- Request example: 
+![img_2.png](docs/images/register_source_request.png)
+
+- Response example:
+![img_3.png](docs/images/register_source_response.png)
+
+4. PUT '/admin/sources' - Update already existing sources <br />
+In source, you can update either format, and/or endpoint. 
+If were provided not-existing source - will return an error 
+
+- Request example:
+![img_4.png](docs/images/put_source_request.png)
+
+- Response example:
+![img_5.png](docs/images/put_source_response.png)
+
+5. DELETE '/admin/sources' - Update already existing sources <br />
+If were provided not-existing source - will return an error
+
+- Request example:
+![img_6.png](docs/images/delete_source_request.png)
+
+- Response example:
+![img_7.png](docs/images/delete_source_response.png)
+
+## Usage:
+1. Using Golang: <br />
+> `go build -o ./bin/go-gator` - Build golang binary <br />
+> `./bin/go-gator`
+You can change default parameters, such as updates frequency, server port and certificates:
+1. -f - Changes news updates frequency
+2. -p - Specify port on which server will be operating
+3. -c and -k - Are used for SSL certificate and key
+
+2. Using Docker
+> `docker build -t go-gator .`
+> `docker run go-gator -p 443:443`
+You can change your port to anything that you like, but destination port on the container should be 443.
+
+3. With Taskfile
+> Docker: <br />
+> task docker-build DOCKER_IMAGE_NAME={your_image_name} <br />
+> task docker-run DOCKER_IMAGE_NAME={your_image_name} <br />
+>  <br />
+> Golang: <br />
+> task build <br />
+> task run

@@ -171,7 +171,6 @@ func LoadSourcesFile() error {
 // the file cannot be created or opened,
 // or if the file content cannot be written or closed properly.
 func UpdateSourceFile() error {
-	var file *os.File
 	cwdPath, err := os.Getwd()
 	if err != nil {
 		return err
@@ -179,8 +178,18 @@ func UpdateSourceFile() error {
 
 	sourcesFilePath := filepath.Join(cwdPath, StoragePath, sourcesFile)
 
-	file, err = os.Create(sourcesFilePath)
+	file, err := os.Create(sourcesFilePath)
 	if err != nil {
+		switch {
+		case errors.Is(err, os.ErrExist):
+			file, err = os.Open(sourcesFilePath)
+			if err != nil {
+				return err
+			}
+		case err != nil:
+			return err
+		}
+
 		return err
 	}
 

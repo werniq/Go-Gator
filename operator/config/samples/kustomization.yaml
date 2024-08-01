@@ -1,4 +1,0 @@
-## Append samples of your project ##
-resources:
-- webapp_v1_gogator.yaml
-# +kubebuilder:scaffold:manifestskustomizesamples

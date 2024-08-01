@@ -35,7 +35,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	webappv1 "teamdev.com/go-gator/api/v1"
+	aggregatorv1 "teamdev.com/go-gator/api/v1"
 	"teamdev.com/go-gator/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
@@ -48,7 +48,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(webappv1.AddToScheme(scheme))
+	utilruntime.Must(aggregatorv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -144,11 +144,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.GoGatorReconciler{
+	if err = (&controller.FeedReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "GoGator")
+		setupLog.Error(err, "unable to create controller", "controller", "Feed")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

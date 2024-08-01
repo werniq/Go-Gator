@@ -1,23 +1,23 @@
-# permissions for end users to view gogators.
+# permissions for end users to view feeds.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
-    app.kubernetes.io/name: ops
+    app.kubernetes.io/name: operator
     app.kubernetes.io/managed-by: kustomize
-  name: gogator-viewer-role
+  name: feed-viewer-role
 rules:
 - apiGroups:
-  - webapp.teamdev.com
+  - aggregator.teamdev.com
   resources:
-  - gogators
+  - feeds
   verbs:
   - get
   - list
   - watch
 - apiGroups:
-  - webapp.teamdev.com
+  - aggregator.teamdev.com
   resources:
-  - gogators/status
+  - feeds/status
   verbs:
   - get

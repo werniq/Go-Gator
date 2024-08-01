@@ -23,17 +23,17 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// GoGatorSpec defines the desired state of GoGator
-type GoGatorSpec struct {
+// FeedSpec defines the desired state of Feed
+type FeedSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of GoGator. Edit gogator_types.go to remove/update
+	// Foo is an example field of Feed. Edit feed_types.go to remove/update
 	Foo string `json:"foo,omitempty"`
 }
 
-// GoGatorStatus defines the observed state of GoGator
-type GoGatorStatus struct {
+// FeedStatus defines the observed state of Feed
+type FeedStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
@@ -41,24 +41,24 @@ type GoGatorStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
-// GoGator is the Schema for the gogators API
-type GoGator struct {
+// Feed is the Schema for the feeds API
+type Feed struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GoGatorSpec   `json:"spec,omitempty"`
-	Status GoGatorStatus `json:"status,omitempty"`
+	Spec   FeedSpec   `json:"spec,omitempty"`
+	Status FeedStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// GoGatorList contains a list of GoGator
-type GoGatorList struct {
+// FeedList contains a list of Feed
+type FeedList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []GoGator `json:"items"`
+	Items           []Feed `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&GoGator{}, &GoGatorList{})
+	SchemeBuilder.Register(&Feed{}, &FeedList{})
 }

@@ -24,29 +24,29 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	webappv1 "teamdev.com/go-gator/api/v1"
+	aggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
-// GoGatorReconciler reconciles a GoGator object
-type GoGatorReconciler struct {
+// FeedReconciler reconciles a Feed object
+type FeedReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=webapp.teamdev.com,resources=gogators,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=webapp.teamdev.com,resources=gogators/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=webapp.teamdev.com,resources=gogators/finalizers,verbs=update
+// +kubebuilder:rbac:groups=aggregator.teamdev.com,resources=feeds,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=aggregator.teamdev.com,resources=feeds/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=aggregator.teamdev.com,resources=feeds/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the GoGator object against the actual cluster state, and then
+// the Feed object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.18.4/pkg/reconcile
-func (r *GoGatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
@@ -55,8 +55,8 @@ func (r *GoGatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GoGatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&webappv1.GoGator{}).
+		For(&aggregatorv1.Feed{}).
 		Complete(r)
 }

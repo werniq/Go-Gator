@@ -27,10 +27,10 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	webappv1 "teamdev.com/go-gator/api/v1"
+	aggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
-var _ = Describe("GoGator Controller", func() {
+var _ = Describe("Feed Controller", func() {
 	Context("When reconciling a resource", func() {
 		const resourceName = "test-resource"
 
@@ -40,13 +40,13 @@ var _ = Describe("GoGator Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		gogator := &webappv1.GoGator{}
+		feed := &aggregatorv1.Feed{}
 
 		BeforeEach(func() {
-			By("creating the custom resource for the Kind GoGator")
-			err := k8sClient.Get(ctx, typeNamespacedName, gogator)
+			By("creating the custom resource for the Kind Feed")
+			err := k8sClient.Get(ctx, typeNamespacedName, feed)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &webappv1.GoGator{
+				resource := &aggregatorv1.Feed{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
@@ -59,16 +59,16 @@ var _ = Describe("GoGator Controller", func() {
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &webappv1.GoGator{}
+			resource := &aggregatorv1.Feed{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("Cleanup the specific resource instance GoGator")
+			By("Cleanup the specific resource instance Feed")
 			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
 		})
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
-			controllerReconciler := &GoGatorReconciler{
+			controllerReconciler := &FeedReconciler{
 				Client: k8sClient,
 				Scheme: k8sClient.Scheme(),
 			}

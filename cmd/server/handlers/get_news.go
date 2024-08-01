@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"gogator/cmd/filters"
+	"gogator/cmd/parsers"
+	"gogator/cmd/types"
+	"gogator/cmd/validator"
 	"log"
 	"net/http"
-	"newsaggr/cmd/filters"
-	"newsaggr/cmd/parsers"
-	"newsaggr/cmd/types"
-	"newsaggr/cmd/validator"
 	"time"
 )
 
@@ -38,6 +38,9 @@ const (
 
 	// ErrFailedParsing is thrown when program fails to parse sources
 	ErrFailedParsing = "error while parsing sources: "
+
+	//
+	ErrValidatingParams = "Error validating parameters: "
 )
 
 // GetNews handler will be used in our server to retrieve news from prepared files
@@ -47,18 +50,13 @@ func GetNews(c *gin.Context) {
 	dateFrom := c.Query(DateFromFlag)
 	dateEnd := c.Query(DateEndFlag)
 
-	dateRangeHandler := &validator.DateRangeHandler{}
-	dateValidationHandler := &validator.DateValidationHandler{}
-	sourceValidationHandler := &validator.SourceValidationHandler{}
-
-	dateRangeHandler.SetNext(dateValidationHandler)
-	dateValidationHandler.SetNext(sourceValidationHandler)
-
-	// Start the chain
-	if err := dateRangeHandler.Handle(c); err != nil {
+	v := &validator.ArgValidator{}
+	err := v.Validate(sources, dateFrom, dateEnd)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"error": ErrValidatingParams + err.Error(),
 		})
+		log.Println(ErrValidatingParams + err.Error())
 		return
 	}
 
@@ -72,12 +70,12 @@ func GetNews(c *gin.Context) {
 		dateEnd = LastFetchedFileDate
 	}
 
-	news, err := parsers.FromFiles(dateFrom, dateEnd)
+	news, err = parsers.FromFiles(dateFrom, dateEnd)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
+			"error": ErrFailedParsing + err.Error(),
 		})
-		log.Println(err.Error())
+		log.Println(ErrFailedParsing, err.Error())
 		return
 	}
 

@@ -10,6 +10,7 @@ import (
 
 func TestGetSourceDetailed(t *testing.T) {
 	server := gin.Default()
+	server.GET("/admin/source/", GetSourceDetailed)
 	server.GET("/admin/source/:source", GetSourceDetailed)
 
 	tests := []struct {
@@ -21,6 +22,16 @@ func TestGetSourceDetailed(t *testing.T) {
 			name:       "Get detailed information about bbc",
 			source:     "bbc",
 			statusCode: http.StatusOK,
+		},
+		{
+			name:       "Try to get wrong source",
+			source:     "no-source",
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			name:       "Try to get source with no name",
+			source:     "",
+			statusCode: http.StatusBadRequest,
 		},
 	}
 

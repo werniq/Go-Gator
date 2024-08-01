@@ -1,14 +1,14 @@
 package filters
 
 import (
-	"newsaggr/cmd/types"
+	"gogator/cmd/types"
 	"strings"
 	"time"
 )
 
 type ApplyKeywordsInstruction struct{}
 
-// Apply is a method in ApplyKeywordsInstruction which is used to filter articles by keyword
+// Apply is a method in ApplyKeywordsInstruction which is used to filter article by keyword
 func (a ApplyKeywordsInstruction) Apply(article types.News, params *types.FilteringParams) bool {
 	keywords := strings.Split(params.Keywords, ",")
 	for _, keyword := range keywords {
@@ -22,21 +22,21 @@ func (a ApplyKeywordsInstruction) Apply(article types.News, params *types.Filter
 
 type ApplyDateRangeInstruction struct{}
 
-// Apply in ApplyDateRangeInstruction is a method which is used to filter articles by data range
+// Apply in ApplyDateRangeInstruction is a method which is used to filter article by data range
 func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.FilteringParams) bool {
 
 	var publicationDate time.Time
 	var err error
 
 	if article.PubDate != "" {
-		publicationDate, err = ParseDate(article.PubDate)
+		publicationDate, err = parseDate(article.PubDate)
 		if err != nil {
 			return false
 		}
 	}
 
 	if params.StartingTimestamp != "" {
-		startingTime, err := ParseDate(params.StartingTimestamp)
+		startingTime, err := parseDate(params.StartingTimestamp)
 		if err != nil {
 			return false
 		}
@@ -46,7 +46,7 @@ func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.Filte
 	}
 
 	if params.EndingTimestamp != "" {
-		endingTime, err := ParseDate(params.EndingTimestamp)
+		endingTime, err := parseDate(params.EndingTimestamp)
 		if err != nil {
 			return false
 		}
@@ -56,26 +56,6 @@ func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.Filte
 	}
 
 	return true
-}
-
-// ParseDate is utility function which parses date to time.Time object
-func ParseDate(dateStr string) (time.Time, error) {
-	var err error
-	var date time.Time
-	timeFormats := []string{
-		time.Layout, time.ANSIC, time.UnixDate, time.RubyDate, time.RFC822, time.RFC822Z,
-		time.RFC850, time.RFC1123, time.RFC1123Z, time.RFC3339, time.RFC3339Nano,
-		time.Kitchen, time.Stamp, time.StampMilli, time.StampMicro, time.StampNano,
-		time.DateTime, time.DateOnly, time.TimeOnly, "January 2, 2006",
-	}
-
-	for _, format := range timeFormats {
-		date, err = time.Parse(format, dateStr)
-		if err == nil {
-			return date, nil
-		}
-	}
-	return time.Time{}, err
 }
 
 type ApplySourcesInstruction struct{}
@@ -94,4 +74,24 @@ func (a ApplySourcesInstruction) Apply(article types.News, params *types.Filteri
 	}
 
 	return false
+}
+
+// parseDate is utility function which parses date to time.Time object
+func parseDate(dateStr string) (time.Time, error) {
+	var err error
+	var date time.Time
+	timeFormats := []string{
+		time.Layout, time.ANSIC, time.UnixDate, time.RubyDate, time.RFC822, time.RFC822Z,
+		time.RFC850, time.RFC1123, time.RFC1123Z, time.RFC3339, time.RFC3339Nano,
+		time.Kitchen, time.Stamp, time.StampMilli, time.StampMicro, time.StampNano,
+		time.DateTime, time.DateOnly, time.TimeOnly, "January 2, 2006",
+	}
+
+	for _, format := range timeFormats {
+		date, err = time.Parse(format, dateStr)
+		if err == nil {
+			return date, nil
+		}
+	}
+	return time.Time{}, err
 }

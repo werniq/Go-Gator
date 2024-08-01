@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"gogator/cmd/parsers"
 	"net/http"
-	"newsaggr/cmd/parsers"
 )
 
 // GetSourceDetailed returns detailed information about source
@@ -24,7 +24,7 @@ func GetSourceDetailed(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"sources": parsers.GetSourceDetailed(source),
 	})
 }

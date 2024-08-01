@@ -2,9 +2,17 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"gogator/cmd/parsers"
 	"log"
 	"net/http"
-	"newsaggr/cmd/parsers"
+)
+
+const (
+	// ErrDeleteSource is thrown whenever we encounter error while deleting new source (Admin API)
+	ErrDeleteSource = "Failed to delete source: "
+
+	// MsgSourceDeleted displays informational message after source was removed
+	MsgSourceDeleted = "Source was successfully removed."
 )
 
 // DeleteSource handler deletes existing source from registered sources.
@@ -32,6 +40,24 @@ func DeleteSource(c *gin.Context) {
 	err = parsers.DeleteSource(reqBody.Source)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": ErrDeleteSource + err.Error(),
+		})
+		log.Println(ErrDeleteSource + err.Error())
+		return
+	}
+
+	dates, err := parsers.GenerateDateRange(FirstFetchedFileDate, LastFetchedFileDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": ErrDeleteSource + err.Error(),
+		})
+		log.Println(ErrDeleteSource + err.Error())
+		return
+	}
+
+	err = parsers.DestroySource(reqBody.Source, dates)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": ErrDeleteSource + err.Error(),
 		})
 		log.Println(ErrDeleteSource + err.Error())

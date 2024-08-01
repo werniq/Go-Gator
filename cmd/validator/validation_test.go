@@ -2,8 +2,10 @@ package validator
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"gogator/cmd/parsers"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -23,12 +25,15 @@ func TestDateRangeHandler_Handle(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := &DateRangeHandler{}
+			handler := &DateRangeHandler{
+				dateFrom: tt.dateFrom,
+				dateEnd:  tt.dateEnd,
+			}
 
 			c, _ := gin.CreateTestContext(httptest.NewRecorder())
 			c.Request = httptest.NewRequest(http.MethodGet, "/?date-from="+tt.dateFrom+"&date-end="+tt.dateEnd, nil)
 
-			err := handler.Handle(c)
+			err := handler.Handle()
 			assert.Equal(t, tt.expectErr, err)
 		})
 	}
@@ -37,24 +42,25 @@ func TestDateRangeHandler_Handle(t *testing.T) {
 func TestDateValidationHandler_Handle(t *testing.T) {
 	tests := []struct {
 		name      string
-		dateFrom  string
-		dateEnd   string
+		date      string
 		expectErr error
 	}{
-		{"ValidDates", "2024-05-01", "2024-05-15", nil},
-		{"InvalidDateFrom", "2024-15-01", "2024-05-15", errors.New(ErrFailedDateValidation)},
-		{"InvalidDateEnd", "2024-05-01", "2024-15-15", errors.New(ErrFailedDateValidation)},
-		{"EmptyDates", "", "", nil},
+		{"ValidDates", "2024-05-01", nil},
+		{"InvalidDateFrom", "2024-15-01", errors.New(ErrFailedDateValidation)},
+		{"InvalidDateEnd", "2024-05-51", errors.New(ErrFailedDateValidation)},
+		{"EmptyDates", "", nil},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := &DateValidationHandler{}
+			handler := &DateValidationHandler{
+				date: tt.date,
+			}
 
 			c, _ := gin.CreateTestContext(httptest.NewRecorder())
-			c.Request = httptest.NewRequest(http.MethodGet, "/?date-from="+tt.dateFrom+"&date-end="+tt.dateEnd, nil)
+			c.Request = httptest.NewRequest(http.MethodGet, "/?date-from="+tt.date, nil)
 
-			err := handler.Handle(c)
+			err := handler.Handle()
 			assert.Equal(t, tt.expectErr, err)
 		})
 	}
@@ -67,18 +73,23 @@ func TestSourceValidationHandler_Handle(t *testing.T) {
 		expectErr error
 	}{
 		{"ValidSources", "abc,bbc", nil},
-		{"InvalidSource", "abc,xyz", errors.New(ErrFailedSourceValidation + "unsupported source: xyz. Supported sources are: [abc bbc nbc usatoday washingtontimes]")},
+		{"InvalidSource", "abc,xyz", errors.New(
+			fmt.Sprintf("%v%s%v", ErrFailedSourceValidation, "unsupported source: xyz. Supported sources are: ",
+				parsers.GetAllSources()))},
+
 		{"EmptySources", "", nil},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := &SourceValidationHandler{}
+			handler := &SourceValidationHandler{
+				sources: tt.sources,
+			}
 
 			c, _ := gin.CreateTestContext(httptest.NewRecorder())
 			c.Request = httptest.NewRequest(http.MethodGet, "/?sources="+tt.sources, nil)
 
-			err := handler.Handle(c)
+			err := handler.Handle()
 			assert.Equal(t, tt.expectErr, err)
 		})
 	}

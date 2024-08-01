@@ -1,10 +1,11 @@
-module newsaggr
+module gogator
 
-go 1.21
+go 1.22
 
 require (
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/gin-gonic/gin v1.10.0
+	github.com/jarcoal/httpmock v1.3.1
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
 )

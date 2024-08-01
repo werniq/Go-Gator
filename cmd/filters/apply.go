@@ -1,8 +1,6 @@
 package filters
 
-import (
-	"newsaggr/cmd/types"
-)
+import "gogator/cmd/types"
 
 var (
 	f InstructionFactory
@@ -18,7 +16,6 @@ func Apply(articles []types.News, params *types.FilteringParams) []types.News {
 		f.CreateApplyKeywordInstruction().Apply,
 	}
 
-	// Iterate over the articles
 	for _, article := range articles {
 		applyAllFilters := true
 

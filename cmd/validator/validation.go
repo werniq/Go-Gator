@@ -3,25 +3,13 @@ package validator
 import (
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
+	parsers "gogator/cmd/parsers"
 	"strings"
 	"time"
 )
 
 const (
-	// KeywordFlag will be used to get the keywords (or empty string) from URL parameter
-	KeywordFlag = "keywords"
-
-	// DateFromFlag will be used to get the date-from (or empty string) from URL parameter
-	DateFromFlag = "date-from"
-
-	// DateEndFlag will be used to get the date-end (or empty string) from URL parameter
-	DateEndFlag = "date-end"
-
-	// SourcesFlag will be used to get the sources (or empty string) from URL parameter
-	SourcesFlag = "sources"
-
-	// ErrDateFromAfter is thrown when user provided DateFrom bigger than DateEnd
+	// ErrDateFromAfter is thrown when user provided date bigger than dateEnd
 	ErrDateFromAfter = "date from can not be after date end"
 
 	// ErrFailedDateValidation is thrown when user submitted date in wrong format
@@ -31,13 +19,56 @@ const (
 	ErrFailedSourceValidation = "error while validating source "
 )
 
+type Validator interface {
+	Validate(keywords, dateFrom, dateEnd string) error
+}
+
+// ArgValidator struct is used to validate arguments which user inputs in get-news handler
+type ArgValidator struct {
+}
+
+type UnsupportedFlagError struct {
+	Err error
+}
+
+func (u *UnsupportedFlagError) Error() string {
+	return fmt.Sprintf(u.Err.Error())
+}
+
+// Validate checks if all user-given arguments are correct
+func (v *ArgValidator) Validate(sources, dateFrom, dateEnd string) error {
+	dateFromValidator := &DateValidationHandler{
+		date: dateFrom,
+	}
+	dateEndValidator := &DateValidationHandler{
+		date: dateEnd,
+	}
+	dateRangeValidator := &DateRangeHandler{
+		dateFrom: dateFrom,
+		dateEnd:  dateEnd,
+	}
+	sourcesValidator := &SourceValidationHandler{
+		sources: sources,
+	}
+
+	dateFromValidator.SetNext(dateEndValidator)
+	dateEndValidator.SetNext(dateRangeValidator)
+	dateRangeValidator.SetNext(sourcesValidator)
+
+	if err := dateFromValidator.Handle(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Handler interface defines the methods required for implementing a validation handler
 type Handler interface {
 	// SetNext sets the next handler in the chain
-
 	SetNext(handler Handler)
+
 	// Handle processes the request and performs validation
-	Handle(c *gin.Context) error
+	Handle() error
 }
 
 // BaseHandler provides a base implementation for chaining handlers
@@ -51,9 +82,9 @@ func (h *BaseHandler) SetNext(handler Handler) {
 }
 
 // HandleNext calls the next handler in the chain, if it exists
-func (h *BaseHandler) HandleNext(c *gin.Context) error {
+func (h *BaseHandler) HandleNext() error {
 	if h.next != nil {
-		return h.next.Handle(c)
+		return h.next.Handle()
 	}
 	return nil
 }
@@ -61,57 +92,58 @@ func (h *BaseHandler) HandleNext(c *gin.Context) error {
 // DateRangeHandler validates that the date-from parameter is not after the date-end parameter
 type DateRangeHandler struct {
 	BaseHandler
+	dateFrom string
+	dateEnd  string
 }
 
 // Handle validates the date range and calls the next handler in the chain
-func (h *DateRangeHandler) Handle(c *gin.Context) error {
-	dateFrom := c.Query(DateFromFlag)
-	dateEnd := c.Query(DateEndFlag)
-
-	if dateEnd != "" && dateFrom != "" {
-		if dateFrom > dateEnd {
-			return errors.New(ErrDateFromAfter)
-		}
+func (h *DateRangeHandler) Handle() error {
+	if err := ByDateRange(h.dateFrom, h.dateEnd); err != nil {
+		return err
 	}
 
-	return h.HandleNext(c)
+	return h.HandleNext()
 }
 
 // DateValidationHandler checks if the date parameters are in the correct format (YYYY-MM-DD)
 type DateValidationHandler struct {
 	BaseHandler
+	date string
 }
 
 // Handle validates the date format and calls the next handler in the chain
-func (h *DateValidationHandler) Handle(c *gin.Context) error {
-	dateFrom := c.Query(DateFromFlag)
-	dateEnd := c.Query(DateEndFlag)
-
-	if err := ByDate(dateFrom); err != nil {
+func (h *DateValidationHandler) Handle() error {
+	if err := ByDate(h.date); err != nil {
 		return errors.New(ErrFailedDateValidation)
 	}
 
-	if err := ByDate(dateEnd); err != nil {
-		return errors.New(ErrFailedDateValidation)
-	}
-
-	return h.HandleNext(c)
+	return h.HandleNext()
 }
 
 // SourceValidationHandler checks if the provided sources are within the supported list
 type SourceValidationHandler struct {
 	BaseHandler
+	sources string
 }
 
 // Handle validates the sources and calls the next handler in the chain
-func (h *SourceValidationHandler) Handle(c *gin.Context) error {
-	sources := c.Query(SourcesFlag)
-
-	if err := BySources(sources); err != nil {
+func (h *SourceValidationHandler) Handle() error {
+	if err := BySources(h.sources); err != nil {
 		return errors.New(ErrFailedSourceValidation + err.Error())
 	}
 
-	return h.HandleNext(c)
+	return h.HandleNext()
+}
+
+// ByDateRange verifies if date range is correct: date from should be before date end
+func ByDateRange(dateFrom, dateEnd string) error {
+	if dateFrom != "" && dateEnd != "" {
+		if dateFrom > dateEnd {
+			return errors.New(ErrDateFromAfter)
+		}
+	}
+
+	return nil
 }
 
 // ByDate checks if the date string is in the correct format (YYYY-MM-DD)
@@ -133,13 +165,28 @@ func BySources(sources string) error {
 	if sources == "" {
 		return nil
 	}
-	supportedSources := []string{"abc", "bbc", "nbc", "usatoday", "washingtontimes"}
+
+	supportedSources := parsers.GetAllSources()
 
 	for _, source := range strings.Split(sources, ",") {
-		if !contains(supportedSources, source) {
+		if _, exists := supportedSources[source]; !exists {
 			return fmt.Errorf("unsupported source: %s. Supported sources are: %v", source, supportedSources)
 		}
 	}
+
+	return nil
+}
+
+// CheckFlagErr enhances flag-related error messages with more user-friendly versions
+func CheckFlagErr(err error) error {
+	if err != nil {
+		if strings.Contains(err.Error(), "flag accessed but not defined") {
+			return &UnsupportedFlagError{Err: errors.New("Unsupported flag: " + err.Error())}
+		}
+
+		return errors.New("error parsing flags: " + err.Error())
+	}
+
 	return nil
 }
 

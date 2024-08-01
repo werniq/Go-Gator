@@ -1,40 +1,32 @@
-# Stage 1: Build stage
-FROM golang:1.21-alpine AS build
+FROM golang:1.22-alpine AS build
 
-# Set the working directory
 WORKDIR /app
 
-# Copy and download dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the source code
-COPY . .
+COPY ./cmd/filters ./cmd/filters
+COPY ./cmd/parsers ./cmd/parsers
+COPY ./cmd/parsers/data ./cmd/parsers/data
+COPY ./cmd/templates ./cmd/templates
+COPY ./cmd/types ./cmd/types
+COPY ./cmd/validator ./cmd/validator
+COPY ./cmd/server ./cmd/server
+COPY ./main.go ./main.go
 
-# Build the Go application
 RUN go build -o go-gator .
 
-# Stage 2: Final stage
-FROM alpine
+FROM alpine:3.20
 
-# Set the working directory
-WORKDIR /app
+ENV PORT=443
+ENV UPDATES_FREQUENCY=4
+ENV CERT_FILE="/app/cmd/server/certs/certificate.pem"
+ENV CERT_KEY="/app/cmd/server/certs/key.pem"
+ENV STORAGE_PATH="."
 
-ENV APP_MODE=DOCKER
-
-RUN echo APP_MODE=DOCKER >> .env
-RUN mkdir -p ./cmd/parsers/data/ && mkdir -p ./cmd/server/certs/
-
-# Copy the binary from the build stage
+COPY --from=build /app/cmd/parsers/data $STORAGE_PATH
 COPY --from=build /app/go-gator .
-COPY --from=build /app/cmd/server/certs/certificate.pem ./cmd/server/certs/certificate.pem
-COPY --from=build /app/cmd/server/certs/key.pem ./cmd/server/certs/key.pem
-COPY --from=build /app/cmd/parsers/data ./cmd/parsers/data
+COPY --from=build $CERT_FILE $CERT_FILE
+COPY --from=build $CERT_KEY $CERT_KEY
 
-# Set the timezone and install CA certificates
-# RUN apk --no-cache add ca-certificates tzdata
-
-EXPOSE 8080
-
-# Set the entrypoint command
-ENTRYPOINT ["/app/go-gator"]
+ENTRYPOINT /go-gator -p=$PORT -f=$UPDATES_FREQUENCY -c=$CERT_FILE -k=$CERT_KEY -fs=$STORAGE_PATH

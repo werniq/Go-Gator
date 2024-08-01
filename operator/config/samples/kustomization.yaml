@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- aggregator_v1_feed.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

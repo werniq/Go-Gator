@@ -1,0 +1,45 @@
+on:
+  push
+
+permissions:
+  contents: write
+  pull-requests: write
+
+name: release-please
+
+env:
+  REGISTRY: hub.docker.com
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/go-gator
+
+jobs:
+  release-please:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: rp
+        with:
+          token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
+          release-type: go
+
+      - name: Log in to docker hub registry
+        if: steps.rp.outputs.release_created
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and push docker image with version tag
+        uses: docker/build-push-action@v5
+        if: ${{ steps.rp.outputs.release_created }}
+        with:
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:${{ steps.rp.outputs.major }}.${{ steps.rp.outputs.minor }}.${{ steps.rp.outputs.patch }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push docker image with latests tag
+        uses: docker/build-push-action@v5
+        if: ${{ steps.rp.outputs.release_created }}
+        with:
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:latest
+          labels: ${{ steps.meta.outputs.labels }}

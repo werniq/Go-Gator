@@ -5,5 +5,5 @@ metadata:
   namespace: go-gator
 rules:
   - apiGroups: ["v1"]
-    resources: ["pods", "services", "configmaps", "secrets", "persistentvolumes", "persistentvolumeclaims", "ingresses"]
+    resources: ["pods", "services", "persistentvolumes", "persistentvolumeclaims"]
     verbs: ["create", "get", "list", "update", "delete"]

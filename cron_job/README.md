@@ -26,4 +26,5 @@ current date in the format `YYYY-MM-DD`.
 
 ```sh
 docker build -t {IMAGE_TAG_TITLE} .
+docker run -it {IMAGE_TAG_TITLE}
 ```

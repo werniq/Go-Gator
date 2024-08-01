@@ -11,7 +11,7 @@ env:
   DOCKERHUB_PASSWORD: '{{ .DOCKERHUB_PASSWORD }}'
 
 tasks:
-  fmt-check:
+  fmt:
     desc: Check if files in the project need formatting
     cmds:
       - go fmt ./... -l

@@ -182,7 +182,10 @@ func UpdateSourceFile() error {
 	if err != nil {
 		switch {
 		case errors.Is(err, os.ErrExist):
-			_, err = os.Open(f)
+			file, err = os.Open(sourcesFilePath)
+			if err != nil {
+				return err
+			}
 		case err != nil:
 			return err
 		}

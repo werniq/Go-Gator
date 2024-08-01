@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	parsers "gogator/cmd/parsers"
+	"gogator/cmd/parsers"
 	"gogator/cmd/server/handlers"
 	"gogator/cmd/types"
 	"os"
@@ -40,6 +40,20 @@ const (
 
 	// errInitializingSources is thrown when func responsible for initialization of sources fails
 	errInitializingSources = "Error initializing sources file: "
+)
+
+const (
+	// DevAddr constant describes the port on which server will operate in Development environment
+	DevAddr = ":8080"
+
+	// ProdAddr is used to run server in production environment
+	ProdAddr = ":443"
+
+	// CertFile is the name of certificate file
+	CertFile = "certificate.pem"
+
+	// KeyFile is the name of the key for the certificate above
+	KeyFile = "key.pem"
 )
 
 // ConfAndRun initializes and runs an HTTPS server using the Gin framework.

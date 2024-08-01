@@ -14,7 +14,7 @@ tasks:
   fmt:
     desc: Check if files in the project need formatting
     cmds:
-      - go fmt ./... -l
+      - go fmt ./...
 
   vet:
     desc: Format all code in all subdirectories

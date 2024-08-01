@@ -18,6 +18,12 @@ func TestSetupRoutes(t *testing.T) {
 	}{
 		{"GET /news", "GET", "/non-existent", http.StatusNotFound},
 		{"GET /admin/sources", "GET", "/admin/sources", http.StatusOK},
+		{"PUT /admin/sources", "PUT", "/admin/sources", http.StatusOK},
+		{"POST /admin/sources", "POST", "/admin/sources", http.StatusOK},
+		{"DELETE /admin/sources", "DELETE", "/admin/sources", http.StatusOK},
+		{"GET /news", "GET", "/news", http.StatusOK},
+		{"POST /news", "GET", "/news", http.StatusNotFound},
+		{"DELETE /news", "GET", "/news", http.StatusNotFound},
 	}
 
 	gin.SetMode(gin.TestMode)

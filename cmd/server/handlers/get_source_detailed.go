@@ -24,7 +24,7 @@ func GetSourceDetailed(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"sources": parsers.GetSourceDetailed(source),
 	})
 }

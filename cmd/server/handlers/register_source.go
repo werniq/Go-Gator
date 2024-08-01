@@ -8,6 +8,20 @@ import (
 	"net/http"
 )
 
+const (
+	// MsgSourceCreated displays informational message after source was created
+	MsgSourceCreated = "Source was successfully registered."
+
+	// ErrFailedToDecode displays when server failed to decode request body into struct
+	ErrFailedToDecode = "Error while decoding request body: "
+
+	// ErrSourceExists is throws when user tries to register already registered source
+	ErrSourceExists = "This source is already registered. "
+
+	// ErrAddSource is thrown whenever we encounter error while adding new source (Admin API)
+	ErrAddSource = "Failed to add source: "
+)
+
 // RegisterSource handler will be used in order to create new source from where
 // we can parse news
 func RegisterSource(c *gin.Context) {
@@ -18,6 +32,7 @@ func RegisterSource(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": ErrFailedToDecode + err.Error(),
 		})
+		log.Println(ErrFailedToDecode + err.Error())
 		return
 	}
 

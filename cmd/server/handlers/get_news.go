@@ -38,6 +38,9 @@ const (
 
 	// ErrFailedParsing is thrown when program fails to parse sources
 	ErrFailedParsing = "error while parsing sources: "
+
+	//
+	ErrValidatingParams = "Error validating parameters: "
 )
 
 // GetNews handler will be used in our server to retrieve news from prepared files
@@ -51,8 +54,9 @@ func GetNews(c *gin.Context) {
 	err := v.Validate(sources, dateFrom, dateEnd)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Error validating parameters: " + err.Error(),
+			"error": ErrValidatingParams + err.Error(),
 		})
+		log.Println(ErrValidatingParams + err.Error())
 		return
 	}
 

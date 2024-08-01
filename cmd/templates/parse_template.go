@@ -29,13 +29,17 @@ const (
 func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
 	sortNewsByPubDate(articles)
 
-	d, err := os.Getwd()
+	cwdPath, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	d = filepath.Join(d, BaseTemplatePath)
 
-	tmpl := template.Must(template.New(BaseTemplate).Funcs(templateFuncs).ParseFiles(d))
+	for strings.Contains(cwdPath, "cmd") {
+		cwdPath = filepath.Dir(cwdPath)
+	}
+	cwdPath = filepath.Join(cwdPath, BaseTemplatePath)
+
+	tmpl := template.Must(template.New(BaseTemplate).Funcs(templateFuncs).ParseFiles(cwdPath))
 
 	for i := 0; i <= len(articles)-1; i++ {
 		articles[i] = types.News{

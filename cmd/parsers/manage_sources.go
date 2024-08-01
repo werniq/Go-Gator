@@ -9,12 +9,52 @@ import (
 	"path/filepath"
 )
 
+var (
+	// g is Parsing factory.
+	// These are custom types which will be used for parsers initialization for
+	// different data formats
+	g ParsingFactory
+
+	// StoragePath is the path to folder with all data from application
+	StoragePath string
+
+	// sourceToEndpoint maps source names (as strings) to their corresponding filenames
+	sourceToEndpoint = map[string]string{
+		WashingtonTimes: "https://www.washingtontimes.com/rss/headlines/news/world",
+		ABC:             "https://abcnews.go.com/abcnews/internationalheadlines",
+		BBC:             "https://feeds.bbci.co.uk/news/rss.xml",
+		UsaToday:        "https://usatoday.com",
+	}
+
+	// sourceToParser maps source names to their corresponding parser instances
+	// The parser are created using ParsingFactory
+	sourceToParser = map[string]Parser{
+		UsaToday:        g.HtmlParser(UsaToday),
+		ABC:             g.XmlParser(ABC),
+		BBC:             g.XmlParser(BBC),
+		WashingtonTimes: g.XmlParser(WashingtonTimes),
+	}
+)
+
+const (
+	// ErrNoSource is thrown when wrong source name was provided
+	ErrNoSource = "no source was detected. please, create source first"
+
+	// ErrSourceExists is thrown when were provided source name that already exists
+	ErrSourceExists = "this source already exists"
+)
+
 // AddNewSource inserts new source to available sources list and determines the appropriate Parser for it
+//
+// Throws an error, if the source was already registered previously.
 func AddNewSource(format, source, endpoint string) error {
+	if _, exists := sourceToEndpoint[source]; exists {
+		return errors.New(ErrSourceExists)
+	}
 	sourceToEndpoint[source] = endpoint
 	sourceToParser[source] = determineParser(format, source)
 
-	err := updateSourcesFile()
+	err := UpdateSourceFile()
 	if err != nil {
 		return err
 	}
@@ -37,9 +77,15 @@ func GetSourceDetailed(source string) types.Source {
 }
 
 // UpdateSourceEndpoint updates endpoint for the given source
+//
+// Throws an error, if provided source not exists
 func UpdateSourceEndpoint(source, newEndpoint string) error {
+	if _, exists := sourceToParser[source]; exists {
+		return errors.New(ErrNoSource)
+	}
+
 	sourceToEndpoint[source] = newEndpoint
-	err := updateSourcesFile()
+	err := UpdateSourceFile()
 	if err != nil {
 		return err
 	}
@@ -48,9 +94,15 @@ func UpdateSourceEndpoint(source, newEndpoint string) error {
 }
 
 // UpdateSourceFormat updates format for the given source
+//
+// Throws an error, if provided source not exists
 func UpdateSourceFormat(source, format string) error {
+	if _, exists := sourceToParser[source]; exists {
+		return errors.New(ErrNoSource)
+	}
+
 	sourceToParser[source] = determineParser(format, source)
-	err := updateSourcesFile()
+	err := UpdateSourceFile()
 	if err != nil {
 		return err
 	}
@@ -64,38 +116,42 @@ func DeleteSource(source string) error {
 		delete(sourceToEndpoint, source)
 		delete(sourceToParser, source)
 
-		err := updateSourcesFile()
+		err := UpdateSourceFile()
 		if err != nil {
 			return err
 		}
+	} else {
+		return errors.New(ErrNoSource)
 	}
+
 	return nil
 }
 
-// LoadSourcesFile initializes sourceToParser and sourceToEndpoint with data from sources.json file
+// LoadSourcesFile initializes sourceToParser and sourceToEndpoint with data stored in
+// sources.json file.
 func LoadSourcesFile() error {
 	cwdPath, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 
-	f := filepath.Join(cwdPath, CmdDir, ParsersDir, DataDir, sourcesFile)
+	sourcesFilepath := filepath.Join(cwdPath, StoragePath, sourcesFile)
 
-	file, err := os.Open(f)
+	file, err := os.Open(sourcesFilepath)
 	if err != nil {
 		return err
 	}
 
-	data, err := io.ReadAll(file)
+	sourcesFileData, err := io.ReadAll(file)
 	if err != nil {
 		return err
 	}
-	if data == nil {
+	if sourcesFileData == nil {
 		return nil
 	}
 
 	var sources []types.Source
-	err = json.Unmarshal(data, &sources)
+	err = json.Unmarshal(sourcesFileData, &sources)
 	if err != nil {
 		return err
 	}
@@ -108,20 +164,25 @@ func LoadSourcesFile() error {
 	return nil
 }
 
-// InitSourcesFile is used to initialize file with information about sources
-func InitSourcesFile() error {
+// UpdateSourceFile initializes or updates a file with all information about sources.
+// It creates the file if it doesn't exist, and updates its content if it does.
+//
+// Returns an error if the current working directory cannot be retrieved,
+// the file cannot be created or opened,
+// or if the file content cannot be written or closed properly.
+func UpdateSourceFile() error {
 	cwdPath, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 
-	f := filepath.Join(cwdPath, CmdDir, ParsersDir, DataDir, sourcesFile)
+	sourcesFilePath := filepath.Join(cwdPath, StoragePath, sourcesFile)
 
-	file, err := os.Create(f)
+	file, err := os.Create(sourcesFilePath)
 	if err != nil {
 		switch {
 		case errors.Is(err, os.ErrExist):
-			file, err = os.Open(f)
+			_, err = os.Open(f)
 		case err != nil:
 			return err
 		}
@@ -138,54 +199,12 @@ func InitSourcesFile() error {
 		})
 	}
 
-	out, err := json.Marshal(sources)
+	sourcesFileData, err := json.Marshal(sources)
 	if err != nil {
 		return err
 	}
 
-	_, err = file.Write(out)
-	if err != nil {
-		return err
-	}
-
-	err = file.Close()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// updateSourcesFile is used to update file with information about sources to prevent losing all information if server
-// crashes
-func updateSourcesFile() error {
-	cwdPath, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	f := filepath.Join(cwdPath, CmdDir, ParsersDir, DataDir, sourcesFile)
-
-	file, err := os.Create(f)
-	if err != nil {
-		return err
-	}
-
-	var sources []types.Source
-	for key, val := range sourceToEndpoint {
-		sources = append(sources, types.Source{
-			Name:     key,
-			Format:   determineFormat(sourceToParser[key], key),
-			Endpoint: val,
-		})
-	}
-
-	out, err := json.Marshal(sources)
-	if err != nil {
-		return err
-	}
-
-	_, err = file.Write(out)
+	_, err = file.Write(sourcesFileData)
 	if err != nil {
 		return err
 	}

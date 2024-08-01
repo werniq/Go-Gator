@@ -4,6 +4,7 @@ metadata:
   name: go-gator-pvc
   namespace: go-gator
 spec:
+  storageClassName: manual
   accessModes:
     - ReadWriteOnce
   resources:

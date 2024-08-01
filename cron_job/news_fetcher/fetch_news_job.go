@@ -16,7 +16,8 @@ import (
 //
 // Using Kubernetes CronJob object, it will run once in a day, to parse
 type NewsFetchingJob struct {
-	params *types.FilteringParams
+	params      *types.FilteringParams
+	storagePath string
 }
 
 const (
@@ -37,13 +38,14 @@ const (
 )
 
 // RunJob initializes and runs NewsFetchingJob, which will parse data from feeds into respective files
-func RunJob() error {
+func RunJob(storagePath string) error {
 	dateTimestamp := time.Now().Format(time.DateOnly)
 	job := &NewsFetchingJob{
 		params: types.NewFilteringParams("",
 			dateTimestamp,
 			"",
 			""),
+		storagePath: storagePath,
 	}
 
 	err := job.Execute()
@@ -57,13 +59,8 @@ func RunJob() error {
 // Execute is a function that fetches news, parses it, and writes the parsed data
 // to a JSON file named with the current date in the format YYYY-MM-DD.
 func (j *NewsFetchingJob) Execute() error {
-	cwdPath, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	articleFilepath := filepath.Join(cwdPath,
-		parsers.StoragePath,
+	articleFilepath := filepath.Join(
+		j.storagePath,
 		j.params.StartingTimestamp+".json")
 
 	articlesFile, err := os.Create(articleFilepath)

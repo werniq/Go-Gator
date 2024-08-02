@@ -23,9 +23,15 @@ import (
 // FeedSpec defines the desired state of Feed
 type FeedSpec struct {
 	// Name field is a string that represents the name of the feed
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=20
+	// +kubebuilder:validation:UniqueItems=true
 	Name string `json:"name,omitempty"`
 
 	// Link field is a string that represents the URL of the feed
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=20
+	// +kubebuilder:validation:UniqueItems=true
 	Link string `json:"link,omitempty"`
 }
 

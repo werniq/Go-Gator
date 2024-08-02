@@ -20,22 +20,35 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // HotNewsSpec defines the desired state of HotNews
 type HotNewsSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Keywords field contains a list of required keywords
+	// +kubebuilder:validation:Required
+	Keywords []string `json:"keywords"`
 
-	// Foo is an example field of HotNews. Edit hotnews_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// DateStart identifies minimal publication date from which news will be fetched
+	DateStart string `json:"dateStart,omitempty"`
+
+	// DateEnd identifies maximal publication date from which news will be fetched
+	DateEnd string `json:"dateEnd,omitempty"`
+
+	// Feeds are all feed names in the current namespace, if empty — will watch ALL available feed
+	Feeds []string `json:"feeds"`
+
+	// FeedGroups are all available sections of feeds from `feed-group-source` ConfigMap
+	FeedGroups []string `json:"feedGroups"`
 }
 
 // HotNewsStatus defines the observed state of HotNews
 type HotNewsStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// ArticlesCount is amount of articles by certain criteria
+	ArticlesCount int `json:"articlesCount"`
+
+	// NewsLink link to the news-aggregator HTTPs server to get all news by the criteria in JSON format
+	NewsLink string `json:"newsLink"`
+
+	// ArticlesTitles are first spec.summaryConfig.titlesCount article titles, sorted by feed name
+	ArticlesTitles []string `json:"articlesTitles"`
 }
 
 // +kubebuilder:object:root=true

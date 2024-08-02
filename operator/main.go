@@ -21,6 +21,8 @@ import (
 	"flag"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	aggregatorv1 "teamdev.com/go-gator/api/aggregator/v1"
+	"teamdev.com/go-gator/internal/controller"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
@@ -33,9 +35,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
-
-	aggregatorv1 "teamdev.com/go-gator/api/aggregator/v1"
-	"teamdev.com/go-gator/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
 

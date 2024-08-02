@@ -34,7 +34,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	aggregatorv1 "teamdev.com/go-gator/api/v1"
+	aggregatorv1 "teamdev.com/go-gator/api/aggregator/v1"
 	"teamdev.com/go-gator/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
@@ -136,6 +136,13 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Feed")
+		os.Exit(1)
+	}
+	if err = (&controller.HotNewsReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "HotNews")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

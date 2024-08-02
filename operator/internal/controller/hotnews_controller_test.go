@@ -18,7 +18,7 @@ package controller
 
 import (
 	"context"
-	aggregatorv1 "teamdev.com/go-gator/api/aggregator/v1"
+	"teamdev.com/go-gator/internal/controller/aggregator"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -27,9 +27,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	aggregatorv1 "teamdev.com/go-gator/api/aggregator/v1"
 )
 
-var _ = Describe("Feed Controller", func() {
+var _ = Describe("HotNews Controller", func() {
 	Context("When reconciling a resource", func() {
 		const resourceName = "test-resource"
 
@@ -39,37 +41,37 @@ var _ = Describe("Feed Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		feed := &aggregatorv1.Feed{}
+		hotnews := &aggregatorv1.HotNews{}
 
 		BeforeEach(func() {
-			By("creating the custom resource for the Kind Feed")
-			err := k8sClient.Get(ctx, typeNamespacedName, feed)
+			By("creating the custom resource for the Kind HotNews")
+			err := aggregator.k8sClient.Get(ctx, typeNamespacedName, hotnews)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &aggregatorv1.Feed{
+				resource := &aggregatorv1.HotNews{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
 					},
 					// TODO(user): Specify other spec details if needed.
 				}
-				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+				Expect(aggregator.k8sClient.Create(ctx, resource)).To(Succeed())
 			}
 		})
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &aggregatorv1.Feed{}
-			err := k8sClient.Get(ctx, typeNamespacedName, resource)
+			resource := &aggregatorv1.HotNews{}
+			err := aggregator.k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("Cleanup the specific resource instance Feed")
-			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+			By("Cleanup the specific resource instance HotNews")
+			Expect(aggregator.k8sClient.Delete(ctx, resource)).To(Succeed())
 		})
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
-			controllerReconciler := &FeedReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
+			controllerReconciler := &HotNewsReconciler{
+				Client: aggregator.k8sClient,
+				Scheme: aggregator.k8sClient.Scheme(),
 			}
 
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{

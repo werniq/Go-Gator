@@ -19,13 +19,12 @@ package controller
 import (
 	"context"
 	"k8s.io/apimachinery/pkg/api/errors"
+	aggregatorv1 "teamdev.com/go-gator/api/aggregator/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	aggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
 // FeedReconciler reconciles a Feed object

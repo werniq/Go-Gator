@@ -1,0 +1,27 @@
+# permissions for end users to edit hotnews.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: operator
+    app.kubernetes.io/managed-by: kustomize
+  name: aggregator-hotnews-editor-role
+rules:
+- apiGroups:
+  - aggregator.teamdev.com
+  resources:
+  - hotnews
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - aggregator.teamdev.com
+  resources:
+  - hotnews/status
+  verbs:
+  - get

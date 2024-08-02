@@ -27,14 +27,17 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	aggregatorv1 "teamdev.com/go-gator/api/aggregator/v1"
 	aggregatorv1 "teamdev.com/go-gator/api/v1"
 	"teamdev.com/go-gator/internal/controller"
+	aggregatorcontroller "teamdev.com/go-gator/internal/controller/aggregator"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -52,12 +55,12 @@ func init() {
 
 func main() {
 	var (
-		metricsAddr 		 string
+		metricsAddr          string
 		enableLeaderElection bool
-		probeAddr 			 string
-		secureMetrics 		 bool
-		enableHTTP2 		 bool
-		tlsOpts 		 	 []func(*tls.Config)
+		probeAddr            string
+		secureMetrics        bool
+		enableHTTP2          bool
+		tlsOpts              []func(*tls.Config)
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
@@ -91,19 +94,29 @@ func main() {
 		TLSOpts: tlsOpts,
 	})
 
-	
 	metricsServerOptions := metricsserver.Options{
 		BindAddress:   metricsAddr,
 		SecureServing: secureMetrics,
-		TLSOpts: tlsOpts,
+		TLSOpts:       tlsOpts,
 	}
 
 	if secureMetrics {
 		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
 	}
 
+	// use default namespaces to cache objects in a specific set of namespaces
+	namespaces := []string{"go-gator"}
+	defaultNamespaces := make(map[string]cache.Config)
+
+	for _, ns := range namespaces {
+		defaultNamespaces[ns] = cache.Config{}
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
+		Scheme: scheme,
+		Cache: cache.Options{
+			DefaultNamespaces: defaultNamespaces,
+		},
 		Metrics:                metricsServerOptions,
 		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: probeAddr,
@@ -120,6 +133,13 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Feed")
+		os.Exit(1)
+	}
+	if err = (&aggregatorcontroller.HotNewsReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "HotNews")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

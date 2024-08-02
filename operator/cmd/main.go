@@ -46,14 +46,19 @@ var (
 )
 
 const (
+	// defaultMetricsAddr is the default address for the metrics endpoint, set to "0" to disable it.
 	defaultMetricsAddr = "0"
 
+	// defaultProbeAddr is the default address for the probe endpoint.
 	defaultProbeAddr = ":8081"
 
+	// defaultEnableLeaderElection indicates that leader election is disabled by default.
 	defaultEnableLeaderElection = false
 
+	// defaultSecureMetrics indicates that the metrics endpoint is served securely via HTTPS by default.
 	defaultSecureMetrics = true
 
+	// defaultHttp2Enabled indicates that HTTP/2 is disabled by default.
 	defaultHttp2Enabled = false
 )
 

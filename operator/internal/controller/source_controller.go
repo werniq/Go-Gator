@@ -24,22 +24,29 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	aggregatorv1 "teamdev.com/go-gator/api/aggregator/v1"
+	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
-// HotNewsReconciler reconciles a HotNews object
-type HotNewsReconciler struct {
+// SourceReconciler reconciles a Source object
+type SourceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=aggregator.teamdev.com,resources=hotnews,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=aggregator.teamdev.com,resources=hotnews/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=aggregator.teamdev.com,resources=hotnews/finalizers,verbs=update
+// +kubebuilder:rbac:groups=news-aggregator.teamdev.com,resources=sources,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=news-aggregator.teamdev.com,resources=sources/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=news-aggregator.teamdev.com,resources=sources/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+// TODO(user): Modify the Reconcile function to compare the state specified by
+// the Source object against the actual cluster state, and then
+// perform operations to make the cluster state reflect the state specified by
+// the user.
+//
+// For more details, check Reconcile and its Result here:
+// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.18.4/pkg/reconcile
+func (r *SourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
@@ -48,8 +55,8 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *SourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&aggregatorv1.HotNews{}).
+		For(&newsaggregatorv1.Source{}).
 		Complete(r)
 }

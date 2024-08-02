@@ -1,23 +1,27 @@
-# permissions for end users to view feeds.
+# permissions for end users to edit sources.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: operator
     app.kubernetes.io/managed-by: kustomize
-  name: feed-viewer-role
+  name: source-editor-role
 rules:
 - apiGroups:
-  - aggregator.teamdev.com
+  - news-aggregator.teamdev.com
   resources:
-  - feeds
+  - sources
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
-  - aggregator.teamdev.com
+  - news-aggregator.teamdev.com
   resources:
-  - feeds/status
+  - sources/status
   verbs:
   - get

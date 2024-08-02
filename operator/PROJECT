@@ -5,7 +5,6 @@
 domain: teamdev.com
 layout:
 - go.kubebuilder.io/v4
-multigroup: true
 projectName: operator
 repo: teamdev.com/go-gator
 resources:
@@ -14,17 +13,8 @@ resources:
     namespaced: true
   controller: true
   domain: teamdev.com
-  group: aggregator
-  kind: Feed
+  group: news-aggregator
+  kind: Source
   path: teamdev.com/go-gator/api/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: teamdev.com
-  group: aggregator
-  kind: HotNews
-  path: teamdev.com/go-gator/api/aggregator/v1
   version: v1
 version: "3"

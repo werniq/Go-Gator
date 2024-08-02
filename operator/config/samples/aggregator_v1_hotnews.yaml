@@ -1,9 +1,0 @@
-apiVersion: aggregator.teamdev.com/v1
-kind: HotNews
-metadata:
-  labels:
-    app.kubernetes.io/name: operator
-    app.kubernetes.io/managed-by: kustomize
-  name: hotnews-sample
-spec:
-

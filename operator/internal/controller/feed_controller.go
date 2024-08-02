@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -39,17 +40,35 @@ type FeedReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the Feed object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.18.4/pkg/reconcile
 func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	var res ctrl.Result
+	var feed aggregatorv1.Feed
+
+	err := r.Get(ctx, req.NamespacedName, &feed)
+	switch {
+	case errors.IsNotFound(err):
+		res, err = r.handleDelete(ctx, &feed)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		return res, nil
+	case err != nil:
+		return ctrl.Result{}, err
+	}
+
+	isNew := len(feed.Status.Conditions) == 0
+
+	if isNew {
+		res, err = r.handleCreate(ctx, &feed)
+	} else {
+		res, err = r.handleUpdate(ctx, &feed)
+	}
+
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -59,4 +78,20 @@ func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&aggregatorv1.Feed{}).
 		Complete(r)
+}
+
+// handleCreate
+func (r *FeedReconciler) handleCreate(ctx context.Context, feed *aggregatorv1.Feed) (ctrl.Result, error) {
+	// todo: handle create
+	return ctrl.Result{}, nil
+}
+
+func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *aggregatorv1.Feed) (ctrl.Result, error) {
+	// todo: handle update
+	return ctrl.Result{}, nil
+}
+
+func (r *FeedReconciler) handleDelete(ctx context.Context, feed *aggregatorv1.Feed) (ctrl.Result, error) {
+	// todo: handle deletion and remove all articles associated with this feed
+	return ctrl.Result{}, nil
 }

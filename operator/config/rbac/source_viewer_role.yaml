@@ -8,7 +8,7 @@ metadata:
   name: source-viewer-role
 rules:
 - apiGroups:
-  - news-aggregator.teamdev.com
+  - newsaggregator.teamdev.com
   resources:
   - sources
   verbs:
@@ -16,7 +16,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - news-aggregator.teamdev.com
+  - newsaggregator.teamdev.com
   resources:
   - sources/status
   verbs:

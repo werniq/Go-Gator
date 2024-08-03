@@ -1,9 +1,12 @@
 /*
 Copyright 2024.
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
     http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +30,7 @@ import (
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
-var _ = Describe("GoGator Controller", func() {
+var _ = Describe("Source Controller", func() {
 	Context("When reconciling a resource", func() {
 		const resourceName = "test-resource"
 
@@ -37,11 +40,11 @@ var _ = Describe("GoGator Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		gogator := &newsaggregatorv1.Source{}
+		source := &newsaggregatorv1.Source{}
 
 		BeforeEach(func() {
-			By("creating the custom resource for the Kind GoGator")
-			err := k8sClient.Get(ctx, typeNamespacedName, gogator)
+			By("creating the custom resource for the Kind Source")
+			err := k8sClient.Get(ctx, typeNamespacedName, source)
 			if err != nil && errors.IsNotFound(err) {
 				resource := &newsaggregatorv1.Source{
 					ObjectMeta: metav1.ObjectMeta{
@@ -60,7 +63,7 @@ var _ = Describe("GoGator Controller", func() {
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("Cleanup the specific resource instance GoGator")
+			By("Cleanup the specific resource instance Source")
 			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
 		})
 		It("should successfully reconcile the resource", func() {

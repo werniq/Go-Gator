@@ -1,10 +1,9 @@
-apiVersion: news-aggregator.teamdev.com/v1
+apiVersion: newsaggregator.teamdev.com/v1
 kind: Source
 metadata:
   labels:
     app.kubernetes.io/name: operator
     app.kubernetes.io/managed-by: kustomize
   name: source-sample
-  namespace: go-gator
 spec:
-
+  # TODO(user): Add fields here

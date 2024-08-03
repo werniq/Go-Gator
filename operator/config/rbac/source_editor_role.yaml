@@ -8,7 +8,7 @@ metadata:
   name: source-editor-role
 rules:
 - apiGroups:
-  - news-aggregator.teamdev.com
+  - newsaggregator.teamdev.com
   resources:
   - sources
   verbs:
@@ -20,7 +20,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - news-aggregator.teamdev.com
+  - newsaggregator.teamdev.com
   resources:
   - sources/status
   verbs:

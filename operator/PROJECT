@@ -13,7 +13,7 @@ resources:
     namespaced: true
   controller: true
   domain: teamdev.com
-  group: news-aggregator
+  group: newsaggregator
   kind: Source
   path: teamdev.com/go-gator/api/v1
   version: v1

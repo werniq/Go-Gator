@@ -1,0 +1,93 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.15.0
+  name: sources.newsaggregator.teamdev.com
+spec:
+  group: newsaggregator.teamdev.com
+  names:
+    kind: Source
+    listKind: SourceList
+    plural: sources
+    singular: source
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: Feed is the Schema for the feeds API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: FeedSpec defines the desired state of Feed
+            properties:
+              link:
+                description: Link field is a string that represents the URL of the
+                  feed
+                type: string
+              name:
+                description: Name field is a string that represents the name of the
+                  feed
+                type: string
+            type: object
+          status:
+            description: FeedStatus defines the observed state of Feed
+            properties:
+              conditions:
+                description: Conditions field is a list of conditions that the feed
+                  can have
+                items:
+                  description: SourceConditions are the cond
+                  properties:
+                    lastUpdateTime:
+                      description: LastUpdateTime is a time when an object changes
+                        it's state
+                      type: string
+                    message:
+                      description: Message field is a string which is populated if
+                        status is false
+                      type: string
+                    reason:
+                      description: Reason field is a string which is populated if
+                        status is false
+                      type: string
+                    status:
+                      description: Status field is a boolean that represents the status
+                        of the condition
+                      type: boolean
+                    type:
+                      description: Type field is a string that represents the type
+                        of the condition
+                      type: string
+                  required:
+                  - lastUpdateTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -17,39 +17,85 @@ limitations under the License.
 package controller
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"net/http"
+	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
-// SourceReconciler reconciles a Source object
+// SourceReconciler reconciles a Feed object
 type SourceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=news-aggregator.teamdev.com,resources=sources,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=news-aggregator.teamdev.com,resources=sources/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=news-aggregator.teamdev.com,resources=sources/finalizers,verbs=update
+// SourceBody is a struct which will be used to generate body for request to the news aggregator.
+//
+// It contains few key fields which suits perfectly to create/update/delete sources in news aggregator.
+type SourceBody struct {
+	// Name field describes this source name
+	Name string `json:"name"`
+
+	// Format identifies parser which should be used for this particular source
+	Format string `json:"format"`
+
+	// Endpoint is a link to this feeds endpoint, where we will go to parse articles.
+	Endpoint string `json:"endpoint"`
+}
+
+const (
+	serverUri = "https://localhost:443/admin/sources"
+
+	defaultSourceFormat = "xml"
+)
+
+// +kubebuilder:rbac:groups=aggregator.teamdev.com,resources=feeds,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=aggregator.teamdev.com,resources=feeds/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=aggregator.teamdev.com,resources=feeds/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the Source object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.18.4/pkg/reconcile
 func (r *SourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	l := log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	var res ctrl.Result
+	var feed newsaggregatorv1.Source
+
+	err := r.Get(ctx, req.NamespacedName, &feed)
+	switch {
+	case errors.IsNotFound(err):
+		res, err = r.handleDelete(ctx, &feed)
+		if err != nil {
+			l.Error(err, "Error while handling delete event ")
+			return ctrl.Result{}, err
+		}
+		return res, nil
+	case err != nil:
+		return ctrl.Result{}, err
+	}
+
+	isNew := len(feed.Status.Conditions) == 0
+
+	if isNew {
+		res, err = r.handleCreate(ctx, &feed)
+	} else {
+		res, err = r.handleUpdate(ctx, &feed)
+	}
+
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	feed.Status.Conditions[0].LastUpdateTime = time.Now().Format(time.DateTime)
 
 	return ctrl.Result{}, nil
 }
@@ -59,4 +105,134 @@ func (r *SourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.Source{}).
 		Complete(r)
+}
+
+// handleCreate makes a request to the news-aggregator service to create a new feed when a new Feed object is instantiated.
+// It constructs a Source object from the Feed specifications, marshals it to JSON, and sends a POST request with the JSON payload.
+// The function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
+// If the server responds with a status other than 201 Created, it attempts to decode and print the server's error message.
+func (r *SourceReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv1.Source) (ctrl.Result, error) {
+	source := &SourceBody{
+		Name:     feed.Spec.Name,
+		Format:   defaultSourceFormat,
+		Endpoint: feed.Spec.Link,
+	}
+
+	sourceData, err := json.Marshal(source)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	requestBody := bytes.NewBuffer(sourceData)
+
+	req, err := http.NewRequest(http.MethodGet, serverUri, requestBody)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if res.StatusCode != http.StatusCreated {
+		var errMsg struct {
+			Error string `json:"error"`
+		}
+		err := json.NewDecoder(res.Body).Decode(&errMsg)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		fmt.Println(errMsg.Error)
+	}
+
+	return ctrl.Result{}, nil
+}
+
+// handleUpdate makes a request to the news-aggregator service to update an existing feed when the Feed object is modified.
+// It constructs a Source object from the Feed specifications, marshals it to JSON, and sends a PUT request with the JSON payload.
+// This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
+// If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
+func (r *SourceReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv1.Source) (ctrl.Result, error) {
+	source := &SourceBody{
+		Name:     feed.Spec.Name,
+		Format:   defaultSourceFormat,
+		Endpoint: feed.Spec.Link,
+	}
+
+	sourceData, err := json.Marshal(source)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	requestBody := bytes.NewBuffer(sourceData)
+
+	req, err := http.NewRequest(http.MethodPut, serverUri, requestBody)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		var errMsg struct {
+			Error string `json:"error"`
+		}
+		err := json.NewDecoder(res.Body).Decode(&errMsg)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		fmt.Println(errMsg.Error)
+	}
+
+	return ctrl.Result{}, nil
+}
+
+// handleDelete makes a request to the news-aggregator service to delete an existing feed based on the Feed object.
+// It constructs a Source object from the Feed specifications, marshals it to JSON, and sends a DELETE request with the JSON payload.
+// This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
+// If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
+func (r *SourceReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv1.Source) (ctrl.Result, error) {
+	source := &SourceBody{
+		Name: feed.Spec.Name,
+	}
+
+	sourceData, err := json.Marshal(source)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	requestBody := bytes.NewBuffer(sourceData)
+
+	req, err := http.NewRequest(http.MethodDelete, serverUri, requestBody)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		var errMsg struct {
+			Error string `json:"error"`
+		}
+		err := json.NewDecoder(res.Body).Decode(&errMsg)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		fmt.Println(errMsg.Error)
+	}
+
+	return ctrl.Result{}, nil
 }

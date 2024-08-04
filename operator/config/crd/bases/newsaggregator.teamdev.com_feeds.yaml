@@ -17,7 +17,7 @@ spec:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: Feed is the Schema for the sources API
+        description: Feed is the Schema for the feeds API
         properties:
           apiVersion:
             description: |-
@@ -39,54 +39,13 @@ spec:
           spec:
             description: FeedSpec defines the desired state of Feed
             properties:
-              link:
-                description: Link field is a string that represents the URL of the
-                  feed
-                type: string
-              name:
-                description: Name field is a string that represents the name of the
-                  feed
-                maxLength: 20
-                minLength: 1
+              foo:
+                description: Foo is an example field of Feed. Edit feed_types.go to
+                  remove/update
                 type: string
             type: object
           status:
             description: FeedStatus defines the observed state of Feed
-            properties:
-              conditions:
-                description: Conditions field is a list of conditions that the feed
-                  can have
-                items:
-                  description: FeedConditions are the cond
-                  properties:
-                    lastUpdateTime:
-                      description: LastUpdateTime is a time when an object changes
-                        it's state
-                      type: string
-                    message:
-                      description: Message field is a string which is populated if
-                        status is false
-                      type: string
-                    reason:
-                      description: Reason field is a string which is populated if
-                        status is false
-                      type: string
-                    status:
-                      description: Status field is a boolean that represents the status
-                        of the condition
-                      type: boolean
-                    type:
-                      description: Type field is a string that represents the type
-                        of the condition
-                      type: string
-                  required:
-                  - lastUpdateTime
-                  - message
-                  - reason
-                  - status
-                  - type
-                  type: object
-                type: array
             type: object
         type: object
     served: true

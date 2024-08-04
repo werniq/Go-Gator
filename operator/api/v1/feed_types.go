@@ -25,17 +25,37 @@ import (
 
 // FeedSpec defines the desired state of Feed
 type FeedSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Name field is a string that represents the name of the feed
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=20
+	Name string `json:"name,omitempty"`
 
-	// Foo is an example field of Feed. Edit feed_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Link field is a string that represents the URL of the feed
+	Link string `json:"link,omitempty"`
 }
 
 // FeedStatus defines the observed state of Feed
 type FeedStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Conditions field is a list of conditions that the feed can have
+	Conditions []FeedConditions `json:"conditions,omitempty"`
+}
+
+// FeedConditions are the cond
+type FeedConditions struct {
+	// Type field is a string that represents the type of the condition
+	Type string `json:"type"`
+
+	// Status field is a boolean that represents the status of the condition
+	Status bool `json:"status"`
+
+	// Reason field is a string which is populated if status is false
+	Reason string `json:"reason"`
+
+	// Message field is a string which is populated if status is false
+	Message string `json:"message"`
+
+	// LastUpdateTime is a time when an object changes it's state
+	LastUpdateTime string `json:"lastUpdateTime"`
 }
 
 // +kubebuilder:object:root=true

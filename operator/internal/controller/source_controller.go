@@ -59,9 +59,9 @@ const (
 	defaultSourceFormat = "xml"
 )
 
-// +kubebuilder:rbac:groups=aggregator.teamdev.com,resources=feeds,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=aggregator.teamdev.com,resources=feeds/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=aggregator.teamdev.com,resources=feeds/finalizers,verbs=update
+// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

@@ -63,7 +63,7 @@ spec:
         args:
           - --leader-elect
           - --health-probe-bind-address=:8081
-        image: controller:latest
+        image: qniw984/news-aggregator-controller:1.0.0
         name: manager
         securityContext:
           allowPrivilegeEscalation: false

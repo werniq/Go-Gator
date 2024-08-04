@@ -17,7 +17,7 @@ spec:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: Feed is the Schema for the feeds API
+        description: Source is the Schema for the sources API
         properties:
           apiVersion:
             description: |-
@@ -37,19 +37,23 @@ spec:
           metadata:
             type: object
           spec:
-            description: FeedSpec defines the desired state of Feed
+            description: SourceSpec defines the desired state of Feed
             properties:
               link:
                 description: Link field is a string that represents the URL of the
                   feed
+                maxLength: 20
+                minLength: 1
                 type: string
               name:
                 description: Name field is a string that represents the name of the
                   feed
+                maxLength: 20
+                minLength: 1
                 type: string
             type: object
           status:
-            description: FeedStatus defines the observed state of Feed
+            description: SourceStatus defines the observed state of Feed
             properties:
               conditions:
                 description: Conditions field is a list of conditions that the feed

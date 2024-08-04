@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
@@ -53,8 +52,10 @@ type SourceBody struct {
 }
 
 const (
+	// serverUri is the link to our news-aggregator
 	serverUri = "https://localhost:443/admin/sources"
 
+	// defaultSourceFormat identifies default data format which should be used for new feed
 	defaultSourceFormat = "xml"
 )
 
@@ -97,6 +98,11 @@ func (r *SourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	feed.Status.Conditions[0].LastUpdateTime = time.Now().Format(time.DateTime)
 
+	err = r.Client.Status().Update(ctx, &feed)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -138,14 +144,11 @@ func (r *SourceReconciler) handleCreate(ctx context.Context, feed *newsaggregato
 	}
 
 	if res.StatusCode != http.StatusCreated {
-		var errMsg struct {
-			Error string `json:"error"`
-		}
-		err := json.NewDecoder(res.Body).Decode(&errMsg)
+		var serverError *serverErr
+		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		fmt.Println(errMsg.Error)
 	}
 
 	return ctrl.Result{}, nil
@@ -182,14 +185,11 @@ func (r *SourceReconciler) handleUpdate(ctx context.Context, feed *newsaggregato
 	}
 
 	if res.StatusCode != http.StatusOK {
-		var errMsg struct {
-			Error string `json:"error"`
-		}
-		err := json.NewDecoder(res.Body).Decode(&errMsg)
+		var serverError *serverErr
+		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		fmt.Println(errMsg.Error)
 	}
 
 	return ctrl.Result{}, nil
@@ -224,14 +224,11 @@ func (r *SourceReconciler) handleDelete(ctx context.Context, feed *newsaggregato
 	}
 
 	if res.StatusCode != http.StatusOK {
-		var errMsg struct {
-			Error string `json:"error"`
-		}
-		err := json.NewDecoder(res.Body).Decode(&errMsg)
+		var serverError *serverErr
+		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		fmt.Println(errMsg.Error)
 	}
 
 	return ctrl.Result{}, nil

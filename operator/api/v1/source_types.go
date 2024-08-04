@@ -17,69 +17,67 @@ limitations under the License.
 package v1
 
 import (
-  metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// FeedSpec defines the desired state of Feed
+// SourceSpec defines the desired state of Feed
 type SourceSpec struct {
-  // Name field is a string that represents the name of the feed
-  // +kubebuilder:validation:Minimum=1
-  // +kubebuilder:validation:Maximum=20
-  // +kubebuilder:validation:UniqueItems=true
-  Name string `json:"name,omitempty"`
+	// Name field is a string that represents the name of the feed
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=20
+	Name string `json:"name,omitempty"`
 
-  // Link field is a string that represents the URL of the feed
-  // +kubebuilder:validation:Minimum=1
-  // +kubebuilder:validation:Maximum=20
-  // +kubebuilder:validation:UniqueItems=true
-  Link string `json:"link,omitempty"`
+	// Link field is a string that represents the URL of the feed
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=20
+	Link string `json:"link,omitempty"`
 }
 
-// FeedStatus defines the observed state of Feed
+// SourceStatus defines the observed state of Feed
 type SourceStatus struct {
-  // Conditions field is a list of conditions that the feed can have
-  Conditions []SourceConditions `json:"conditions,omitempty"`
+	// Conditions field is a list of conditions that the feed can have
+	Conditions []SourceConditions `json:"conditions,omitempty"`
 }
 
 // SourceConditions are the cond
 type SourceConditions struct {
-  // Type field is a string that represents the type of the condition
-  Type string `json:"type"`
+	// Type field is a string that represents the type of the condition
+	Type string `json:"type"`
 
-  // Status field is a boolean that represents the status of the condition
-  Status bool `json:"status"`
+	// Status field is a boolean that represents the status of the condition
+	Status bool `json:"status"`
 
-  // Reason field is a string which is populated if status is false
-  Reason string `json:"reason"`
+	// Reason field is a string which is populated if status is false
+	Reason string `json:"reason"`
 
-  // Message field is a string which is populated if status is false
-  Message string `json:"message"`
+	// Message field is a string which is populated if status is false
+	Message string `json:"message"`
 
-  // LastUpdateTime is a time when an object changes it's state
-  LastUpdateTime string `json:"lastUpdateTime"`
+	// LastUpdateTime is a time when an object changes it's state
+	LastUpdateTime string `json:"lastUpdateTime"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
-// Feed is the Schema for the feeds API
+// Source is the Schema for the sources API
 type Source struct {
-  metav1.TypeMeta   `json:",inline"`
-  metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-  Spec   SourceSpec   `json:"spec,omitempty"`
-  Status SourceStatus `json:"status,omitempty"`
+	Spec   SourceSpec   `json:"spec,omitempty"`
+	Status SourceStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
 // SourceList contains a list of Source
 type SourceList struct {
-  metav1.TypeMeta `json:",inline"`
-  metav1.ListMeta `json:"metadata,omitempty"`
-  Items           []Source `json:"items"`
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []Source `json:"items"`
 }
 
 func init() {
-  SchemeBuilder.Register(&Source{}, &SourceList{})
+	SchemeBuilder.Register(&Source{}, &SourceList{})
 }

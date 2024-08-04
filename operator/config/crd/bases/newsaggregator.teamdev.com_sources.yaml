@@ -42,8 +42,6 @@ spec:
               link:
                 description: Link field is a string that represents the URL of the
                   feed
-                maxLength: 20
-                minLength: 1
                 type: string
               name:
                 description: Name field is a string that represents the name of the

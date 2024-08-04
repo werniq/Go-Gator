@@ -71,6 +71,8 @@ func (r *SourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	var res ctrl.Result
 	var feed newsaggregatorv1.Source
 
+	l.Info("Trying to retrieve feed.")
+
 	err := r.Get(ctx, req.NamespacedName, &feed)
 	switch {
 	case errors.IsNotFound(err):
@@ -86,15 +88,21 @@ func (r *SourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	isNew := len(feed.Status.Conditions) == 0
 
+	l.Info("Succeeded in retrieving feed: ")
+
 	if isNew {
+		l.Info("Feed is being created")
 		res, err = r.handleCreate(ctx, &feed)
 	} else {
+		l.Info("Feed is being updated")
 		res, err = r.handleUpdate(ctx, &feed)
 	}
 
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+
+	l.Info("Feed was updated or created without any errors")
 
 	feed.Status.Conditions[0].LastUpdateTime = time.Now().Format(time.DateTime)
 

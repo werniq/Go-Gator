@@ -28,8 +28,6 @@ type SourceSpec struct {
 	Name string `json:"name,omitempty"`
 
 	// Link field is a string that represents the URL of the feed
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=20
 	Link string `json:"link,omitempty"`
 }
 

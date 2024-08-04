@@ -31,8 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// SourceReconciler reconciles a Feed object
-type SourceReconciler struct {
+// FeedReconciler reconciles a Feed object
+type FeedReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -65,15 +65,15 @@ const (
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-func (r *SourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 
 	var res ctrl.Result
-	var feed newsaggregatorv1.Source
+	var feed newsaggregatorv1.Feed
 
 	l.Info("Trying to retrieve feed.")
 
-	err := r.Get(ctx, req.NamespacedName, &feed)
+	err := r.Client.Get(ctx, req.NamespacedName, &feed)
 	switch {
 	case errors.IsNotFound(err):
 		res, err = r.handleDelete(ctx, &feed)
@@ -115,17 +115,17 @@ func (r *SourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *SourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&newsaggregatorv1.Source{}).
+		For(&newsaggregatorv1.Feed{}).
 		Complete(r)
 }
 
 // handleCreate makes a request to the news-aggregator service to create a new feed when a new Feed object is instantiated.
-// It constructs a Source object from the Feed specifications, marshals it to JSON, and sends a POST request with the JSON payload.
+// It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a POST request with the JSON payload.
 // The function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 201 Created, it attempts to decode and print the server's error message.
-func (r *SourceReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv1.Source) (ctrl.Result, error) {
+func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
 	source := &SourceBody{
 		Name:     feed.Spec.Name,
 		Format:   defaultSourceFormat,
@@ -163,10 +163,10 @@ func (r *SourceReconciler) handleCreate(ctx context.Context, feed *newsaggregato
 }
 
 // handleUpdate makes a request to the news-aggregator service to update an existing feed when the Feed object is modified.
-// It constructs a Source object from the Feed specifications, marshals it to JSON, and sends a PUT request with the JSON payload.
+// It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a PUT request with the JSON payload.
 // This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
-func (r *SourceReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv1.Source) (ctrl.Result, error) {
+func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
 	source := &SourceBody{
 		Name:     feed.Spec.Name,
 		Format:   defaultSourceFormat,
@@ -204,10 +204,10 @@ func (r *SourceReconciler) handleUpdate(ctx context.Context, feed *newsaggregato
 }
 
 // handleDelete makes a request to the news-aggregator service to delete an existing feed based on the Feed object.
-// It constructs a Source object from the Feed specifications, marshals it to JSON, and sends a DELETE request with the JSON payload.
+// It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a DELETE request with the JSON payload.
 // This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
-func (r *SourceReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv1.Source) (ctrl.Result, error) {
+func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
 	source := &SourceBody{
 		Name: feed.Spec.Name,
 	}

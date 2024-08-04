@@ -1,10 +1,9 @@
 apiVersion: newsaggregator.teamdev.com/v1
-kind: Source
+kind: Feed
 metadata:
   labels:
     app.kubernetes.io/name: operator
     app.kubernetes.io/managed-by: kustomize
-  name: source-sample
+  name: feed-sample
 spec:
-  name: bbc
-  link: https://bbc.com
+  # TODO(user): Add fields here

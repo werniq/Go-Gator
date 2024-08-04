@@ -20,8 +20,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// SourceSpec defines the desired state of Feed
-type SourceSpec struct {
+// FeedSpec defines the desired state of Feed
+type FeedSpec struct {
 	// Name field is a string that represents the name of the feed
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=20
@@ -31,14 +31,14 @@ type SourceSpec struct {
 	Link string `json:"link,omitempty"`
 }
 
-// SourceStatus defines the observed state of Feed
-type SourceStatus struct {
+// FeedStatus defines the observed state of Feed
+type FeedStatus struct {
 	// Conditions field is a list of conditions that the feed can have
-	Conditions []SourceConditions `json:"conditions,omitempty"`
+	Conditions []FeedConditions `json:"conditions,omitempty"`
 }
 
-// SourceConditions are the cond
-type SourceConditions struct {
+// FeedConditions are the cond
+type FeedConditions struct {
 	// Type field is a string that represents the type of the condition
 	Type string `json:"type"`
 
@@ -58,24 +58,24 @@ type SourceConditions struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
-// Source is the Schema for the sources API
-type Source struct {
+// Feed is the Schema for the sources API
+type Feed struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   SourceSpec   `json:"spec,omitempty"`
-	Status SourceStatus `json:"status,omitempty"`
+	Spec   FeedSpec   `json:"spec,omitempty"`
+	Status FeedStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// SourceList contains a list of Source
-type SourceList struct {
+// FeedList contains a list of Feed
+type FeedList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Source `json:"items"`
+	Items           []Feed `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Source{}, &SourceList{})
+	SchemeBuilder.Register(&Feed{}, &FeedList{})
 }

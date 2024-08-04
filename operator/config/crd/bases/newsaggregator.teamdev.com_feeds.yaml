@@ -4,20 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.15.0
-  name: sources.newsaggregator.teamdev.com
+  name: feeds.newsaggregator.teamdev.com
 spec:
   group: newsaggregator.teamdev.com
   names:
-    kind: Source
-    listKind: SourceList
-    plural: sources
-    singular: source
+    kind: Feed
+    listKind: FeedList
+    plural: feeds
+    singular: feed
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: Source is the Schema for the sources API
+        description: Feed is the Schema for the sources API
         properties:
           apiVersion:
             description: |-
@@ -37,7 +37,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: SourceSpec defines the desired state of Feed
+            description: FeedSpec defines the desired state of Feed
             properties:
               link:
                 description: Link field is a string that represents the URL of the
@@ -51,13 +51,13 @@ spec:
                 type: string
             type: object
           status:
-            description: SourceStatus defines the observed state of Feed
+            description: FeedStatus defines the observed state of Feed
             properties:
               conditions:
                 description: Conditions field is a list of conditions that the feed
                   can have
                 items:
-                  description: SourceConditions are the cond
+                  description: FeedConditions are the cond
                   properties:
                     lastUpdateTime:
                       description: LastUpdateTime is a time when an object changes

@@ -14,7 +14,7 @@ resources:
   controller: true
   domain: teamdev.com
   group: newsaggregator
-  kind: Source
+  kind: Feed
   path: teamdev.com/go-gator/api/v1
   version: v1
 version: "3"

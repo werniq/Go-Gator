@@ -19,12 +19,11 @@ package controller
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"net/http"
-	"time"
-
 	"k8s.io/apimachinery/pkg/runtime"
+	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -54,7 +53,7 @@ type SourceBody struct {
 
 const (
 	// serverUri is the link to our news-aggregator
-	serverUri = "https://localhost:443/admin/sources"
+	serverUri = "https://10.244.0.17:443/admin/sources"
 
 	// defaultSourceFormat identifies default data format which should be used for new feed
 	defaultSourceFormat = "xml"
@@ -92,20 +91,14 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	l.Info("Succeeded in retrieving feed: ")
 
 	if isNew {
-		l.Info("Feed is being created")
 		res, err = r.handleCreate(ctx, &feed)
 	} else {
-		l.Info("Feed is being updated")
 		res, err = r.handleUpdate(ctx, &feed)
 	}
 
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-
-	l.Info("Feed was updated or created without any errors")
-
-	feed.Status.Conditions[0].LastUpdateTime = time.Now().Format(time.DateTime)
 
 	err = r.Client.Status().Update(ctx, &feed)
 	if err != nil {
@@ -127,7 +120,8 @@ func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // The function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 201 Created, it attempts to decode and print the server's error message.
 func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
-	source := &SourceBody{
+	l := log.FromContext(ctx)
+	source := SourceBody{
 		Name:     feed.Spec.Name,
 		Format:   defaultSourceFormat,
 		Endpoint: feed.Spec.Link,
@@ -140,24 +134,32 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	requestBody := bytes.NewBuffer(sourceData)
 
-	req, err := http.NewRequest(http.MethodGet, serverUri, requestBody)
+	req, err := http.NewRequest(http.MethodPost, serverUri, requestBody)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	req.Header.Add("Content-Type", "application/json")
+	customTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	customClient := &http.Client{Transport: customTransport}
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := customClient.Do(req)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+	defer res.Body.Close()
+
+	l.Info("Successfully executed default client")
 
 	if res.StatusCode != http.StatusCreated {
-		var serverError *serverErr
+		l.Info(res.Status)
+		serverError := &serverErr{}
 		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
+		return ctrl.Result{}, serverError
 	}
 
 	return ctrl.Result{}, nil
@@ -186,9 +188,12 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 		return ctrl.Result{}, err
 	}
 
-	req.Header.Add("Content-Type", "application/json")
+	customTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	customClient := &http.Client{Transport: customTransport}
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := customClient.Do(req)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -225,9 +230,12 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 		return ctrl.Result{}, err
 	}
 
-	req.Header.Add("Content-Type", "application/json")
+	customTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	customClient := &http.Client{Transport: customTransport}
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := customClient.Do(req)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

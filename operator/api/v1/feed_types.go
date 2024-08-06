@@ -34,7 +34,7 @@ type FeedSpec struct {
 // FeedStatus defines the observed state of Feed
 type FeedStatus struct {
 	// Conditions field is a list of conditions that the feed can have
-	Conditions map[string]*FeedConditions `json:"conditions,omitempty"`
+	Conditions map[string]FeedConditions `json:"conditions,omitempty"`
 }
 
 // FeedConditions are the cond

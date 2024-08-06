@@ -20,9 +20,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // FeedSpec defines the desired state of Feed
 type FeedSpec struct {
 	// Name field is a string that represents the name of the feed
@@ -37,14 +34,11 @@ type FeedSpec struct {
 // FeedStatus defines the observed state of Feed
 type FeedStatus struct {
 	// Conditions field is a list of conditions that the feed can have
-	Conditions []FeedConditions `json:"conditions,omitempty"`
+	Conditions map[string]*FeedConditions `json:"conditions,omitempty"`
 }
 
 // FeedConditions are the cond
 type FeedConditions struct {
-	// Type field is a string that represents the type of the condition
-	Type string `json:"type"`
-
 	// Status field is a boolean that represents the status of the condition
 	Status bool `json:"status"`
 

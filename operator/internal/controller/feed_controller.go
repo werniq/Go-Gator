@@ -88,7 +88,6 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 			l.Error(err, "Error while handling delete event ")
 			return ctrl.Result{}, err
 		}
-		l.Info("Successfully deleted feed")
 		return res, nil
 	}
 
@@ -123,7 +122,6 @@ func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // The function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 201 Created, it attempts to decode and print the server's error message.
 func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
-	l := log.FromContext(ctx)
 	source := SourceBody{
 		Name:     feed.Spec.Name,
 		Format:   defaultSourceFormat,
@@ -152,10 +150,7 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 		return ctrl.Result{}, err
 	}
 
-	l.Info("Successfully executed default client")
-
 	if res.StatusCode != http.StatusCreated {
-		l.Info(res.Status)
 		serverError := &serverErr{}
 		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
@@ -174,8 +169,6 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-
-	l.Info("Successfully created feed")
 
 	return ctrl.Result{}, nil
 }

@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"gogator/cmd/parsers"
+	"gogator/cmd/types"
 	"log"
 	"net/http"
 )
@@ -18,9 +20,7 @@ const (
 // DeleteSource handler deletes existing source from registered sources.
 // If non-existent source is going to be deleted - throws an error.
 func DeleteSource(c *gin.Context) {
-	var reqBody struct {
-		Source string `json:"name"`
-	}
+	var reqBody types.Source
 
 	err := c.ShouldBindJSON(&reqBody)
 	if err != nil {
@@ -30,14 +30,15 @@ func DeleteSource(c *gin.Context) {
 		return
 	}
 
-	if !sourceInArray(reqBody.Source) {
+	if !sourceInArray(reqBody.Name) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": ErrSourceNotFound,
 		})
+		fmt.Println(reqBody.Name)
 		return
 	}
 
-	err = parsers.DeleteSource(reqBody.Source)
+	err = parsers.DeleteSource(reqBody.Name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": ErrDeleteSource + err.Error(),
@@ -55,7 +56,7 @@ func DeleteSource(c *gin.Context) {
 		return
 	}
 
-	err = parsers.DestroySource(reqBody.Source, dates)
+	err = parsers.DestroySource(reqBody.Name, dates)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": ErrDeleteSource + err.Error(),

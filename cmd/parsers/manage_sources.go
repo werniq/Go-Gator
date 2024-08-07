@@ -16,7 +16,7 @@ var (
 	g ParsingFactory
 
 	// StoragePath is the path to folder with all data from application
-	StoragePath string
+	StoragePath string = "/tmp/"
 
 	// sourceToEndpoint maps source names (as strings) to their corresponding filenames
 	sourceToEndpoint = map[string]string{
@@ -37,9 +37,6 @@ var (
 )
 
 const (
-	// ErrNoSource is thrown when wrong source name was provided
-	ErrNoSource = "no source was detected. please, create source first"
-
 	// ErrSourceExists is thrown when were provided source name that already exists
 	ErrSourceExists = "this source already exists"
 )
@@ -80,10 +77,6 @@ func GetSourceDetailed(source string) types.Source {
 //
 // Throws an error, if provided source not exists
 func UpdateSourceEndpoint(source, newEndpoint string) error {
-	if _, exists := sourceToParser[source]; exists {
-		return errors.New(ErrNoSource)
-	}
-
 	sourceToEndpoint[source] = newEndpoint
 	err := UpdateSourceFile()
 	if err != nil {
@@ -97,10 +90,6 @@ func UpdateSourceEndpoint(source, newEndpoint string) error {
 //
 // Throws an error, if provided source not exists
 func UpdateSourceFormat(source, format string) error {
-	if _, exists := sourceToParser[source]; exists {
-		return errors.New(ErrNoSource)
-	}
-
 	sourceToParser[source] = determineParser(format, source)
 	err := UpdateSourceFile()
 	if err != nil {
@@ -112,16 +101,12 @@ func UpdateSourceFormat(source, format string) error {
 
 // DeleteSource removes source from the map
 func DeleteSource(source string) error {
-	if _, exists := sourceToEndpoint[source]; exists {
-		delete(sourceToEndpoint, source)
-		delete(sourceToParser, source)
+	delete(sourceToEndpoint, source)
+	delete(sourceToParser, source)
 
-		err := UpdateSourceFile()
-		if err != nil {
-			return err
-		}
-	} else {
-		return errors.New(ErrNoSource)
+	err := UpdateSourceFile()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -130,12 +115,7 @@ func DeleteSource(source string) error {
 // LoadSourcesFile initializes sourceToParser and sourceToEndpoint with data stored in
 // sources.json file.
 func LoadSourcesFile() error {
-	cwdPath, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	sourcesFilepath := filepath.Join(cwdPath, StoragePath, sourcesFile)
+	sourcesFilepath := filepath.Join(StoragePath, sourcesFile)
 
 	file, err := os.Open(sourcesFilepath)
 	if err != nil {
@@ -171,12 +151,7 @@ func LoadSourcesFile() error {
 // the file cannot be created or opened,
 // or if the file content cannot be written or closed properly.
 func UpdateSourceFile() error {
-	cwdPath, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	sourcesFilePath := filepath.Join(cwdPath, StoragePath, sourcesFile)
+	sourcesFilePath := filepath.Join(StoragePath, sourcesFile)
 
 	file, err := os.Create(sourcesFilePath)
 	if err != nil {

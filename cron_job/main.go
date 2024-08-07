@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	defaultStoragePath = "/tmp/data"
+	defaultStoragePath = "/tmp/"
 )
 
 func main() {

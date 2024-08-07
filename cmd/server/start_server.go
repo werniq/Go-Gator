@@ -14,6 +14,8 @@ import (
 var (
 	// defaultCertsPath is default path to server
 	defaultCertsPath = filepath.Join("cmd", "server", "certs")
+
+	defaultDataDirPath = "/tmp/"
 )
 
 const (
@@ -74,7 +76,7 @@ func ConfAndRun() error {
 		"Absolute path to the certificate for the HTTPs server")
 	flag.StringVar(&keyFile, "k", filepath.Join(cwdPath, defaultCertsPath, defaultPrivateKey),
 		"Absolute path to the private key for the HTTPs server")
-	flag.StringVar(&storagePath, "fs", filepath.Join(parsers.CmdDir, parsers.ParsersDir, parsers.DataDir),
+	flag.StringVar(&storagePath, "fs", defaultDataDirPath,
 		"Path to directory where all data will be stored")
 	flag.Parse()
 

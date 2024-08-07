@@ -21,12 +21,14 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"k8s.io/apimachinery/pkg/api/errors"
+	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
@@ -76,18 +78,29 @@ const (
 func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var res ctrl.Result
 	var feed newsaggregatorv1.Feed
+	var err error
 
-	err := r.Get(ctx, req.NamespacedName, &feed)
-	if errors.IsNotFound(err) {
+	l := log.FromContext(ctx)
+
+	err = r.Get(ctx, req.NamespacedName, &feed)
+	if err != nil {
+		l.Error(err, "error in getting my object : %+v")
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	err = r.handleFinalizer(ctx, feed)
+	if err != nil {
+		l.Error(err, "failed to update finalizer : %+v")
+		return ctrl.Result{}, err
+	}
+
+	if !feed.ObjectMeta.DeletionTimestamp.IsZero() {
 		res, err = r.handleDelete(ctx, &feed)
 		if err != nil {
+			l.Error(err, "failed to delete feed : %+v")
 			return ctrl.Result{}, err
 		}
 		return res, nil
-	}
-
-	if err != nil {
-		return ctrl.Result{}, err
 	}
 
 	isNew := feed.Status.Conditions[typeCreated] == newsaggregatorv1.FeedConditions{}
@@ -101,6 +114,11 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+
+	//err = r.Client.Status().Update(ctx, &feed)
+	//if err != nil {
+	//	return ctrl.Result{}, err
+	//}
 
 	return ctrl.Result{}, nil
 }
@@ -238,6 +256,7 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 		if err != nil {
 			return ctrl.Result{}, err
 		}
+		return ctrl.Result{}, serverError
 	}
 
 	err = res.Body.Close()
@@ -254,7 +273,14 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 // If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
 func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
 	source := &SourceBody{
-		Name: feed.Spec.Name,
+		Name:     feed.Spec.Name,
+		Format:   defaultSourceFormat,
+		Endpoint: feed.Spec.Link,
+	}
+	fmt.Println(feed)
+
+	if feed.Name == "" {
+		return ctrl.Result{}, nil
 	}
 
 	sourceData, err := json.Marshal(source)
@@ -285,9 +311,42 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 		if err != nil {
 			return ctrl.Result{}, err
 		}
+		return ctrl.Result{}, serverError
+	}
+
+	err = res.Body.Close()
+	if err != nil {
+		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// handleFinalizer handles the finalizer logic for the Feed object
+func (r *FeedReconciler) handleFinalizer(ctx context.Context, obj newsaggregatorv1.Feed) error {
+	l := log.FromContext(ctx)
+	var err error
+
+	feedFinalizerName := "feed.finalizers"
+
+	if obj.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !controllerutil.ContainsFinalizer(&obj, feedFinalizerName) {
+			controllerutil.AddFinalizer(&obj, feedFinalizerName)
+			l.Info("Add Finalizer", feedFinalizerName)
+			return r.Update(ctx, &obj)
+		}
+	} else {
+		if controllerutil.ContainsFinalizer(&obj, feedFinalizerName) {
+			if _, err = r.handleDelete(ctx, &obj); err != nil {
+				return err
+			}
+			controllerutil.RemoveFinalizer(&obj, feedFinalizerName)
+			l.Info("Remove Finalizer", feedFinalizerName)
+			return r.Update(ctx, &obj)
+		}
+	}
+
+	return nil
 }
 
 // updateFeedStatus updates the status of the newly-created Feed object with the given status, reason, and message, so that
@@ -303,11 +362,6 @@ func (r *FeedReconciler) initFeedStatus(ctx context.Context,
 
 	feed.Status.Conditions = make(map[string]newsaggregatorv1.FeedConditions, feedStatusConditionsCapacity)
 	feed.Status.Conditions[t] = condition
-
-	err := r.Client.Status().Update(ctx, feed)
-	if err != nil {
-		return err
-	}
 
 	return nil
 }

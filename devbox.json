@@ -4,14 +4,18 @@
     "docker@24.0.9",
     "git@2.45.2",
     "go-task@3.38.0",
-    "go@1.22.5"
+    "go@1.22.5",
+    "kubectl@1.30.2",
+    "kubebuilder@4.1.0",
+    "kustomize@5.4.3"
   ],
   "shell": {
     "init_hook": [
       "go install honnef.co/go/tools/cmd/staticcheck@2023.1.7",
       "go get -u honnef.co/go/tools",
       "export GOPATH=$HOME/go",
-      "PATH=$GOPATH/bin:$PATH"
+      "PATH=$GOPATH/bin:$PATH",
+      "go get github.com/llparse/controller-gen"
     ]
   }
 }

@@ -16,8 +16,8 @@ func (StatusUpdatePredicate) Update(e event.UpdateEvent) bool {
 	oldObj := e.ObjectOld.DeepCopyObject().(metav1.Object)
 	newObj := e.ObjectNew.DeepCopyObject().(metav1.Object)
 
-	oldStatus := reflect.ValueOf(oldObj).Elem().FieldByName("Status").Interface()
-	newStatus := reflect.ValueOf(newObj).Elem().FieldByName("Status").Interface()
+	oldStatus := reflect.ValueOf(oldObj).Elem().FieldByName("Spec").Interface()
+	newStatus := reflect.ValueOf(newObj).Elem().FieldByName("Spec").Interface()
 
 	return !reflect.DeepEqual(oldStatus, newStatus)
 }

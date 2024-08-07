@@ -102,11 +102,6 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
-	err = r.Client.Status().Update(ctx, &feed)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
 	return ctrl.Result{}, nil
 }
 
@@ -138,6 +133,13 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	req, err := http.NewRequest(http.MethodPost, serverUri, requestBody)
 	if err != nil {
+		err = r.initFeedStatus(ctx, feed, typeCreated,
+			true,
+			err.Error(),
+			err.Error())
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -148,6 +150,13 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	res, err := customClient.Do(req)
 	if err != nil {
+		err = r.initFeedStatus(ctx, feed, typeCreated,
+			true,
+			err.Error(),
+			err.Error())
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -157,16 +166,32 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 		if err != nil {
 			return ctrl.Result{}, err
 		}
+		err = r.initFeedStatus(ctx, feed, typeCreated,
+			true,
+			serverError.ErrorMsg,
+			serverError.ErrorMsg)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, serverError
 	}
 
 	err = res.Body.Close()
 	if err != nil {
+		err = r.initFeedStatus(ctx, feed, typeCreated,
+			true,
+			err.Error(),
+			err.Error())
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, err
 	}
 
 	err = r.initFeedStatus(ctx, feed, typeCreated,
-		true, "Created", "Feed has been created successfully")
+		true,
+		"",
+		"")
 	if err != nil {
 		return ctrl.Result{}, err
 	}

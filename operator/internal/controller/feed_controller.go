@@ -115,10 +115,10 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
-	//err = r.Client.Status().Update(ctx, &feed)
-	//if err != nil {
-	//	return ctrl.Result{}, err
-	//}
+	err = r.Client.Status().Update(ctx, &feed)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -332,7 +332,7 @@ func (r *FeedReconciler) handleFinalizer(ctx context.Context, obj newsaggregator
 	if obj.ObjectMeta.DeletionTimestamp.IsZero() {
 		if !controllerutil.ContainsFinalizer(&obj, feedFinalizerName) {
 			controllerutil.AddFinalizer(&obj, feedFinalizerName)
-			l.Info("Add Finalizer", feedFinalizerName)
+			l.Info("Add Finalizer", "feed-name", feedFinalizerName)
 			return r.Update(ctx, &obj)
 		}
 	} else {
@@ -341,7 +341,7 @@ func (r *FeedReconciler) handleFinalizer(ctx context.Context, obj newsaggregator
 				return err
 			}
 			controllerutil.RemoveFinalizer(&obj, feedFinalizerName)
-			l.Info("Remove Finalizer", feedFinalizerName)
+			l.Info("Remove Finalizer", "feed-remove name ", feedFinalizerName)
 			return r.Update(ctx, &obj)
 		}
 	}

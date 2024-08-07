@@ -27,8 +27,6 @@ import (
 	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
@@ -54,7 +52,7 @@ type SourceBody struct {
 
 const (
 	// serverUri is the link to our news-aggregator
-	serverUri = "https://10.244.0.71:443/admin/sources"
+	serverUri = "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
 
 	// feedStatusConditionsCapacity is a capacity of feed status conditions array
 	feedStatusConditionsCapacity = 2
@@ -76,8 +74,6 @@ const (
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	l := log.FromContext(ctx)
-
 	var res ctrl.Result
 	var feed newsaggregatorv1.Feed
 
@@ -85,7 +81,6 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	if errors.IsNotFound(err) {
 		res, err = r.handleDelete(ctx, &feed)
 		if err != nil {
-			l.Error(err, "Error while handling delete event ")
 			return ctrl.Result{}, err
 		}
 		return res, nil
@@ -107,6 +102,11 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
+	err = r.Client.Status().Update(ctx, &feed)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -114,6 +114,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.Feed{}).
+		WithEventFilter(StatusUpdatePredicate{}).
 		Complete(r)
 }
 

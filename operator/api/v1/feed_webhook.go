@@ -17,11 +17,16 @@ limitations under the License.
 package v1
 
 import (
+	"context"
+	"encoding/json"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
+	config "sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+	"teamdev.com/go-gator/api/v1/validation"
 )
 
 // log is for logging in this package.
@@ -74,40 +79,36 @@ func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 
 // validateFeed calls to our validation package to validate the feed configuration
 func (r *Feed) validateFeed() (admission.Warnings, error) {
-	//err := validation.Validate(r.Spec.Name, r.Spec.Link)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//config, err := clientcmd.BuildConfigFromFlags("", codeSpaceKubeconfigPath)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//client, err := kubernetes.NewForConfig(config)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//feeds := []Feed{}
-	//d, err := client.RESTClient().
-	//	Get().
-	//	AbsPath("/apis/newsaggregator.teamdev.com/v1/feeds").
-	//	DoRaw(context.TODO())
-	//
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//if err := json.Unmarshal(d, &feeds); err != nil {
-	//	panic(err)
-	//}
-	//
-	//for _, feed := range feeds {
-	//	if feed.Spec.Name == r.Spec.Name {
-	//		return admission.Warnings{"feed name already exists"}, nil
-	//	}
-	//}
-	//
+	err := validation.Validate(r.Spec.Name, r.Spec.Link)
+	if err != nil {
+		return nil, err
+	}
+
+	c := config.GetConfigOrDie()
+	clientset, err := kubernetes.NewForConfig(c)
+	if err != nil {
+		return nil, err
+	}
+
+	feeds := []Feed{}
+	d, err := clientset.RESTClient().
+		Get().
+		AbsPath("/apis/newsaggregator.teamdev.com/v1/feeds").
+		DoRaw(context.TODO())
+
+	if err != nil {
+		panic(err)
+	}
+
+	if err := json.Unmarshal(d, &feeds); err != nil {
+		panic(err)
+	}
+
+	for _, feed := range feeds {
+		if feed.Spec.Name == r.Spec.Name {
+			return admission.Warnings{"feed name already exists"}, nil
+		}
+	}
+
 	return nil, nil
 }

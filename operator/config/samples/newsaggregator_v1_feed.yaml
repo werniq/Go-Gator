@@ -6,5 +6,5 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: feed-sample
 spec:
-  name: abc
-  link: abc.com
+  name: abc.com
+  link: https://api.abc.api

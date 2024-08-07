@@ -54,9 +54,7 @@ spec:
             description: FeedStatus defines the observed state of Feed
             properties:
               conditions:
-                description: Conditions field is a list of conditions that the feed
-                  can have
-                items:
+                additionalProperties:
                   description: FeedConditions are the cond
                   properties:
                     lastUpdateTime:
@@ -75,18 +73,15 @@ spec:
                       description: Status field is a boolean that represents the status
                         of the condition
                       type: boolean
-                    type:
-                      description: Type field is a string that represents the type
-                        of the condition
-                      type: string
                   required:
                   - lastUpdateTime
                   - message
                   - reason
                   - status
-                  - type
                   type: object
-                type: array
+                description: Conditions field is a list of conditions that the feed
+                  can have
+                type: object
             type: object
         type: object
     served: true

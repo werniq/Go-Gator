@@ -1,8 +1,16 @@
-# operator
-// TODO(user): Add simple overview of use/purpose
+# Operator
+This operator handles the creation, updating, and deletion of feeds on a news-aggregator server. 
+When a news feed is registered, a request is sent to the server to create a feed 
+with the specified name and endpoint.
+Similarly, when a news feed is updated or deleted, requests are made to update
+or remove the feed from the server accordingly.
 
 ## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+This operator performs the management of feeds on a news-aggregator server by creating, 
+updating, or deleting feeds. 
+When the status of a Feed CRD changes (whether it is created, updated, or deleted), 
+the operator sends a request to the news-aggregator server to perform the corresponding action
+with the specified name and endpoint.
 
 ## Getting Started
 

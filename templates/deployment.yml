@@ -17,11 +17,21 @@ spec:
     spec:
       serviceAccountName: user-developer
       automountServiceAccountToken: false
+      volumes:
+        - name: go-gator-pv
+          persistentVolumeClaim:
+            claimName: go-gator-pvc
       containers:
         - name: go-gator
           image: qniw984/go-gator:1.1.0
           ports:
             - containerPort: 443
+              hostPort: 443
+              name: "go-gator-server"
+          volumeMounts:
+            - mountPath: /tmp/data/
+              name: go-gator-pv
+          args: ["-fs=/tmp/data/"]
           resources:
             requests:
               cpu: 100m

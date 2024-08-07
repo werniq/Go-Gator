@@ -27,8 +27,6 @@ import (
 	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
@@ -56,17 +54,17 @@ const (
 	// serverUri is the link to our news-aggregator
 	serverUri = "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
 
+	// feedStatusConditionsCapacity is a capacity of feed status conditions array
+	feedStatusConditionsCapacity = 2
+
 	// defaultSourceFormat identifies default data format which should be used for new feed
 	defaultSourceFormat = "xml"
 
-	// TypeCreated identifies that feed was created
-	TypeCreated = "Created"
+	// typeCreated identifies that feed was created
+	typeCreated = "Created"
 
-	// TypeUpdated identifies that feed was updated
-	TypeUpdated = "Updated"
-
-	// TypeDeleted identifies that feed was deleted
-	TypeDeleted = "Deleted"
+	// typeUpdated identifies that feed was updated
+	typeUpdated = "Updated"
 )
 
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds,verbs=get;list;watch;create;update;patch;delete
@@ -76,28 +74,25 @@ const (
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	l := log.FromContext(ctx)
-
 	var res ctrl.Result
 	var feed newsaggregatorv1.Feed
 
 	err := r.Get(ctx, req.NamespacedName, &feed)
-	switch {
-	case errors.IsNotFound(err):
+	if errors.IsNotFound(err) {
 		res, err = r.handleDelete(ctx, &feed)
 		if err != nil {
-			l.Error(err, "Error while handling delete event ")
 			return ctrl.Result{}, err
 		}
-		l.Info("Successfully deleted feed")
 		return res, nil
-	case err != nil:
+	}
+
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	isNew := feed.Status.Conditions[TypeCreated] == newsaggregatorv1.FeedConditions{}
+	isNew := feed.Status.Conditions[typeCreated] == newsaggregatorv1.FeedConditions{}
 
-	if isNew {
+	if isNew && feed.Spec.Name != "" {
 		res, err = r.handleCreate(ctx, &feed)
 	} else {
 		res, err = r.handleUpdate(ctx, &feed)
@@ -119,6 +114,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.Feed{}).
+		WithEventFilter(StatusUpdatePredicate{}).
 		Complete(r)
 }
 
@@ -127,7 +123,6 @@ func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // The function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 201 Created, it attempts to decode and print the server's error message.
 func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
-	l := log.FromContext(ctx)
 	source := SourceBody{
 		Name:     feed.Spec.Name,
 		Format:   defaultSourceFormat,
@@ -156,10 +151,7 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 		return ctrl.Result{}, err
 	}
 
-	l.Info("Successfully executed default client")
-
 	if res.StatusCode != http.StatusCreated {
-		l.Info(res.Status)
 		serverError := &serverErr{}
 		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
@@ -173,13 +165,11 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 		return ctrl.Result{}, err
 	}
 
-	err = r.initFeedStatus(ctx, feed, TypeCreated,
+	err = r.initFeedStatus(ctx, feed, typeCreated,
 		true, "Created", "Feed has been created successfully")
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-
-	l.Info("Successfully created feed")
 
 	return ctrl.Result{}, nil
 }
@@ -189,7 +179,6 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 // This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
 func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
-	l := log.FromContext(ctx)
 	source := &SourceBody{
 		Name:     feed.Spec.Name,
 		Format:   defaultSourceFormat,
@@ -230,13 +219,6 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-
-	err = r.updateFeedStatus(ctx, feed, TypeUpdated, true, "Created", "Feed has been created successfully")
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	l.Info("Successfully updated field")
 
 	return ctrl.Result{}, nil
 }
@@ -294,7 +276,7 @@ func (r *FeedReconciler) initFeedStatus(ctx context.Context,
 		LastUpdateTime: metav1.Now().String(),
 	}
 
-	feed.Status.Conditions = make(map[string]newsaggregatorv1.FeedConditions, 3)
+	feed.Status.Conditions = make(map[string]newsaggregatorv1.FeedConditions, feedStatusConditionsCapacity)
 	feed.Status.Conditions[t] = condition
 
 	err := r.Client.Status().Update(ctx, feed)

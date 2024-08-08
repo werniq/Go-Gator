@@ -22,6 +22,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"net/http"
@@ -29,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
@@ -67,6 +69,8 @@ const (
 
 	// typeUpdated identifies that feed was updated
 	typeUpdated = "Updated"
+
+	feedFinalizerName = "feed.finalizers"
 )
 
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds,verbs=get;list;watch;create;update;patch;delete
@@ -84,35 +88,47 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	err = r.Get(ctx, req.NamespacedName, &feed)
 	if err != nil {
-		l.Error(err, "error in getting my object : %+v")
-		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
+		if errors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
 
-	err = r.handleFinalizer(ctx, feed)
-	if err != nil {
-		l.Error(err, "failed to update finalizer : %+v")
 		return ctrl.Result{}, err
 	}
 
-	if !feed.ObjectMeta.DeletionTimestamp.IsZero() {
-		res, err = r.handleDelete(ctx, &feed)
-		if err != nil {
-			l.Error(err, "failed to delete feed : %+v")
-			return ctrl.Result{}, err
+	if feed.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !controllerutil.ContainsFinalizer(&feed, feedFinalizerName) {
+			controllerutil.AddFinalizer(&feed, feedFinalizerName)
+			l.Info("Add Finalizer", "feed-name", feedFinalizerName)
+			err = r.Client.Update(ctx, &feed)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
 		}
-		return res, nil
+	} else {
+		if controllerutil.ContainsFinalizer(&feed, feedFinalizerName) {
+			if _, err = r.handleDelete(ctx, &feed); err != nil {
+				return ctrl.Result{}, err
+			}
+
+			controllerutil.RemoveFinalizer(&feed, feedFinalizerName)
+			l.Info("Remove Finalizer", "feed-remove name ", feedFinalizerName)
+			err = r.Client.Update(ctx, &feed)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+		}
 	}
 
 	isNew := feed.Status.Conditions[typeCreated] == newsaggregatorv1.FeedConditions{}
 
-	if isNew && feed.Spec.Name != "" {
+	if isNew {
 		res, err = r.handleCreate(ctx, &feed)
 	} else {
 		res, err = r.handleUpdate(ctx, &feed)
 	}
 
 	if err != nil {
-		return ctrl.Result{}, err
+		return res, err
 	}
 
 	err = r.Client.Status().Update(ctx, &feed)
@@ -127,7 +143,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.Feed{}).
-		WithEventFilter(StatusUpdatePredicate{}).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Complete(r)
 }
 
@@ -144,6 +160,13 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	sourceData, err := json.Marshal(source)
 	if err != nil {
+		initErr := r.initFeedStatus(ctx, feed, typeCreated,
+			false,
+			err.Error(),
+			err.Error())
+		if initErr != nil {
+			return ctrl.Result{}, initErr
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -151,12 +174,12 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	req, err := http.NewRequest(http.MethodPost, serverUri, requestBody)
 	if err != nil {
-		err = r.initFeedStatus(ctx, feed, typeCreated,
-			true,
+		initErr := r.initFeedStatus(ctx, feed, typeCreated,
+			false,
 			err.Error(),
 			err.Error())
-		if err != nil {
-			return ctrl.Result{}, err
+		if initErr != nil {
+			return ctrl.Result{}, initErr
 		}
 		return ctrl.Result{}, err
 	}
@@ -168,12 +191,12 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	res, err := customClient.Do(req)
 	if err != nil {
-		err = r.initFeedStatus(ctx, feed, typeCreated,
-			true,
+		initErr := r.initFeedStatus(ctx, feed, typeCreated,
+			false,
 			err.Error(),
 			err.Error())
-		if err != nil {
-			return ctrl.Result{}, err
+		if initErr != nil {
+			return ctrl.Result{}, initErr
 		}
 		return ctrl.Result{}, err
 	}
@@ -184,32 +207,32 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		err = r.initFeedStatus(ctx, feed, typeCreated,
-			true,
-			serverError.ErrorMsg,
-			serverError.ErrorMsg)
-		if err != nil {
-			return ctrl.Result{}, err
+		initErr := r.initFeedStatus(ctx, feed, typeCreated,
+			false,
+			err.Error(),
+			err.Error())
+		if initErr != nil {
+			return ctrl.Result{}, initErr
 		}
 		return ctrl.Result{}, serverError
 	}
 
 	err = res.Body.Close()
 	if err != nil {
-		err = r.initFeedStatus(ctx, feed, typeCreated,
-			true,
+		initErr := r.initFeedStatus(ctx, feed, typeCreated,
+			false,
 			err.Error(),
 			err.Error())
-		if err != nil {
-			return ctrl.Result{}, err
+		if initErr != nil {
+			return ctrl.Result{}, initErr
 		}
 		return ctrl.Result{}, err
 	}
 
 	err = r.initFeedStatus(ctx, feed, typeCreated,
 		true,
-		"",
-		"")
+		"Some reason",
+		"asdads")
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -260,6 +283,14 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 	}
 
 	err = res.Body.Close()
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	err = r.updateFeedStatus(ctx, feed, typeUpdated,
+		true,
+		"",
+		"")
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -322,33 +353,6 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 	return ctrl.Result{}, nil
 }
 
-// handleFinalizer handles the finalizer logic for the Feed object
-func (r *FeedReconciler) handleFinalizer(ctx context.Context, obj newsaggregatorv1.Feed) error {
-	l := log.FromContext(ctx)
-	var err error
-
-	feedFinalizerName := "feed.finalizers"
-
-	if obj.ObjectMeta.DeletionTimestamp.IsZero() {
-		if !controllerutil.ContainsFinalizer(&obj, feedFinalizerName) {
-			controllerutil.AddFinalizer(&obj, feedFinalizerName)
-			l.Info("Add Finalizer", "feed-name", feedFinalizerName)
-			return r.Update(ctx, &obj)
-		}
-	} else {
-		if controllerutil.ContainsFinalizer(&obj, feedFinalizerName) {
-			if _, err = r.handleDelete(ctx, &obj); err != nil {
-				return err
-			}
-			controllerutil.RemoveFinalizer(&obj, feedFinalizerName)
-			l.Info("Remove Finalizer", "feed-remove name ", feedFinalizerName)
-			return r.Update(ctx, &obj)
-		}
-	}
-
-	return nil
-}
-
 // updateFeedStatus updates the status of the newly-created Feed object with the given status, reason, and message, so that
 // feed.Status.Conditions wont be nil and next event will be either update or delete.
 func (r *FeedReconciler) initFeedStatus(ctx context.Context,
@@ -378,11 +382,6 @@ func (r *FeedReconciler) updateFeedStatus(ctx context.Context,
 	}
 
 	feed.Status.Conditions[t] = condition
-
-	err := r.Client.Status().Update(ctx, feed)
-	if err != nil {
-		return err
-	}
 
 	return nil
 }

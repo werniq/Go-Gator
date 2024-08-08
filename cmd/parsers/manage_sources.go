@@ -36,18 +36,10 @@ var (
 	}
 )
 
-const (
-	// ErrSourceExists is thrown when were provided source name that already exists
-	ErrSourceExists = "this source already exists"
-)
-
 // AddNewSource inserts new source to available sources list and determines the appropriate Parser for it
 //
 // Throws an error, if the source was already registered previously.
 func AddNewSource(format, source, endpoint string) error {
-	if _, exists := sourceToEndpoint[source]; exists {
-		return errors.New(ErrSourceExists)
-	}
 	sourceToEndpoint[source] = endpoint
 	sourceToParser[source] = determineParser(format, source)
 

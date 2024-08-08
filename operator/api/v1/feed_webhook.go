@@ -19,6 +19,8 @@ package v1
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -68,7 +70,7 @@ func (r *Feed) ValidateCreate() (admission.Warnings, error) {
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Feed) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	feedlog.Info("validate update", "name", r.Name)
-	return r.validateFeed()
+	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
@@ -85,13 +87,13 @@ func (r *Feed) validateFeed() (admission.Warnings, error) {
 	}
 
 	c := config.GetConfigOrDie()
-	clientset, err := kubernetes.NewForConfig(c)
+	k8sClient, err := kubernetes.NewForConfig(c)
 	if err != nil {
 		return nil, err
 	}
 
-	feeds := []Feed{}
-	d, err := clientset.RESTClient().
+	feeds := FeedList{}
+	d, err := k8sClient.RESTClient().
 		Get().
 		AbsPath("/apis/newsaggregator.teamdev.com/v1/feeds").
 		DoRaw(context.TODO())
@@ -100,15 +102,18 @@ func (r *Feed) validateFeed() (admission.Warnings, error) {
 		panic(err)
 	}
 
-	if err := json.Unmarshal(d, &feeds); err != nil {
-		panic(err)
+	err = json.Unmarshal(d, &feeds)
+	if err != nil {
+		fmt.Println(string(d))
+		return nil, err
 	}
 
-	for _, feed := range feeds {
+	for _, feed := range feeds.Items {
 		if feed.Spec.Name == r.Spec.Name {
-			return admission.Warnings{"feed name already exists"}, nil
+			return nil, errors.New("name must be unique")
 		}
 	}
+	fmt.Println("Passed name uniqueness validation")
 
 	return nil, nil
 }

@@ -21,7 +21,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -70,6 +69,8 @@ const (
 	// typeUpdated identifies that feed was updated
 	typeUpdated = "Updated"
 
+	// feedFinalizerName is a title of finalizer which will be added to feed object
+	// for proper deletion of feed in news aggregator
 	feedFinalizerName = "feed.finalizers"
 )
 
@@ -89,9 +90,8 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	err = r.Get(ctx, req.NamespacedName, &feed)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return ctrl.Result{}, nil
+			return ctrl.Result{}, err
 		}
-
 		return ctrl.Result{}, err
 	}
 
@@ -160,13 +160,10 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	sourceData, err := json.Marshal(source)
 	if err != nil {
-		initErr := r.initFeedStatus(ctx, feed, typeCreated,
+		r.initFeedStatus(ctx, feed, typeCreated,
 			false,
 			err.Error(),
 			err.Error())
-		if initErr != nil {
-			return ctrl.Result{}, initErr
-		}
 		return ctrl.Result{}, err
 	}
 
@@ -174,13 +171,10 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	req, err := http.NewRequest(http.MethodPost, serverUri, requestBody)
 	if err != nil {
-		initErr := r.initFeedStatus(ctx, feed, typeCreated,
+		r.initFeedStatus(ctx, feed, typeCreated,
 			false,
 			err.Error(),
 			err.Error())
-		if initErr != nil {
-			return ctrl.Result{}, initErr
-		}
 		return ctrl.Result{}, err
 	}
 
@@ -191,51 +185,42 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	res, err := customClient.Do(req)
 	if err != nil {
-		initErr := r.initFeedStatus(ctx, feed, typeCreated,
+		r.initFeedStatus(ctx, feed, typeCreated,
 			false,
 			err.Error(),
 			err.Error())
-		if initErr != nil {
-			return ctrl.Result{}, initErr
-		}
 		return ctrl.Result{}, err
 	}
 
 	if res.StatusCode != http.StatusCreated {
 		serverError := &serverErr{}
+
 		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		initErr := r.initFeedStatus(ctx, feed, typeCreated,
+
+		r.initFeedStatus(ctx, feed, typeCreated,
 			false,
-			err.Error(),
-			err.Error())
-		if initErr != nil {
-			return ctrl.Result{}, initErr
-		}
+			serverError.Error(),
+			serverError.Error())
+
 		return ctrl.Result{}, serverError
 	}
 
 	err = res.Body.Close()
 	if err != nil {
-		initErr := r.initFeedStatus(ctx, feed, typeCreated,
+		r.initFeedStatus(ctx, feed, typeCreated,
 			false,
 			err.Error(),
 			err.Error())
-		if initErr != nil {
-			return ctrl.Result{}, initErr
-		}
 		return ctrl.Result{}, err
 	}
 
-	err = r.initFeedStatus(ctx, feed, typeCreated,
+	r.initFeedStatus(ctx, feed, typeCreated,
 		true,
-		"Some reason",
-		"asdads")
-	if err != nil {
-		return ctrl.Result{}, err
-	}
+		"",
+		"")
 
 	return ctrl.Result{}, nil
 }
@@ -287,13 +272,11 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 		return ctrl.Result{}, err
 	}
 
-	err = r.updateFeedStatus(ctx, feed, typeUpdated,
+	r.updateFeedStatus(ctx, feed,
+		typeUpdated,
 		true,
 		"",
 		"")
-	if err != nil {
-		return ctrl.Result{}, err
-	}
 
 	return ctrl.Result{}, nil
 }
@@ -308,7 +291,6 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 		Format:   defaultSourceFormat,
 		Endpoint: feed.Spec.Link,
 	}
-	fmt.Println(feed)
 
 	if feed.Name == "" {
 		return ctrl.Result{}, nil
@@ -356,7 +338,7 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 // updateFeedStatus updates the status of the newly-created Feed object with the given status, reason, and message, so that
 // feed.Status.Conditions wont be nil and next event will be either update or delete.
 func (r *FeedReconciler) initFeedStatus(ctx context.Context,
-	feed *newsaggregatorv1.Feed, t string, status bool, reason string, message string) error {
+	feed *newsaggregatorv1.Feed, eventType string, status bool, reason string, message string) {
 	condition := newsaggregatorv1.FeedConditions{
 		Status:         status,
 		Reason:         reason,
@@ -365,15 +347,13 @@ func (r *FeedReconciler) initFeedStatus(ctx context.Context,
 	}
 
 	feed.Status.Conditions = make(map[string]newsaggregatorv1.FeedConditions, feedStatusConditionsCapacity)
-	feed.Status.Conditions[t] = condition
-
-	return nil
+	feed.Status.Conditions[eventType] = condition
 }
 
 // updateFeedStatus updates the status of the newly-created Feed object with the given status, reason, and message, so that
 // feed.Status.Conditions wont be nil and next event will be either update or delete.
 func (r *FeedReconciler) updateFeedStatus(ctx context.Context,
-	feed *newsaggregatorv1.Feed, t string, status bool, reason string, message string) error {
+	feed *newsaggregatorv1.Feed, eventType string, status bool, reason string, message string) {
 	condition := newsaggregatorv1.FeedConditions{
 		Status:         status,
 		Reason:         reason,
@@ -381,7 +361,5 @@ func (r *FeedReconciler) updateFeedStatus(ctx context.Context,
 		LastUpdateTime: metav1.Now().String(),
 	}
 
-	feed.Status.Conditions[t] = condition
-
-	return nil
+	feed.Status.Conditions[eventType] = condition
 }

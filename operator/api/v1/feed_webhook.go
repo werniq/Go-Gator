@@ -34,12 +34,6 @@ import (
 // log is for logging in this package.
 var feedlog = logf.Log.WithName("feed-resource")
 
-const (
-	defaultKubeConfigPath = "/home/.kube/config"
-
-	codeSpaceKubeconfigPath = "/home/codespace/.kube/config"
-)
-
 // SetupWebhookWithManager will setup the manager to manage the webhooks
 func (r *Feed) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).

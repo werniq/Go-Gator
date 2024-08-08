@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -98,7 +97,6 @@ func (r *Feed) validateFeed() (admission.Warnings, error) {
 
 	err = json.Unmarshal(d, &feeds)
 	if err != nil {
-		fmt.Println(string(d))
 		return nil, err
 	}
 
@@ -107,7 +105,6 @@ func (r *Feed) validateFeed() (admission.Warnings, error) {
 			return nil, errors.New("name must be unique")
 		}
 	}
-	fmt.Println("Passed name uniqueness validation")
 
 	return nil, nil
 }

@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +25,6 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"net/http"
-	"net/http/httptest"
 	"reflect"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -102,35 +100,6 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 		})
 	}
 }
-
-//func TestFeedReconciler_SetupWithManager(eventType *testing.T) {
-//	type fields struct {
-//		Client client.Client
-//		Scheme *runtime.Scheme
-//	}
-//	type args struct {
-//		mgr controllerruntime.Manager
-//	}
-//	tests := []struct {
-//		name    string
-//		fields  fields
-//		args    args
-//		wantErr bool
-//	}{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		eventType.Run(tt.name, func(eventType *testing.T) {
-//			r := &FeedReconciler{
-//				Client: tt.fields.Client,
-//				Scheme: tt.fields.Scheme,
-//			}
-//			if err := r.SetupWithManager(tt.args.mgr); (err != nil) != tt.wantErr {
-//				eventType.Errorf("SetupWithManager() error = %v, wantErr %v", err, tt.wantErr)
-//			}
-//		})
-//	}
-//}
 
 func TestFeedReconciler_handleCreate(t *testing.T) {
 	tests := []struct {
@@ -228,7 +197,6 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 	tests := []struct {
 		name           string
 		feed           *newsaggregatorv1.Feed
-		mockClient     func() *http.Client
 		expectedResult ctrl.Result
 		expectedErr    bool
 	}{
@@ -240,12 +208,7 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 					Link: "http://example.com",
 				},
 			},
-			mockClient: func() *http.Client {
-				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(http.StatusOK)
-				}))
-				return server.Client()
-			},
+
 			expectedResult: ctrl.Result{},
 			expectedErr:    false,
 		},
@@ -257,7 +220,6 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 					Link: "http://example.com",
 				},
 			},
-			mockClient:     func() *http.Client { return &http.Client{} },
 			expectedResult: ctrl.Result{},
 			expectedErr:    true,
 		},
@@ -269,7 +231,6 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 					Link: "http://example.com",
 				},
 			},
-			mockClient:     func() *http.Client { return &http.Client{} },
 			expectedResult: ctrl.Result{},
 			expectedErr:    true,
 		},
@@ -281,7 +242,6 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 					Link: string([]byte{0x7f}),
 				},
 			},
-			mockClient:     func() *http.Client { return &http.Client{} },
 			expectedResult: ctrl.Result{},
 			expectedErr:    true,
 		},
@@ -292,13 +252,6 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 					Name: "Test Feed",
 					Link: "http://example.com",
 				},
-			},
-			mockClient: func() *http.Client {
-				return &http.Client{
-					Transport: &http.Transport{
-						TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-					},
-				}
 			},
 			expectedResult: ctrl.Result{},
 			expectedErr:    true,
@@ -311,13 +264,6 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 					Link: "http://example.com",
 				},
 			},
-			mockClient: func() *http.Client {
-				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(http.StatusBadRequest)
-					w.Write([]byte(`{"error":"Bad Request"}`))
-				}))
-				return server.Client()
-			},
 			expectedResult: ctrl.Result{},
 			expectedErr:    true,
 		},
@@ -328,13 +274,6 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 					Name: "Test Feed",
 					Link: "http://example.com",
 				},
-			},
-			mockClient: func() *http.Client {
-				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(http.StatusOK)
-					w.Header().Set("Content-Length", "-1")
-				}))
-				return server.Client()
 			},
 			expectedResult: ctrl.Result{},
 			expectedErr:    true,
@@ -361,7 +300,6 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 	tests := []struct {
 		name           string
 		feed           *newsaggregatorv1.Feed
-		mockClient     func() *http.Client
 		expectedResult ctrl.Result
 		expectedErr    error
 	}{
@@ -372,12 +310,6 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 					Name: "Test Feed",
 					Link: "http://example.com",
 				},
-			},
-			mockClient: func() *http.Client {
-				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(http.StatusOK)
-				}))
-				return server.Client()
 			},
 			expectedResult: ctrl.Result{},
 			expectedErr:    nil,
@@ -390,7 +322,6 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 					Link: "http://example.com",
 				},
 			},
-			mockClient:     func() *http.Client { return &http.Client{} },
 			expectedResult: ctrl.Result{},
 			expectedErr:    errors.New("json: error calling MarshalJSON"),
 		},
@@ -402,7 +333,6 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 					Link: string([]byte{0x7f}),
 				},
 			},
-			mockClient:     func() *http.Client { return &http.Client{} },
 			expectedResult: ctrl.Result{},
 			expectedErr:    errors.New("http: invalid character"),
 		},
@@ -413,13 +343,6 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 					Name: "Test Feed",
 					Link: "http://example.com",
 				},
-			},
-			mockClient: func() *http.Client {
-				return &http.Client{
-					Transport: &http.Transport{
-						TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-					},
-				}
 			},
 			expectedResult: ctrl.Result{},
 			expectedErr:    errors.New("dial tcp: lookup"),
@@ -432,13 +355,6 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 					Link: "http://example.com",
 				},
 			},
-			mockClient: func() *http.Client {
-				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(http.StatusBadRequest)
-					w.Write([]byte(`{"error":"Bad Request"}`))
-				}))
-				return server.Client()
-			},
 			expectedResult: ctrl.Result{},
 			expectedErr:    errors.New("Bad Request"),
 		},
@@ -449,13 +365,6 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 					Name: "Test Feed",
 					Link: "http://example.com",
 				},
-			},
-			mockClient: func() *http.Client {
-				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(http.StatusOK)
-					w.Header().Set("Content-Length", "-1")
-				}))
-				return server.Client()
 			},
 			expectedResult: ctrl.Result{},
 			expectedErr:    errors.New("http: response body close error"),

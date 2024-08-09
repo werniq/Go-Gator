@@ -85,20 +85,22 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	var feed newsaggregatorv1.Feed
 	var err error
 
-	l := log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	err = r.Get(ctx, req.NamespacedName, &feed)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return ctrl.Result{}, err
 		}
+
 		return ctrl.Result{}, err
 	}
 
 	if feed.ObjectMeta.DeletionTimestamp.IsZero() {
 		if !controllerutil.ContainsFinalizer(&feed, feedFinalizerName) {
 			controllerutil.AddFinalizer(&feed, feedFinalizerName)
-			l.Info("Add Finalizer", "feed-name", feedFinalizerName)
+			logger.Info("Add Finalizer", feed.Name, feedFinalizerName)
+
 			err = r.Client.Update(ctx, &feed)
 			if err != nil {
 				return ctrl.Result{}, err
@@ -111,7 +113,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 			}
 
 			controllerutil.RemoveFinalizer(&feed, feedFinalizerName)
-			l.Info("Remove Finalizer", "feed-remove name ", feedFinalizerName)
+			logger.Info("Remove Finalizer", feed.Name, feedFinalizerName)
 			err = r.Client.Update(ctx, &feed)
 			if err != nil {
 				return ctrl.Result{}, err

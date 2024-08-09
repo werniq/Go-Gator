@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"gogator/cmd/parsers"
 	"gogator/cmd/types"
@@ -34,7 +33,7 @@ func DeleteSource(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": ErrSourceNotFound,
 		})
-		fmt.Println(reqBody.Name)
+		log.Println(ErrDeleteSource + err.Error())
 		return
 	}
 

@@ -15,6 +15,7 @@ var (
 	// defaultCertsPath is default path to server
 	defaultCertsPath = filepath.Join("cmd", "server", "certs")
 
+	// defaultDataDirPath is a default path to the directory where all data will be stored
 	defaultDataDirPath = "/tmp/"
 )
 

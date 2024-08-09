@@ -58,7 +58,7 @@ const (
 	serverUri = "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
 
 	// feedStatusConditionsCapacity is a capacity of feed status conditions array
-	feedStatusConditionsCapacity = 2
+	feedStatusConditionsCapacity = 3
 
 	// defaultSourceFormat identifies default data format which should be used for new feed
 	defaultSourceFormat = "xml"

@@ -21,11 +21,10 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 	"net/http"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -130,59 +129,57 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.HotNews{}).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Complete(r)
 }
 
 // handleCreate function sends a request to the news aggregator server to retrieve news
 // with the specified parameters, and returns an error if something goes wrong.
 func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggregatorv1.HotNews) error {
-	l := log.FromContext(ctx)
-	requestUrl, err := r.constructRequestUrl(hotNews.Spec.Keywords,
+	logger := log.FromContext(ctx)
+	requestUrl, err := r.constructRequestUrl(
+		hotNews.Spec.Keywords,
 		hotNews.Spec.DateStart,
 		hotNews.Spec.DateEnd,
-		hotNews.Spec.Feeds)
+		hotNews.Spec.Feeds,
+	)
+
 	if err != nil {
-		l.Error(err, errFailedToConstructRequestUrl)
+		logger.Error(err, errFailedToConstructRequestUrl)
 		return err
 	}
 
 	req, err := http.NewRequest("GET", requestUrl, nil)
 	if err != nil {
-		l.Error(err, errFailedToCreateRequest)
+		logger.Error(err, errFailedToCreateRequest)
 		return err
 	}
 
-	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
 
-	customHttpClient := &http.Client{Transport: &http.Transport{TLSClientConfig: tlsConfig}}
+	httpClient := &http.Client{Transport: &http.Transport{TLSClientConfig: tlsConfig}}
 
-	res, err := customHttpClient.Do(req)
+	res, err := httpClient.Do(req)
 	if err != nil {
-		l.Error(err, errFailedToSendRequest)
+		logger.Error(err, errFailedToSendRequest)
 		return err
 	}
 
 	if res.StatusCode != http.StatusOK {
-		var serverErr *serverError
-		data, err := io.ReadAll(res.Body)
+		serverErr := &serverError{}
+		err = json.NewDecoder(res.Body).Decode(&serverErr)
 		if err != nil {
-			l.Error(err, errFailedToReadResponseBody)
+			logger.Error(err, errFailedToUnmarshalResponseBody)
 			return err
 		}
-
-		err = json.Unmarshal(data, &serverErr)
-		if err != nil {
-			l.Error(err, errFailedToUnmarshalResponseBody)
-			return err
-		}
-
-		l.Error(fmt.Errorf(serverErr.ErrMsg), errFailedToGetNews)
-		return err
+		return serverErr
 	}
 
 	err = res.Body.Close()
 	if err != nil {
-		l.Error(err, errFailedToCloseResponseBody)
+		logger.Error(err, errFailedToCloseResponseBody)
 		return err
 	}
 
@@ -228,25 +225,28 @@ func (r *HotNewsReconciler) constructRequestUrl(keywords, dateFrom, dateEnd stri
 }
 
 // getConfigMapData returns all data from config map named feedGroupsConfigMapName in defaultNamespace
-func (r *HotNewsReconciler) getConfigMapData(ctx context.Context) (map[string]string, error) {
-	l := log.FromContext(ctx)
-	config, err := clientcmd.BuildConfigFromFlags("", pathToKubeConfig)
-	if err != nil {
-		return nil, err
-	}
+func (r *HotNewsReconciler) getConfigMapData(ctx context.Context) ([]string, error) {
+	logger := log.FromContext(ctx)
+
+	config := ctrl.GetConfigOrDie()
 
 	clientSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		l.Error(err, errFailedToCreateClientSet)
+		logger.Error(err, errFailedToCreateClientSet)
 		return nil, err
 	}
 
-	configMap, err := clientSet.CoreV1().ConfigMaps(defaultNamespace).Get(context.TODO(),
-		feedGroupsConfigMapName, v1.GetOptions{})
+	configMaps, err := clientSet.CoreV1().ConfigMaps(defaultNamespace).List(context.TODO(), v1.ListOptions{})
 	if err != nil {
-		l.Error(err, errFailedToGetConfigMap)
+		logger.Error(err, errFailedToGetConfigMap)
 		return nil, err
 	}
 
-	return configMap.Data, nil
+	var groupData []string
+
+	for _, configMap := range configMaps.Items {
+		groupData = append(groupData, configMap.Data[feedGroupsConfigMapName])
+	}
+
+	return groupData, nil
 }

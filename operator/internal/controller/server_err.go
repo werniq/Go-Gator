@@ -1,6 +1,6 @@
 package controller
 
-// serverErr struct is used to parse error response from news-aggregator server.
+// serverErr struct is used to parse error response from our news-aggregator server.
 //
 // When go-gator server encounters errors with something, it returns them in json format with
 // one error field, which indicates the actual error message.

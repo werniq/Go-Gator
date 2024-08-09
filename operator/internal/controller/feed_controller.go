@@ -66,6 +66,9 @@ const (
 	// typeCreated identifies that feed was created
 	typeCreated = "Created"
 
+	// typeFailedToCreate identifies that feed was not created
+	typeFailedToCreate = "CreateFailed"
+
 	// typeUpdated identifies that feed was updated
 	typeUpdated = "Updated"
 
@@ -114,6 +117,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 			controllerutil.RemoveFinalizer(&feed, feedFinalizerName)
 			logger.Info("Remove Finalizer", feed.Name, feedFinalizerName)
+
 			err = r.Client.Update(ctx, &feed)
 			if err != nil {
 				return ctrl.Result{}, err
@@ -130,7 +134,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	if err != nil {
-		return res, err
+		return ctrl.Result{}, err
 	}
 
 	err = r.Client.Status().Update(ctx, &feed)
@@ -138,7 +142,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
-	return ctrl.Result{}, nil
+	return res, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -162,7 +166,8 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	sourceData, err := json.Marshal(source)
 	if err != nil {
-		r.initFeedStatus(ctx, feed, typeCreated,
+		r.initFeedStatus(ctx, feed,
+			typeFailedToCreate,
 			false,
 			err.Error(),
 			err.Error())
@@ -173,7 +178,8 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	req, err := http.NewRequest(http.MethodPost, serverUri, requestBody)
 	if err != nil {
-		r.initFeedStatus(ctx, feed, typeCreated,
+		r.initFeedStatus(ctx, feed,
+			typeFailedToCreate,
 			false,
 			err.Error(),
 			err.Error())
@@ -187,7 +193,8 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	res, err := customClient.Do(req)
 	if err != nil {
-		r.initFeedStatus(ctx, feed, typeCreated,
+		r.initFeedStatus(ctx, feed,
+			typeFailedToCreate,
 			false,
 			err.Error(),
 			err.Error())
@@ -202,7 +209,8 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 			return ctrl.Result{}, err
 		}
 
-		r.initFeedStatus(ctx, feed, typeCreated,
+		r.initFeedStatus(ctx, feed,
+			typeFailedToCreate,
 			false,
 			serverError.Error(),
 			serverError.Error())
@@ -212,14 +220,16 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	err = res.Body.Close()
 	if err != nil {
-		r.initFeedStatus(ctx, feed, typeCreated,
+		r.initFeedStatus(ctx, feed,
+			typeFailedToCreate,
 			false,
 			err.Error(),
 			err.Error())
 		return ctrl.Result{}, err
 	}
 
-	r.initFeedStatus(ctx, feed, typeCreated,
+	r.initFeedStatus(ctx, feed,
+		typeFailedToCreate,
 		true,
 		"",
 		"")
@@ -261,7 +271,7 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 	}
 
 	if res.StatusCode != http.StatusOK {
-		var serverError *serverErr
+		serverError := &serverErr{}
 		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
 			return ctrl.Result{}, err
@@ -337,8 +347,10 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 	return ctrl.Result{}, nil
 }
 
-// updateFeedStatus updates the status of the newly-created Feed object with the given status, reason, and message, so that
+// initFeedStatus initializes the status of the newly-created Feed object with the given status, reason, and message, so that
 // feed.Status.Conditions wont be nil and next event will be either update or delete.
+//
+// Additionally, if we encountered error during creation of the feed, those fields will be populated, indicating error.
 func (r *FeedReconciler) initFeedStatus(ctx context.Context,
 	feed *newsaggregatorv1.Feed, eventType string, status bool, reason string, message string) {
 	condition := newsaggregatorv1.FeedConditions{

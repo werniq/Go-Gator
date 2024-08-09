@@ -82,6 +82,42 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 			want:    controllerruntime.Result{},
 			wantErr: false,
 		},
+		{
+			name: "Failed Reconcile due to missing Feed",
+			fields: fields{
+				Client: fake.NewFakeClient(),
+				Scheme: nil,
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: controllerruntime.Request{
+					NamespacedName: client.ObjectKey{
+						Name:      "non-existent-feed",
+						Namespace: "non-existent-namespace",
+					},
+				},
+			},
+			want:    controllerruntime.Result{},
+			wantErr: true,
+		},
+		{
+			name: "Failed Reconcile due to Get error",
+			fields: fields{
+				Client: fake.NewFakeClient(),
+				Scheme: nil,
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: controllerruntime.Request{
+					NamespacedName: client.ObjectKey{
+						Name:      "test-feed",
+						Namespace: "default",
+					},
+				},
+			},
+			want:    controllerruntime.Result{},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

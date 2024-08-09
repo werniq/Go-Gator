@@ -11,44 +11,44 @@ import (
 //
 // This function removes articles with this source as publisher, from all available data files
 func DestroySource(source string, dateRange []string) error {
-	for _, filename := range dateRange {
+	for _, articlesFilename := range dateRange {
 		jp := JsonParser{
-			Source: filename + JsonExtension,
+			Source: articlesFilename + JsonExtension,
 		}
 
-		n, err := jp.Parse()
+		news, err := jp.Parse()
 		if err != nil {
 			return nil
 		}
 
-		n = removeNewsBySource(n, source)
+		news = removeNewsBySource(news, source)
 		if err != nil {
 			return err
 		}
 
-		cwd, err := os.Getwd()
+		cwdPath, err := os.Getwd()
 		if err != nil {
 			return err
 		}
 
-		filename = filepath.Join(cwd, StoragePath, filename+JsonExtension)
+		articlesFilename = filepath.Join(cwdPath, StoragePath, articlesFilename+JsonExtension)
 
-		err = os.Truncate(filename, 0)
+		err = os.Truncate(articlesFilename, 0)
 		if err != nil {
 			return err
 		}
 
-		file, err := os.OpenFile(filename, os.O_RDWR, 0654)
+		file, err := os.OpenFile(articlesFilename, os.O_RDWR, 0654)
 		if err != nil {
 			return err
 		}
 
-		out, err := json.Marshal(n)
+		articleFileData, err := json.Marshal(news)
 		if err != nil {
 			return err
 		}
 
-		_, err = file.Write(out)
+		_, err = file.Write(articleFileData)
 		if err != nil {
 			return err
 		}
@@ -63,13 +63,13 @@ func DestroySource(source string, dateRange []string) error {
 }
 
 // removeNewsBySource removes all news items with the specified source
-func removeNewsBySource(n []types.News, source string) []types.News {
-	var news []types.News
-	for _, article := range n {
+func removeNewsBySource(news []types.News, source string) []types.News {
+	var filteredNews []types.News
+	for _, article := range news {
 		if article.Publisher != source {
-			news = append(news, article)
+			filteredNews = append(filteredNews, article)
 		}
 	}
 
-	return news
+	return filteredNews
 }

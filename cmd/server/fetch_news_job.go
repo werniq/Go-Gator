@@ -15,7 +15,10 @@ type FetchNewsJob struct {
 }
 
 var (
-	ErrCreatingFile  = "Error while creating a file: "
+	// ErrCreatingFile is thrown when there was an error while creating sources file
+	ErrCreatingFile = "Error while creating a file: "
+
+	// ErrParsingSource is thrown when we have error while parsing sources
 	ErrParsingSource = "Error while parsing sources: "
 )
 
@@ -27,11 +30,11 @@ func (j *FetchNewsJob) Run() error {
 		return err
 	}
 
-	f := filepath.Join(cwdPath,
+	articleFilepath := filepath.Join(cwdPath,
 		parsers.StoragePath,
 		j.Filters.StartingTimestamp+parsers.JsonExtension)
 
-	file, err := os.Create(f)
+	file, err := os.Create(articleFilepath)
 	if err != nil {
 		return errors.New(ErrCreatingFile + err.Error())
 	}
@@ -45,12 +48,12 @@ func (j *FetchNewsJob) Run() error {
 	// program additionally applies date range filters
 	news = filters.Apply(news, j.Filters)
 
-	data, err := json.Marshal(news)
+	articlesData, err := json.Marshal(news)
 	if err != nil {
 		return err
 	}
 
-	_, err = file.Write(data)
+	_, err = file.Write(articlesData)
 	if err != nil {
 		return err
 	}

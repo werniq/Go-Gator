@@ -82,6 +82,6 @@ tasks:
       - kubectl apply -f templates/
 
   undeploy:
-    desc: Remove go-gator from kubernetes Cluster
+    desc: Remove news aggregator from kubernetes Cluster
     cmds:
       - kubectl delete -f templates/

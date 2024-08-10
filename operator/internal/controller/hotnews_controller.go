@@ -25,6 +25,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -212,6 +213,15 @@ func (r *HotNewsReconciler) constructRequestUrl(keywords, dateFrom, dateEnd stri
 	if len(feeds) < 1 {
 		return "", fmt.Errorf(errFeedsAreRequired)
 	}
+	requestUrl += fmt.Sprintf("?keywords=%s", keywords)
+
+	var feedStr strings.Builder
+	for _, feed := range feeds {
+		feedStr.WriteString(feed)
+		feedStr.WriteRune(',')
+	}
+
+	requestUrl += fmt.Sprintf("&sources=%s", feedStr.String()[:len(feedStr.String())-2])
 
 	if dateFrom != "" {
 		requestUrl += fmt.Sprintf("&dateFrom=%s", dateFrom)

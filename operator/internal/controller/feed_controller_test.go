@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
+	newsaggregatorv1 "teamdev.com/go-gator-operator/api/v1"
 	"testing"
 	"time"
 )

@@ -34,8 +34,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
-	"teamdev.com/go-gator/internal/controller"
+	newsaggregatorv1 "teamdev.com/go-gator-operator/api/v1"
+	"teamdev.com/go-gator-operator/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
 

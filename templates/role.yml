@@ -3,3 +3,7 @@ kind: Role
 metadata:
   name: go-gator-service
   namespace: go-gator
+rules:
+  - apiGroups: ["v1"]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]

@@ -63,7 +63,7 @@ func (r *Feed) ValidateCreate() (admission.Warnings, error) {
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Feed) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	feedlog.Info("validate update", "name", r.Name)
-	return nil, nil
+	return r.validateFeed()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type

@@ -85,8 +85,8 @@ func init() {
 	SchemeBuilder.Register(&HotNews{}, &HotNewsList{})
 }
 
-// createStatus func initializes HotNews.Status object with the provided data
-func (r *HotNews) initHotNewsStatus(articlesCount int, requestUrl string, articlesTitles []string) {
+// InitHotNewsStatus func initializes HotNews.Status object with the provided data
+func (r *HotNews) InitHotNewsStatus(articlesCount int, requestUrl string, articlesTitles []string) {
 	r.Status.ArticlesCount = articlesCount
 	r.Status.NewsLink = requestUrl
 	r.Status.ArticlesTitles = articlesTitles

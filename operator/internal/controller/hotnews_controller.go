@@ -56,9 +56,6 @@ const (
 	// errFeedsAreRequired is thrown when feeds are not provided
 	errFeedsAreRequired = "feeds or feedGroups are required"
 
-	// errKeywordsAreRequired indicates that keywords are required for the request and creation of HotNews object
-	errKeywordsAreRequired = "keywords are required"
-
 	// errFailedToConstructRequestUrl error message which is returned when failed to construct request URL
 	errFailedToConstructRequestUrl = "failed to construct request URL"
 
@@ -68,8 +65,8 @@ const (
 	// errFailedToSendRequest indicates error during sending an HTTP request
 	errFailedToSendRequest = "failed to send a request"
 
-	// errFailedToUnmarshalResponseBody indicates that error occurred when failed to unmarshal response body
-	errFailedToUnmarshalResponseBody = "failed to unmarshal response body"
+	// errFailedToDecodeResBody indicates that error occurred when failed to unmarshal response body
+	errFailedToDecodeResBody = "failed to decode response body"
 
 	// errFailedToCloseResponseBody is returned when failed to close response body
 	errFailedToCloseResponseBody = "failed to close response body"
@@ -91,12 +88,13 @@ type HotNewsReconciler struct {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state
 func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	var hotNews newsaggregatorv1.HotNews
 
 	err := r.Client.Get(ctx, req.NamespacedName, &hotNews)
 	if err != nil {
+		logger.Error(err, "unable to fetch HotNews")
 		return ctrl.Result{}, err
 	}
 
@@ -105,6 +103,8 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if err != nil {
 			return ctrl.Result{}, err
 		}
+		logger.Info("HotNews has been deleted")
+		return ctrl.Result{}, nil
 	}
 
 	if !hotNews.ObjectMeta.CreationTimestamp.IsZero() {
@@ -112,17 +112,21 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-	}
-
-	err = r.handleCreate(ctx, &hotNews)
-	if err != nil {
-		return ctrl.Result{}, err
+		logger.Info("HotNews has been updated")
+	} else {
+		err = r.handleCreate(ctx, &hotNews)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		logger.Info("HotNews has been created")
 	}
 
 	err = r.Client.Status().Update(ctx, &hotNews)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+
+	logger.Info("HotNewsReconciler has been successfully executed")
 
 	return ctrl.Result{}, nil
 }
@@ -145,7 +149,7 @@ func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggre
 		return err
 	}
 
-	req, err := http.NewRequest("GET", requestUrl, nil)
+	req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
 	if err != nil {
 		logger.Error(err, errFailedToCreateRequest)
 		return err
@@ -166,10 +170,17 @@ func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggre
 		serverErr := &serverError{}
 		err = json.NewDecoder(res.Body).Decode(&serverErr)
 		if err != nil {
-			logger.Error(err, errFailedToUnmarshalResponseBody)
+			logger.Error(err, errFailedToDecodeResBody)
 			return err
 		}
 		return serverErr
+	}
+
+	var articles []article
+	err = json.NewDecoder(res.Body).Decode(&articles)
+	if err != nil {
+		logger.Error(err, errFailedToDecodeResBody)
+		return err
 	}
 
 	err = res.Body.Close()
@@ -178,7 +189,25 @@ func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggre
 		return err
 	}
 
+	var articlesTitles []string
+	for _, a := range articles {
+		articlesTitles = append(articlesTitles, a.Title)
+	}
+
+	hotNews.InitHotNewsStatus(len(articles), requestUrl, articlesTitles)
+
+	logger.Info("HotNews.handleCreate has been successfully executed")
+
 	return nil
+}
+
+// articles struct is used to parse the response from the news aggregator server
+type article struct {
+	Title       string `json:"title" xml:"title"`
+	PubDate     string `json:"publishedAt" xml:"pubDate"`
+	Description string `json:"description" xml:"description"`
+	Publisher   string `xml:"source" json:"Publisher"`
+	Link        string `json:"url" xml:"link"`
 }
 
 // handleUpdate function updates the HotNews object and returns an error if something goes wrong.

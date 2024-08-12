@@ -18,13 +18,10 @@ package v1
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes"
-	"log"
 	ctrl "sigs.k8s.io/controller-runtime"
-	config "sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -34,21 +31,12 @@ var (
 	feedlog = logf.Log.WithName("feed-resource")
 
 	// k8sClient is a kubernetes client that is used to interact with the k8s API
-	k8sClient *kubernetes.Clientset
+	k8sClient client.Client
 )
-
-func init() {
-	var err error
-
-	c := config.GetConfigOrDie()
-	k8sClient, err = kubernetes.NewForConfig(c)
-	if err != nil {
-		log.Fatalln(err)
-	}
-}
 
 // SetupWebhookWithManager will set up the manager to manage the webhooks
 func (r *Feed) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	k8sClient = mgr.GetClient()
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -98,17 +86,11 @@ func (r *Feed) validateFeed() (admission.Warnings, error) {
 
 // checkNameUniqueness checks if the Spec.name of the feed is unique in the namespace
 func (r *Feed) checkNameUniqueness() (admission.Warnings, error) {
-	feeds := FeedList{}
-	data, err := k8sClient.RESTClient().
-		Get().
-		AbsPath("/apis/newsaggregator.teamdev.com/v1/feeds").
-		DoRaw(context.TODO())
+	feeds := &FeedList{}
 
-	if err != nil {
-		panic(err)
-	}
+	listOptions := client.ListOptions{Namespace: r.Namespace}
 
-	err = json.Unmarshal(data, &feeds)
+	err := k8sClient.List(context.Background(), feeds, &listOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -118,22 +100,17 @@ func (r *Feed) checkNameUniqueness() (admission.Warnings, error) {
 			return nil, errors.New("name must be unique in the namespace")
 		}
 	}
+
 	return nil, nil
 }
 
 // checkLinkUniqueness checks if the Spec.link of the feed is unique in the namespace
 func (r *Feed) checkLinkUniqueness() (admission.Warnings, error) {
-	feeds := FeedList{}
-	data, err := k8sClient.RESTClient().
-		Get().
-		AbsPath("/apis/newsaggregator.teamdev.com/v1/feeds").
-		DoRaw(context.TODO())
+	feeds := &FeedList{}
 
-	if err != nil {
-		return nil, err
-	}
+	listOptions := client.ListOptions{Namespace: r.Namespace}
 
-	err = json.Unmarshal(data, &feeds)
+	err := k8sClient.List(context.Background(), feeds, &listOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -143,5 +120,6 @@ func (r *Feed) checkLinkUniqueness() (admission.Warnings, error) {
 			return nil, errors.New("link must be unique in the namespace")
 		}
 	}
+
 	return nil, nil
 }

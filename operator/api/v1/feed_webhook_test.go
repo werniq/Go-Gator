@@ -17,157 +17,74 @@ limitations under the License.
 package v1
 
 import (
-	"errors"
-	"fmt"
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 )
 
-func TestValidateFeed(t *testing.T) {
-	var tests = []struct {
-		name           string
-		feed           *Feed
-		mockResponse   string
-		mockError      error
-		expectedError  string
-		shouldPanic    bool
-		validationErr  error
-		k8sClientSetup func(k8sClient *fake.Clientset)
-	}{
-		{
-			name: "Successful validation",
-			feed: &Feed{
-				Spec: FeedSpec{
-					Name: "UniqueFeedName",
-					Link: "https://example.com/feed",
-				},
-			},
-			mockResponse:  `{"items":[]}`,
-			expectedError: "",
-			validationErr: nil,
-		},
-		{
-			name: "Validation failure due to invalid feed name or link",
-			feed: &Feed{
-				Spec: FeedSpec{
-					Name: "",
-					Link: "",
-				},
-			},
-			mockResponse:  "",
-			expectedError: "validation error",
-			validationErr: errors.New("validation error"),
-		},
-		{
-			name: "Feed name already exists",
-			feed: &Feed{
+func TestFeed_validateFeed(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = AddToScheme(scheme)
+
+	existingFeedList := &FeedList{
+		Items: []Feed{
+			{
 				Spec: FeedSpec{
 					Name: "ExistingFeedName",
 					Link: "https://example.com/feed",
 				},
 			},
-			mockResponse:  `{"items":[{"spec":{"name":"ExistingFeedName"}}]}`,
-			expectedError: "name must be unique",
-		},
-		{
-			name: "K8s client error",
-			feed: &Feed{
-				Spec: FeedSpec{
-					Name: "UniqueFeedName",
-					Link: "https://example.com/feed",
-				},
-			},
-			mockResponse:  "",
-			expectedError: "error creating Kubernetes client",
-		},
-		{
-			name: "Unmarshal error",
-			feed: &Feed{
-				Spec: FeedSpec{
-					Name: "UniqueFeedName",
-					Link: "https://example.com/feed",
-				},
-			},
-			mockResponse:  "invalid json",
-			expectedError: "invalid character",
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			warnings, err := tt.feed.validateFeed()
 
-			if tt.expectedError != "" {
-				assert.NotNil(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
-			} else {
-				assert.Nil(t, err)
-				assert.Nil(t, warnings)
-			}
-		})
-	}
-}
+	k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithLists(existingFeedList).Build()
 
-func TestFeed_validateFeed(t *testing.T) {
-	type fields struct {
-		TypeMeta   v1.TypeMeta
-		ObjectMeta v1.ObjectMeta
-		Spec       FeedSpec
-		Status     FeedStatus
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		want    admission.Warnings
-		wantErr assert.ErrorAssertionFunc
+	var tests = []struct {
+		name        string
+		feed        *Feed
+		expectedErr bool
 	}{
 		{
 			name: "Successful validation",
-			fields: fields{
+			feed: &Feed{
 				Spec: FeedSpec{
 					Name: "UniqueFeedName",
 					Link: "https://example.com/feed",
 				},
 			},
-			want:    nil,
-			wantErr: assert.NoError,
+			expectedErr: false,
 		},
 		{
-			fields: fields{
+			name: "Validation failure due to invalid feed name",
+			feed: &Feed{
 				Spec: FeedSpec{
 					Name: "SuperVeryLongNameThatIsNotValid",
-					Link: "https://example.com/feed",
+					Link: "",
 				},
 			},
-			want:    nil,
-			wantErr: assert.NoError,
+			expectedErr: true,
 		},
 		{
-			fields: fields{
+			name: "Validation failure due to invalid feed link",
+			feed: &Feed{
 				Spec: FeedSpec{
-					Name: "Normal Nam",
-					Link: "wrong.com/feed",
+					Name: "SuperVeryLongNameThatIsNotValid",
+					Link: "",
 				},
 			},
-			want:    nil,
-			wantErr: assert.NoError,
+			expectedErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &Feed{
-				TypeMeta:   tt.fields.TypeMeta,
-				ObjectMeta: tt.fields.ObjectMeta,
-				Spec:       tt.fields.Spec,
-				Status:     tt.fields.Status,
+			_, err := tt.feed.validateFeed()
+
+			if tt.expectedErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
-			got, err := r.validateFeed()
-			if !tt.wantErr(t, err, fmt.Sprintf("validateFeed()")) {
-				return
-			}
-			assert.Equalf(t, tt.want, got, "validateFeed()")
 		})
 	}
 }

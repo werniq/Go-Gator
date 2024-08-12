@@ -135,6 +135,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	k8sClient = mgr.GetClient()
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.Feed{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Complete(r)

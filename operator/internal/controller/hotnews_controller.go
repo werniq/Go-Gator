@@ -92,6 +92,8 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	var hotNews newsaggregatorv1.HotNews
 
+	logger.Info("Entering reconciler")
+
 	err := r.Client.Get(ctx, req.NamespacedName, &hotNews)
 	if err != nil {
 		logger.Error(err, "unable to fetch HotNews")
@@ -99,6 +101,7 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if !hotNews.ObjectMeta.DeletionTimestamp.IsZero() {
+		logger.Info("HotNews is deleting")
 		err = r.handleDelete(ctx, &hotNews)
 		if err != nil {
 			return ctrl.Result{}, err
@@ -108,17 +111,19 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if !hotNews.ObjectMeta.CreationTimestamp.IsZero() {
-		err = r.handleUpdate(ctx, &hotNews)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		logger.Info("HotNews has been updated")
-	} else {
+		logger.Info("HotNews is creating")
 		err = r.handleCreate(ctx, &hotNews)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
 		logger.Info("HotNews has been created")
+	} else {
+		logger.Info("HotNews is updating")
+		err = r.handleUpdate(ctx, &hotNews)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		logger.Info("HotNews has been updated")
 	}
 
 	err = r.Client.Status().Update(ctx, &hotNews)
@@ -142,12 +147,13 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // with the specified parameters, and returns an error if something goes wrong.
 func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggregatorv1.HotNews) error {
 	logger := log.FromContext(ctx)
-	requestUrl, err := r.constructRequestUrl(hotNews.Spec)
 
+	requestUrl, err := r.constructRequestUrl(hotNews.Spec)
 	if err != nil {
 		logger.Error(err, errFailedToConstructRequestUrl)
 		return err
 	}
+	logger.Info(requestUrl)
 
 	req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
 	if err != nil {
@@ -155,12 +161,12 @@ func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggre
 		return err
 	}
 
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
+	customTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	httpClient := &http.Client{Transport: &http.Transport{TLSClientConfig: tlsConfig}}
+	customClient := &http.Client{Transport: customTransport}
 
-	res, err := httpClient.Do(req)
+	res, err := customClient.Do(req)
 	if err != nil {
 		logger.Error(err, errFailedToSendRequest)
 		return err
@@ -213,11 +219,15 @@ type article struct {
 
 // handleUpdate function updates the HotNews object and returns an error if something goes wrong.
 func (r *HotNewsReconciler) handleUpdate(ctx context.Context, hotNews *newsaggregatorv1.HotNews) error {
+	logger := log.FromContext(ctx)
+	logger.Info("handling update")
 	return nil
 }
 
 // handleDelete function deletes the HotNews object and returns an error if something goes wrong.
 func (r *HotNewsReconciler) handleDelete(ctx context.Context, hotNews *newsaggregatorv1.HotNews) error {
+	logger := log.FromContext(ctx)
+	logger.Info("handling delete")
 	return nil
 }
 
@@ -254,7 +264,7 @@ func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpe
 		}
 	}
 
-	requestUrl.WriteString("&sources=" + feedStr.String()[:len(feedStr.String())-2])
+	requestUrl.WriteString("&sources=" + feedStr.String()[:len(feedStr.String())-1])
 
 	if spec.DateStart != "" {
 		requestUrl.WriteString("&dateFrom=" + spec.DateStart)

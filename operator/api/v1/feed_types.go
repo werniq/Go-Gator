@@ -20,21 +20,33 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// TODO: add description to package
+
+type FeedConditionType int
+
+const (
+	TypeFeedCreated FeedConditionType = iota
+	TypeFeedFailedToCreate
+	TypeFeedUpdated
+)
+
 // FeedSpec defines the desired state of Feed
 type FeedSpec struct {
 	// Name field is a string that represents the name of the feed
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=20
+	// +kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
 
 	// Link field is a string that represents the URL of the feed
+	// +kubebuilder:validation:Required
 	Link string `json:"link,omitempty"`
 }
 
 // FeedStatus defines the observed state of Feed
 type FeedStatus struct {
-	// Conditions field is a list of conditions that the feed can have
-	Conditions map[string]FeedConditions `json:"conditions,omitempty"`
+	// Conditions field is a map of conditions that the feed can have
+	Conditions map[FeedConditionType]FeedConditions `json:"conditions,omitempty"`
 }
 
 // FeedConditions are the cond

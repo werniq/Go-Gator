@@ -428,21 +428,21 @@ func Test_initFeedStatus(t *testing.T) {
 	tests := []struct {
 		name      string
 		feed      *newsaggregatorv1.Feed
-		eventType string
+		eventType newsaggregatorv1.FeedConditionType
 		status    bool
 		reason    string
 		message   string
-		expected  map[string]newsaggregatorv1.FeedConditions
+		expected  map[newsaggregatorv1.FeedConditionType]newsaggregatorv1.FeedConditions
 	}{
 		{
 			name:      "Initializes the feed status correctly",
 			feed:      &newsaggregatorv1.Feed{},
-			eventType: "Ready",
+			eventType: newsaggregatorv1.TypeFeedCreated,
 			status:    true,
 			reason:    "FeedCreated",
 			message:   "Feed has been successfully created",
-			expected: map[string]newsaggregatorv1.FeedConditions{
-				"Ready": {
+			expected: map[newsaggregatorv1.FeedConditionType]newsaggregatorv1.FeedConditions{
+				newsaggregatorv1.TypeFeedCreated: {
 					Status:         true,
 					Reason:         "FeedCreated",
 					Message:        "Feed has been successfully created",
@@ -471,25 +471,25 @@ func Test_updateFeedStatus(t *testing.T) {
 	tests := []struct {
 		name      string
 		feed      *newsaggregatorv1.Feed
-		eventType string
+		eventType newsaggregatorv1.FeedConditionType
 		status    bool
 		reason    string
 		message   string
-		expected  map[string]newsaggregatorv1.FeedConditions
+		expected  map[newsaggregatorv1.FeedConditionType]newsaggregatorv1.FeedConditions
 	}{
 		{
 			name: "Updates the feed status correctly",
 			feed: &newsaggregatorv1.Feed{
 				Status: newsaggregatorv1.FeedStatus{
-					Conditions: map[string]newsaggregatorv1.FeedConditions{},
+					Conditions: map[newsaggregatorv1.FeedConditionType]newsaggregatorv1.FeedConditions{},
 				},
 			},
-			eventType: "Ready",
+			eventType: newsaggregatorv1.TypeFeedCreated,
 			status:    true,
 			reason:    "FeedUpdated",
 			message:   "Feed status has been updated",
-			expected: map[string]newsaggregatorv1.FeedConditions{
-				"Ready": {
+			expected: map[newsaggregatorv1.FeedConditionType]newsaggregatorv1.FeedConditions{
+				newsaggregatorv1.TypeFeedCreated: {
 					Status:         true,
 					Reason:         "FeedUpdated",
 					Message:        "Feed status has been updated",

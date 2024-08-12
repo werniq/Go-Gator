@@ -29,7 +29,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-// log is for logging in this package.
 var feedlog = logf.Log.WithName("feed-resource")
 
 // SetupWebhookWithManager will setup the manager to manage the webhooks
@@ -37,16 +36,6 @@ func (r *Feed) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
-}
-
-// +kubebuilder:webhook:path=/mutate-newsaggregator-teamdev-com-v1-feed,mutating=true,failurePolicy=fail,sideEffects=None,groups=newsaggregator.teamdev.com,resources=feeds,verbs=create;update;delete,versions=v1,name=mfeed.kb.io,admissionReviewVersions=v1
-
-var _ webhook.Defaulter = &Feed{}
-
-// Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *Feed) Default() {
-	feedlog.Info("default", "name", r.Name)
-
 }
 
 // +kubebuilder:webhook:path=/validate-newsaggregator-teamdev-com-v1-feed,mutating=false,failurePolicy=fail,sideEffects=None,groups=newsaggregator.teamdev.com,resources=feeds,verbs=create;update;delete,versions=v1,name=vfeed.kb.io,admissionReviewVersions=v1
@@ -73,7 +62,7 @@ func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 
 // validateFeed calls to our validation package to validate the feed configuration
 func (r *Feed) validateFeed() (admission.Warnings, error) {
-	err := Validate(r.Spec.Name, r.Spec.Link)
+	err := Validate(r)
 	if err != nil {
 		return nil, err
 	}

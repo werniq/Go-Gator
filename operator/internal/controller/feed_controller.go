@@ -39,6 +39,8 @@ type FeedReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+var k8sClient client.Client
+
 const (
 	// serverUri is the link to our news-aggregator
 	serverUri = "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
@@ -48,15 +50,6 @@ const (
 
 	// defaultSourceFormat identifies default data format which should be used for new feed
 	defaultSourceFormat = "xml"
-
-	// typeCreated identifies that feed was created
-	typeCreated = "Created"
-
-	// typeFailedToCreate identifies that feed was not created
-	typeFailedToCreate = "CreateFailed"
-
-	// typeUpdated identifies that feed was updated
-	typeUpdated = "Updated"
 
 	// feedFinalizerName is a title of finalizer which will be added to feed object
 	// for proper deletion of feed in news aggregator
@@ -111,7 +104,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		}
 	}
 
-	isNew := feed.Status.Conditions[typeCreated] == newsaggregatorv1.FeedConditions{}
+	isNew := feed.Status.Conditions[newsaggregatorv1.TypeFeedCreated] == newsaggregatorv1.FeedConditions{}
 
 	if isNew {
 		res, err = r.handleCreate(ctx, &feed)
@@ -120,7 +113,26 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	if err != nil {
+		r.initFeedStatus(ctx, &feed,
+			newsaggregatorv1.TypeFeedCreated,
+			false,
+			err.Error(),
+			err.Error())
 		return ctrl.Result{}, err
+	}
+
+	if isNew {
+		r.initFeedStatus(ctx, &feed,
+			newsaggregatorv1.TypeFeedCreated,
+			true,
+			"FeedCreated",
+			"Feed was successfully created")
+	} else {
+		r.updateFeedStatus(ctx, &feed,
+			newsaggregatorv1.TypeFeedUpdated,
+			true,
+			"FeedUpdated",
+			"Feed was successfully updated")
 	}
 
 	err = r.Client.Status().Update(ctx, &feed)
@@ -139,6 +151,20 @@ func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+// sourceBody is a struct which will be used to generate body for request to the news aggregator.
+//
+// It contains few key fields which suits perfectly to create/update/delete sources in news aggregator.
+type sourceBody struct {
+	// Name field describes this source name
+	Name string `json:"name"`
+
+	// Format identifies parser which should be used for this particular source
+	Format string `json:"format"`
+
+	// Endpoint is a link to this feeds endpoint, where we will go to parse articles.
+	Endpoint string `json:"endpoint"`
+}
+
 // handleCreate makes a request to the news-aggregator service to create a new feed when a new Feed object is instantiated.
 // It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a POST request with the JSON payload.
 // The function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
@@ -152,11 +178,6 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	sourceData, err := json.Marshal(source)
 	if err != nil {
-		r.initFeedStatus(ctx, feed,
-			typeFailedToCreate,
-			false,
-			err.Error(),
-			err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -164,11 +185,6 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	req, err := http.NewRequest(http.MethodPost, serverUri, requestBody)
 	if err != nil {
-		r.initFeedStatus(ctx, feed,
-			typeFailedToCreate,
-			false,
-			err.Error(),
-			err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -179,11 +195,6 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	res, err := customClient.Do(req)
 	if err != nil {
-		r.initFeedStatus(ctx, feed,
-			typeFailedToCreate,
-			false,
-			err.Error(),
-			err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -195,30 +206,13 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 			return ctrl.Result{}, err
 		}
 
-		r.initFeedStatus(ctx, feed,
-			typeFailedToCreate,
-			false,
-			serverError.Error(),
-			serverError.Error())
-
 		return ctrl.Result{}, serverError
 	}
 
 	err = res.Body.Close()
 	if err != nil {
-		r.initFeedStatus(ctx, feed,
-			typeFailedToCreate,
-			false,
-			err.Error(),
-			err.Error())
 		return ctrl.Result{}, err
 	}
-
-	r.initFeedStatus(ctx, feed,
-		typeFailedToCreate,
-		true,
-		"",
-		"")
 
 	return ctrl.Result{}, nil
 }
@@ -269,12 +263,6 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-
-	r.updateFeedStatus(ctx, feed,
-		typeUpdated,
-		true,
-		"",
-		"")
 
 	return ctrl.Result{}, nil
 }
@@ -338,7 +326,7 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 //
 // Additionally, if we encountered error during creation of the feed, those fields will be populated, indicating error.
 func (r *FeedReconciler) initFeedStatus(ctx context.Context,
-	feed *newsaggregatorv1.Feed, eventType string, status bool, reason string, message string) {
+	feed *newsaggregatorv1.Feed, eventType newsaggregatorv1.FeedConditionType, status bool, reason string, message string) {
 	condition := newsaggregatorv1.FeedConditions{
 		Status:         status,
 		Reason:         reason,
@@ -346,14 +334,14 @@ func (r *FeedReconciler) initFeedStatus(ctx context.Context,
 		LastUpdateTime: metav1.Now().String(),
 	}
 
-	feed.Status.Conditions = make(map[string]newsaggregatorv1.FeedConditions, feedStatusConditionsCapacity)
+	feed.Status.Conditions = make(map[newsaggregatorv1.FeedConditionType]newsaggregatorv1.FeedConditions, feedStatusConditionsCapacity)
 	feed.Status.Conditions[eventType] = condition
 }
 
 // updateFeedStatus updates the status of the newly-created Feed object with the given status, reason, and message, so that
 // feed.Status.Conditions wont be nil and next event will be either update or delete.
 func (r *FeedReconciler) updateFeedStatus(ctx context.Context,
-	feed *newsaggregatorv1.Feed, eventType string, status bool, reason string, message string) {
+	feed *newsaggregatorv1.Feed, eventType newsaggregatorv1.FeedConditionType, status bool, reason string, message string) {
 	condition := newsaggregatorv1.FeedConditions{
 		Status:         status,
 		Reason:         reason,
@@ -362,18 +350,4 @@ func (r *FeedReconciler) updateFeedStatus(ctx context.Context,
 	}
 
 	feed.Status.Conditions[eventType] = condition
-}
-
-// sourceBody is a struct which will be used to generate body for request to the news aggregator.
-//
-// It contains few key fields which suits perfectly to create/update/delete sources in news aggregator.
-type sourceBody struct {
-	// Name field describes this source name
-	Name string `json:"name"`
-
-	// Format identifies parser which should be used for this particular source
-	Format string `json:"format"`
-
-	// Endpoint is a link to this feeds endpoint, where we will go to parse articles.
-	Endpoint string `json:"endpoint"`
 }

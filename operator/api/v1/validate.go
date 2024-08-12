@@ -19,14 +19,14 @@ const (
 
 // Validate function initializes a chain from all existing validation handlers
 // and returns an error if any of the handlers fails
-func Validate(name string, url string) error {
+func Validate(feed *Feed) error {
 	lengthValidationHandler := &LengthValidate{
-		keyword:           name,
+		keyword:           feed.Spec.Name,
 		requiredMaxLength: requiredMaxLength,
 		requiredMinLength: requiredMinLength,
 	}
 
-	urlValidationHandler := &UrlValidate{url: url}
+	urlValidationHandler := &UrlValidate{url: feed.Spec.Link}
 
 	lengthValidationHandler.
 		SetNext(urlValidationHandler)

@@ -50,7 +50,7 @@ func TestFeed_validateFeed(t *testing.T) {
 			feed: &Feed{
 				Spec: FeedSpec{
 					Name: "UniqueFeedName",
-					Link: "https://example.com/feed",
+					Link: "https://example.com",
 				},
 			},
 			expectedErr: false,

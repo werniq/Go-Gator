@@ -18,17 +18,17 @@ func Validate(feed FeedSpec) error {
 	return urlValidationHandler.Validate()
 }
 
-type Handler interface {
+type handler interface {
 	Validate() error
-	SetNext(handler Handler) Handler
+	SetNext(handler handler) handler
 	HandleNext() error
 }
 
 type baseHandler struct {
-	next Handler
+	next handler
 }
 
-func (h *baseHandler) SetNext(handler Handler) Handler {
+func (h *baseHandler) SetNext(handler handler) handler {
 	h.next = handler
 	return handler
 }

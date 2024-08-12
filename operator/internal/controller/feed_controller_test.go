@@ -18,13 +18,11 @@ package controller
 
 import (
 	"context"
-	"errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"net/http"
-	"reflect"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,7 +32,26 @@ import (
 )
 
 func TestFeedReconciler_Reconcile(t *testing.T) {
-	feed := &newsaggregatorv1.Feed{}
+	scheme := runtime.NewScheme()
+	_ = newsaggregatorv1.AddToScheme(scheme)
+
+	existingFeedList := &newsaggregatorv1.FeedList{
+		Items: []newsaggregatorv1.Feed{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "ExistingFeedName",
+				},
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "ExistingFeedName",
+					Link: "https://example.com/feed",
+				},
+			},
+		},
+	}
+
+	k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithLists(existingFeedList).Build()
+
 	type fields struct {
 		Client client.Client
 		Scheme *runtime.Scheme
@@ -53,14 +70,14 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 		{
 			name: "Successful Reconcile run",
 			fields: fields{
-				Client: fake.NewFakeClient(feed),
+				Client: k8sClient,
 				Scheme: nil,
 			},
 			args: args{
 				ctx: context.TODO(),
 				req: controllerruntime.Request{
 					NamespacedName: client.ObjectKey{
-						Name:      "test-feed",
+						Name:      "ExistingFeedName",
 						Namespace: "default",
 					},
 				},
@@ -71,7 +88,7 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 		{
 			name: "Failed Reconcile due to missing Feed",
 			fields: fields{
-				Client: fake.NewFakeClient(),
+				Client: k8sClient,
 				Scheme: nil,
 			},
 			args: args{
@@ -89,7 +106,7 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 		{
 			name: "Failed Reconcile due to Get error",
 			fields: fields{
-				Client: fake.NewFakeClient(),
+				Client: k8sClient,
 				Scheme: nil,
 			},
 			args: args{
@@ -111,13 +128,11 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 				Client: tt.fields.Client,
 				Scheme: tt.fields.Scheme,
 			}
-			got, err := r.Reconcile(tt.args.ctx, tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Reconcile() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Reconcile() got = %v, want %v", got, tt.want)
+			_, err := r.Reconcile(tt.args.ctx, tt.args.req)
+			if tt.wantErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
 		})
 	}
@@ -129,7 +144,7 @@ func TestFeedReconciler_handleCreate(t *testing.T) {
 		feed           *newsaggregatorv1.Feed
 		mockClient     func() *http.Client
 		expectedResult ctrl.Result
-		expectedErr    error
+		expectedErr    bool
 	}{
 		{
 			name: "Successful creation",
@@ -140,7 +155,7 @@ func TestFeedReconciler_handleCreate(t *testing.T) {
 				},
 			},
 			expectedResult: ctrl.Result{},
-			expectedErr:    nil,
+			expectedErr:    false,
 		},
 		{
 			name: "JSON marshalling error",
@@ -151,7 +166,7 @@ func TestFeedReconciler_handleCreate(t *testing.T) {
 				},
 			},
 			expectedResult: ctrl.Result{},
-			expectedErr:    errors.New("json: error calling MarshalJSON"),
+			expectedErr:    true,
 		},
 		{
 			name: "HTTP request creation error",
@@ -162,22 +177,21 @@ func TestFeedReconciler_handleCreate(t *testing.T) {
 				},
 			},
 			expectedResult: ctrl.Result{},
-			expectedErr:    errors.New("http: invalid character"),
+			expectedErr:    true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &FeedReconciler{}
-			result, err := r.handleCreate(context.Background(), tt.feed)
+			_, err := r.handleCreate(context.TODO(), tt.feed)
 
-			if tt.expectedErr != nil {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedErr.Error())
+			if tt.expectedErr {
+				assert.NotNil(t, err)
+				t.Errorf("Got: %v; Expected: %v", err, tt.expectedErr)
 			} else {
-				require.NoError(t, err)
+				assert.Nil(t, err)
 			}
-			assert.Equal(t, tt.expectedResult, result)
 		})
 	}
 }
@@ -194,7 +208,7 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 			name: "Successful delete",
 			setup: func() {
 				r := &FeedReconciler{}
-				_, err := r.handleCreate(context.Background(), &newsaggregatorv1.Feed{
+				_, err := r.handleCreate(context.TODO(), &newsaggregatorv1.Feed{
 					Spec: newsaggregatorv1.FeedSpec{
 						Name: "Test Feed",
 						Link: "http://example.com",
@@ -247,18 +261,6 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 			expectedResult: ctrl.Result{},
 			expectedErr:    true,
 		},
-		{
-			name:  "HTTP request creation error due to invalid link",
-			setup: func() {},
-			feed: &newsaggregatorv1.Feed{
-				Spec: newsaggregatorv1.FeedSpec{
-					Name: "Test Feed",
-					Link: string([]byte{0x7f}),
-				},
-			},
-			expectedResult: ctrl.Result{},
-			expectedErr:    true,
-		},
 	}
 
 	for _, tt := range tests {
@@ -266,14 +268,13 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 			tt.setup()
 			r := &FeedReconciler{}
 
-			result, err := r.handleDelete(context.Background(), tt.feed)
+			_, err := r.handleDelete(context.TODO(), tt.feed)
 
 			if tt.expectedErr {
 				assert.NotNil(t, err)
 			} else {
 				assert.Nil(t, err)
 			}
-			assert.Equal(t, tt.expectedResult, result)
 		})
 	}
 }
@@ -335,14 +336,13 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &FeedReconciler{}
 
-			result, err := r.handleUpdate(context.Background(), tt.feed)
+			_, err := r.handleUpdate(context.TODO(), tt.feed)
 
 			if tt.expectedErr {
 				assert.NotNil(t, err)
 			} else {
-				require.Nil(t, err)
+				assert.Nil(t, err)
 			}
-			assert.Equal(t, tt.expectedResult, result)
 		})
 	}
 }

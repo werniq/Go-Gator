@@ -22,21 +22,31 @@ import (
 
 // TODO: add description to package
 
-type FeedConditionType int
+type FeedConditionType string
 
 const (
-	TypeFeedCreated FeedConditionType = iota
-	TypeFeedFailedToCreate
-	TypeFeedUpdated
+	// TypeFeedCreated represents the Created condition type
+	TypeFeedCreated = "Created"
 
+	// TypeFeedFailedToCreate represents the FailedToCreate condition type
+	TypeFeedFailedToCreate = "FailedToCreate"
+
+	// TypeFeedUpdated represents the Updated condition type
+	TypeFeedUpdated = "Updated"
+
+	// failedToCreateReason is a constant that represents the reason for failed to create condition
 	failedToCreateReason = false
 
+	// createdReason is a constant that represents the reason for created condition
 	createdReason = true
 
 	// feedStatusConditionsCapacity is a capacity of feed status conditions array
 	feedStatusConditionsCapacity = 3
 
+	// FeedCreated represents the reason for created condition
 	FeedCreated = "FeedCreated"
+
+	// FeedUpdated represents the reason for updated condition
 	FeedUpdated = "FeedUpdated"
 )
 
@@ -56,7 +66,7 @@ type FeedSpec struct {
 // FeedStatus defines the observed state of Feed
 type FeedStatus struct {
 	// Conditions field is a map of conditions that the feed can have
-	Conditions map[FeedConditionType]FeedConditions `json:"conditions,omitempty"`
+	Conditions map[string]FeedConditions `json:"conditions,omitempty"`
 }
 
 // FeedConditions are the cond
@@ -118,9 +128,9 @@ func (r *Feed) SetUpdatedCondition(reason string) {
 
 // setCondition sets the created condition of the feed to the one specified in arguments.
 // Is used for aliasing the created and updated conditions.
-func (r *Feed) setCondition(conditionType FeedConditionType, status bool, reason, message string) {
+func (r *Feed) setCondition(conditionType string, status bool, reason, message string) {
 	if r.Status.Conditions == nil {
-		r.Status.Conditions = make(map[FeedConditionType]FeedConditions, feedStatusConditionsCapacity)
+		r.Status.Conditions = make(map[string]FeedConditions, feedStatusConditionsCapacity)
 	}
 
 	r.Status.Conditions[conditionType] = FeedConditions{

@@ -6,32 +6,19 @@ import (
 )
 
 const (
+	// lengthValidationError is a constant that represents the error message for invalid length of keyword
 	lengthValidationError = "length of keyword is invalid: "
 
-	nameValidationError = "name cannot be empty"
-
+	// urlValidationError is a constant that represents the error message for invalid url
 	urlValidationError = "url must contain http or https"
-
-	requiredMinLength = 1
-
-	requiredMaxLength = 20
 )
 
 // Validate function initializes a chain from all existing validation handlers
 // and returns an error if any of the handlers fails
-func Validate(feed *Feed) error {
-	lengthValidationHandler := &LengthValidate{
-		keyword:           feed.Spec.Name,
-		requiredMaxLength: requiredMaxLength,
-		requiredMinLength: requiredMinLength,
-	}
+func Validate(feed FeedSpec) error {
+	urlValidationHandler := &UrlValidate{url: feed.Link}
 
-	urlValidationHandler := &UrlValidate{url: feed.Spec.Link}
-
-	lengthValidationHandler.
-		SetNext(urlValidationHandler)
-
-	return lengthValidationHandler.Validate()
+	return urlValidationHandler.Validate()
 }
 
 type Handler interface {

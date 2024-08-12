@@ -22,6 +22,7 @@ import (
 	"errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	"log"
 	ctrl "sigs.k8s.io/controller-runtime"
 	config "sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -29,9 +30,24 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-var feedlog = logf.Log.WithName("feed-resource")
+var (
+	feedlog = logf.Log.WithName("feed-resource")
 
-// SetupWebhookWithManager will setup the manager to manage the webhooks
+	// k8sClient is a kubernetes client that is used to interact with the k8s API
+	k8sClient *kubernetes.Clientset
+)
+
+func init() {
+	var err error
+
+	c := config.GetConfigOrDie()
+	k8sClient, err = kubernetes.NewForConfig(c)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+// SetupWebhookWithManager will set up the manager to manage the webhooks
 func (r *Feed) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
@@ -62,13 +78,7 @@ func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 
 // validateFeed calls to our validation package to validate the feed configuration
 func (r *Feed) validateFeed() (admission.Warnings, error) {
-	err := Validate(r)
-	if err != nil {
-		return nil, err
-	}
-
-	c := config.GetConfigOrDie()
-	k8sClient, err := kubernetes.NewForConfig(c)
+	err := Validate(r.Spec)
 	if err != nil {
 		return nil, err
 	}

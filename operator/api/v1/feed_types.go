@@ -28,6 +28,15 @@ const (
 	TypeFeedCreated FeedConditionType = iota
 	TypeFeedFailedToCreate
 	TypeFeedUpdated
+
+	failedToCreateReason = false
+
+	createdReason = true
+
+
+	// feedStatusConditionsCapacity is a capacity of feed status conditions array
+	feedStatusConditionsCapacity = 3
+
 )
 
 // FeedSpec defines the desired state of Feed
@@ -87,4 +96,36 @@ type FeedList struct {
 
 func init() {
 	SchemeBuilder.Register(&Feed{}, &FeedList{})
+}
+
+// SetCreatedCondition sets the created condition of the feed to Created.
+func (r *Feed) SetCreatedCondition(message, reason string) {
+	r.setCondition(TypeFeedCreated, createdReason, reason, message)
+}
+
+// SetFailedCondition sets the failed condition of the feed to Failed.
+//
+// It sets the status to false, the reason to failedToCreateReason and the message with reason to the provided message.
+func (r *Feed) SetFailedCondition(reason, message string) {
+	r.setCondition(TypeFeedFailedToCreate, failedToCreateReason, reason, message)\
+}
+
+// SetUpdatedCondition sets the updated condition of the feed to Updated.
+func (r *Feed) SetUpdatedCondition(message, reason string) {
+	r.setCondition(TypeFeedUpdated, createdReason, reason, message)
+}
+
+// setCondition sets the created condition of the feed to the one specified in arguments.
+// Is used for aliasing the created and updated conditions.
+func (r *Feed) setCondition(conditionType FeedConditionType, status bool, reason, message string) {
+	if r.Status.Conditions == nil {
+		r.Status.Conditions = make(map[FeedConditionType]FeedConditions, feedStatusConditionsCapacity)
+	}
+
+	r.Status.Conditions[conditionType] = FeedConditions{
+		Status:         status,
+		Reason:         reason,
+		Message:        message,
+		LastUpdateTime: metav1.Now().String(),
+	}
 }

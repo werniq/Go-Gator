@@ -22,10 +22,10 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -44,9 +44,6 @@ var k8sClient client.Client
 const (
 	// serverUri is the link to our news-aggregator
 	serverUri = "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
-
-	// feedStatusConditionsCapacity is a capacity of feed status conditions array
-	feedStatusConditionsCapacity = 3
 
 	// defaultSourceFormat identifies default data format which should be used for new feed
 	defaultSourceFormat = "xml"
@@ -113,26 +110,16 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	if err != nil {
-		r.initFeedStatus(ctx, &feed,
-			newsaggregatorv1.TypeFeedCreated,
-			false,
+		feed.SetFailedCondition(
 			err.Error(),
 			err.Error())
 		return ctrl.Result{}, err
 	}
 
 	if isNew {
-		r.initFeedStatus(ctx, &feed,
-			newsaggregatorv1.TypeFeedCreated,
-			true,
-			"FeedCreated",
-			"Feed was successfully created")
+		feed.SetCreatedCondition("FeedCreated", "Feed was successfully created")
 	} else {
-		r.updateFeedStatus(ctx, &feed,
-			newsaggregatorv1.TypeFeedUpdated,
-			true,
-			"FeedUpdated",
-			"Feed was successfully updated")
+		feed.SetUpdatedCondition("FeedUpdated", "Feed was successfully updated")
 	}
 
 	err = r.Client.Status().Update(ctx, &feed)
@@ -146,8 +133,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 // SetupWithManager sets up the controller with the Manager.
 func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&newsaggregatorv1.Feed{}).
-		WithEventFilter(predicate.GenerationChangedPredicate{}).
+		For(&newsaggregatorv1.Feed{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Complete(r)
 }
 
@@ -222,7 +208,7 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 // This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
 func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
-	source := &sourceBody{
+	source := sourceBody{
 		Name:     feed.Spec.Name,
 		Format:   defaultSourceFormat,
 		Endpoint: feed.Spec.Link,
@@ -272,7 +258,7 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 // This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
 func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
-	source := &sourceBody{
+	source := sourceBody{
 		Name:     feed.Spec.Name,
 		Format:   defaultSourceFormat,
 		Endpoint: feed.Spec.Link,
@@ -319,35 +305,4 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 	}
 
 	return ctrl.Result{}, nil
-}
-
-// initFeedStatus initializes the status of the newly-created Feed object with the given status, reason, and message, so that
-// feed.Status.Conditions wont be nil and next event will be either update or delete.
-//
-// Additionally, if we encountered error during creation of the feed, those fields will be populated, indicating error.
-func (r *FeedReconciler) initFeedStatus(ctx context.Context,
-	feed *newsaggregatorv1.Feed, eventType newsaggregatorv1.FeedConditionType, status bool, reason string, message string) {
-	condition := newsaggregatorv1.FeedConditions{
-		Status:         status,
-		Reason:         reason,
-		Message:        message,
-		LastUpdateTime: metav1.Now().String(),
-	}
-
-	feed.Status.Conditions = make(map[newsaggregatorv1.FeedConditionType]newsaggregatorv1.FeedConditions, feedStatusConditionsCapacity)
-	feed.Status.Conditions[eventType] = condition
-}
-
-// updateFeedStatus updates the status of the newly-created Feed object with the given status, reason, and message, so that
-// feed.Status.Conditions wont be nil and next event will be either update or delete.
-func (r *FeedReconciler) updateFeedStatus(ctx context.Context,
-	feed *newsaggregatorv1.Feed, eventType newsaggregatorv1.FeedConditionType, status bool, reason string, message string) {
-	condition := newsaggregatorv1.FeedConditions{
-		Status:         status,
-		Reason:         reason,
-		Message:        message,
-		LastUpdateTime: metav1.Now().String(),
-	}
-
-	feed.Status.Conditions[eventType] = condition
 }

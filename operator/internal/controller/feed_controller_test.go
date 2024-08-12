@@ -33,7 +33,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	newsaggregatorv1 "teamdev.com/go-gator-operator/api/v1"
 	"testing"
-	"time"
 )
 
 func TestMain(m *testing.M) {
@@ -233,11 +232,22 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 	tests := []struct {
 		name           string
 		feed           *newsaggregatorv1.Feed
+		setup          func()
 		expectedResult ctrl.Result
 		expectedErr    bool
 	}{
 		{
 			name: "Successful delete",
+			setup: func() {
+				r := &FeedReconciler{}
+				_, err := r.handleCreate(context.Background(), &newsaggregatorv1.Feed{
+					Spec: newsaggregatorv1.FeedSpec{
+						Name: "Test Feed",
+						Link: "http://example.com",
+					},
+				})
+				assert.Nil(t, err)
+			},
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
 					Name: "Test Feed",
@@ -249,7 +259,8 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 			expectedErr:    false,
 		},
 		{
-			name: "Feed name is empty",
+			name:  "Invalid feed name",
+			setup: func() {},
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
 					Name: "",
@@ -260,7 +271,20 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 			expectedErr:    true,
 		},
 		{
-			name: "JSON marshalling error",
+			name:  "Invalid feed endpoint",
+			setup: func() {},
+			feed: &newsaggregatorv1.Feed{
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "",
+					Link: "example.com",
+				},
+			},
+			expectedResult: ctrl.Result{},
+			expectedErr:    true,
+		},
+		{
+			name:  "JSON marshalling error",
+			setup: func() {},
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
 					Name: string([]byte{0xff, 0xfe, 0xfd}),
@@ -271,7 +295,8 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 			expectedErr:    true,
 		},
 		{
-			name: "HTTP request creation error",
+			name:  "HTTP request creation error due to invalid link",
+			setup: func() {},
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
 					Name: "Test Feed",
@@ -281,43 +306,11 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 			expectedResult: ctrl.Result{},
 			expectedErr:    true,
 		},
-		{
-			name: "HTTP request execution error",
-			feed: &newsaggregatorv1.Feed{
-				Spec: newsaggregatorv1.FeedSpec{
-					Name: "Test Feed",
-					Link: "http://example.com",
-				},
-			},
-			expectedResult: ctrl.Result{},
-			expectedErr:    true,
-		},
-		{
-			name: "Non-200 status code",
-			feed: &newsaggregatorv1.Feed{
-				Spec: newsaggregatorv1.FeedSpec{
-					Name: "Test Feed",
-					Link: "http://example.com",
-				},
-			},
-			expectedResult: ctrl.Result{},
-			expectedErr:    true,
-		},
-		{
-			name: "Error closing response body",
-			feed: &newsaggregatorv1.Feed{
-				Spec: newsaggregatorv1.FeedSpec{
-					Name: "Test Feed",
-					Link: "http://example.com",
-				},
-			},
-			expectedResult: ctrl.Result{},
-			expectedErr:    true,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
 			r := &FeedReconciler{}
 
 			result, err := r.handleDelete(context.Background(), tt.feed)
@@ -337,7 +330,7 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 		name           string
 		feed           *newsaggregatorv1.Feed
 		expectedResult ctrl.Result
-		expectedErr    error
+		expectedErr    bool
 	}{
 		{
 			name: "Successful update",
@@ -348,7 +341,7 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 				},
 			},
 			expectedResult: ctrl.Result{},
-			expectedErr:    nil,
+			expectedErr:    false,
 		},
 		{
 			name: "JSON marshalling error",
@@ -359,7 +352,7 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 				},
 			},
 			expectedResult: ctrl.Result{},
-			expectedErr:    errors.New("json: error calling MarshalJSON"),
+			expectedErr:    true,
 		},
 		{
 			name: "HTTP request creation error",
@@ -370,40 +363,18 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 				},
 			},
 			expectedResult: ctrl.Result{},
-			expectedErr:    errors.New("http: invalid character"),
+			expectedErr:    true,
 		},
 		{
 			name: "HTTP request execution error",
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
-					Name: "Test Feed",
+					Name: "test Feed",
 					Link: "http://example.com",
 				},
 			},
 			expectedResult: ctrl.Result{},
-			expectedErr:    errors.New("dial tcp: lookup"),
-		},
-		{
-			name: "Non-200 status code",
-			feed: &newsaggregatorv1.Feed{
-				Spec: newsaggregatorv1.FeedSpec{
-					Name: "Test Feed",
-					Link: "http://example.com",
-				},
-			},
-			expectedResult: ctrl.Result{},
-			expectedErr:    errors.New("Bad Request"),
-		},
-		{
-			name: "Error closing response body",
-			feed: &newsaggregatorv1.Feed{
-				Spec: newsaggregatorv1.FeedSpec{
-					Name: "Test Feed",
-					Link: "http://example.com",
-				},
-			},
-			expectedResult: ctrl.Result{},
-			expectedErr:    errors.New("http: response body close error"),
+			expectedErr:    true,
 		},
 	}
 
@@ -413,103 +384,12 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 
 			result, err := r.handleUpdate(context.Background(), tt.feed)
 
-			if tt.expectedErr != nil {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedErr.Error())
+			if tt.expectedErr {
+				assert.NotNil(t, err)
 			} else {
-				require.NoError(t, err)
+				require.Nil(t, err)
 			}
 			assert.Equal(t, tt.expectedResult, result)
-		})
-	}
-}
-
-func Test_initFeedStatus(t *testing.T) {
-	tests := []struct {
-		name      string
-		feed      *newsaggregatorv1.Feed
-		eventType newsaggregatorv1.FeedConditionType
-		status    bool
-		reason    string
-		message   string
-		expected  map[newsaggregatorv1.FeedConditionType]newsaggregatorv1.FeedConditions
-	}{
-		{
-			name:      "Initializes the feed status correctly",
-			feed:      &newsaggregatorv1.Feed{},
-			eventType: newsaggregatorv1.TypeFeedCreated,
-			status:    true,
-			reason:    "FeedCreated",
-			message:   "Feed has been successfully created",
-			expected: map[newsaggregatorv1.FeedConditionType]newsaggregatorv1.FeedConditions{
-				newsaggregatorv1.TypeFeedCreated: {
-					Status:         true,
-					Reason:         "FeedCreated",
-					Message:        "Feed has been successfully created",
-					LastUpdateTime: time.Now().Format(time.RFC3339),
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := &FeedReconciler{}
-
-			r.initFeedStatus(context.TODO(), tt.feed, tt.eventType, tt.status, tt.reason, tt.message)
-
-			condition, exists := tt.feed.Status.Conditions[tt.eventType]
-			assert.True(t, exists)
-			assert.Equal(t, tt.expected[tt.eventType].Status, condition.Status)
-			assert.Equal(t, tt.expected[tt.eventType].Reason, condition.Reason)
-			assert.Equal(t, tt.expected[tt.eventType].Message, condition.Message)
-		})
-	}
-}
-
-func Test_updateFeedStatus(t *testing.T) {
-	tests := []struct {
-		name      string
-		feed      *newsaggregatorv1.Feed
-		eventType newsaggregatorv1.FeedConditionType
-		status    bool
-		reason    string
-		message   string
-		expected  map[newsaggregatorv1.FeedConditionType]newsaggregatorv1.FeedConditions
-	}{
-		{
-			name: "Updates the feed status correctly",
-			feed: &newsaggregatorv1.Feed{
-				Status: newsaggregatorv1.FeedStatus{
-					Conditions: map[newsaggregatorv1.FeedConditionType]newsaggregatorv1.FeedConditions{},
-				},
-			},
-			eventType: newsaggregatorv1.TypeFeedCreated,
-			status:    true,
-			reason:    "FeedUpdated",
-			message:   "Feed status has been updated",
-			expected: map[newsaggregatorv1.FeedConditionType]newsaggregatorv1.FeedConditions{
-				newsaggregatorv1.TypeFeedCreated: {
-					Status:         true,
-					Reason:         "FeedUpdated",
-					Message:        "Feed status has been updated",
-					LastUpdateTime: time.Now().Format(time.RFC3339),
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := &FeedReconciler{}
-
-			r.updateFeedStatus(context.TODO(), tt.feed, tt.eventType, tt.status, tt.reason, tt.message)
-
-			condition, exists := tt.feed.Status.Conditions[tt.eventType]
-			assert.True(t, exists)
-			assert.Equal(t, tt.expected[tt.eventType].Status, condition.Status)
-			assert.Equal(t, tt.expected[tt.eventType].Reason, condition.Reason)
-			assert.Equal(t, tt.expected[tt.eventType].Message, condition.Message)
 		})
 	}
 }

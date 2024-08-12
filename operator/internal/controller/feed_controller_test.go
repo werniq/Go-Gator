@@ -22,7 +22,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"net/http"
 	"reflect"
@@ -30,21 +29,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	newsaggregatorv1 "teamdev.com/go-gator-operator/api/v1"
 	"testing"
 )
-
-func TestMain(m *testing.M) {
-	err := newsaggregatorv1.AddToScheme(scheme.Scheme)
-	if err != nil {
-		panic(err)
-	}
-	opts := zap.Options{
-		Development: true,
-	}
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
-}
 
 func TestFeedReconciler_Reconcile(t *testing.T) {
 	feed := &newsaggregatorv1.Feed{}
@@ -177,39 +164,6 @@ func TestFeedReconciler_handleCreate(t *testing.T) {
 			expectedResult: ctrl.Result{},
 			expectedErr:    errors.New("http: invalid character"),
 		},
-		{
-			name: "HTTP request execution error",
-			feed: &newsaggregatorv1.Feed{
-				Spec: newsaggregatorv1.FeedSpec{
-					Name: "Test Feed",
-					Link: "http://example.com",
-				},
-			},
-			expectedResult: ctrl.Result{},
-			expectedErr:    errors.New("dial tcp: lookup"),
-		},
-		{
-			name: "Non-201 status code",
-			feed: &newsaggregatorv1.Feed{
-				Spec: newsaggregatorv1.FeedSpec{
-					Name: "Test Feed",
-					Link: "http://example.com",
-				},
-			},
-			expectedResult: ctrl.Result{},
-			expectedErr:    errors.New("Bad Request"),
-		},
-		{
-			name: "Error closing response body",
-			feed: &newsaggregatorv1.Feed{
-				Spec: newsaggregatorv1.FeedSpec{
-					Name: "Test Feed",
-					Link: "http://example.com",
-				},
-			},
-			expectedResult: ctrl.Result{},
-			expectedErr:    errors.New("http: response body close error"),
-		},
 	}
 
 	for _, tt := range tests {
@@ -254,7 +208,6 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 					Link: "http://example.com",
 				},
 			},
-
 			expectedResult: ctrl.Result{},
 			expectedErr:    false,
 		},

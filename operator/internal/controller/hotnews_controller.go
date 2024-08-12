@@ -197,6 +197,7 @@ func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggre
 	hotNews.InitHotNewsStatus(len(articles), requestUrl, articlesTitles)
 
 	logger.Info("HotNews.handleCreate has been successfully executed")
+	logger.Info("HotNews object", "HotNews", hotNews)
 
 	return nil
 }

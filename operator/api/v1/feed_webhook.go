@@ -27,7 +27,6 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-	"teamdev.com/go-gator/api/v1/validation"
 )
 
 // log is for logging in this package.
@@ -74,7 +73,7 @@ func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 
 // validateFeed calls to our validation package to validate the feed configuration
 func (r *Feed) validateFeed() (admission.Warnings, error) {
-	err := validation.Validate(r.Spec.Name, r.Spec.Link)
+	err := Validate(r.Spec.Name, r.Spec.Link)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +85,7 @@ func (r *Feed) validateFeed() (admission.Warnings, error) {
 	}
 
 	feeds := FeedList{}
-	d, err := k8sClient.RESTClient().
+	data, err := k8sClient.RESTClient().
 		Get().
 		AbsPath("/apis/newsaggregator.teamdev.com/v1/feeds").
 		DoRaw(context.TODO())
@@ -95,7 +94,7 @@ func (r *Feed) validateFeed() (admission.Warnings, error) {
 		panic(err)
 	}
 
-	err = json.Unmarshal(d, &feeds)
+	err = json.Unmarshal(data, &feeds)
 	if err != nil {
 		return nil, err
 	}

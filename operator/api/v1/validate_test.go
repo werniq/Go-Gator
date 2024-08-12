@@ -1,4 +1,4 @@
-package validation
+package v1
 
 import (
 	"testing"

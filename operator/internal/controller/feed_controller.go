@@ -39,20 +39,6 @@ type FeedReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// SourceBody is a struct which will be used to generate body for request to the news aggregator.
-//
-// It contains few key fields which suits perfectly to create/update/delete sources in news aggregator.
-type SourceBody struct {
-	// Name field describes this source name
-	Name string `json:"name"`
-
-	// Format identifies parser which should be used for this particular source
-	Format string `json:"format"`
-
-	// Endpoint is a link to this feeds endpoint, where we will go to parse articles.
-	Endpoint string `json:"endpoint"`
-}
-
 const (
 	// serverUri is the link to our news-aggregator
 	serverUri = "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
@@ -158,7 +144,7 @@ func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // The function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 201 Created, it attempts to decode and print the server's error message.
 func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
-	source := SourceBody{
+	source := sourceBody{
 		Name:     feed.Spec.Name,
 		Format:   defaultSourceFormat,
 		Endpoint: feed.Spec.Link,
@@ -242,7 +228,7 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 // This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
 func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
-	source := &SourceBody{
+	source := &sourceBody{
 		Name:     feed.Spec.Name,
 		Format:   defaultSourceFormat,
 		Endpoint: feed.Spec.Link,
@@ -298,7 +284,7 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 // This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
 func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
-	source := &SourceBody{
+	source := &sourceBody{
 		Name:     feed.Spec.Name,
 		Format:   defaultSourceFormat,
 		Endpoint: feed.Spec.Link,
@@ -376,4 +362,18 @@ func (r *FeedReconciler) updateFeedStatus(ctx context.Context,
 	}
 
 	feed.Status.Conditions[eventType] = condition
+}
+
+// sourceBody is a struct which will be used to generate body for request to the news aggregator.
+//
+// It contains few key fields which suits perfectly to create/update/delete sources in news aggregator.
+type sourceBody struct {
+	// Name field describes this source name
+	Name string `json:"name"`
+
+	// Format identifies parser which should be used for this particular source
+	Format string `json:"format"`
+
+	// Endpoint is a link to this feeds endpoint, where we will go to parse articles.
+	Endpoint string `json:"endpoint"`
 }

@@ -21,8 +21,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	v12 "k8s.io/api/core/v1"
 	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -36,45 +35,47 @@ import (
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
+var (
+	// feedGroupsObjectKey - an object key for the ConfigMap which contains feed groups
+	feedGroupsObjectKey = client.ObjectKey{
+		Namespace: feedGroupsNamespace,
+		Name:      feedGroupsConfigMapName,
+	}
+)
+
 const (
+	// feedGroupsNamespace is a namespace where feed groups are stored
+	feedGroupsNamespace = "default"
+
 	// serverUrl is a URL to our news aggregator server
-	serverUrl = ""
+	serverUrl = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
 
-	// pathToKubeConfig is a path to the kubeconfig file
-	pathToKubeConfig = ""
-
-	// defaultNamespace is title of the default namespace
-	defaultNamespace = ""
-
-	// feedGroupsConfigMapName is a name of the ConfigMap which contains feed groups
+	// feedGroupsConfigMapName is a name of the default ConfigMap which contains our feed groups names and sources
 	feedGroupsConfigMapName = "feed-group-source"
 
-	// errFeedsAreRequired is an error message which is returned when feeds are not provided
+	// errFeedsAreRequired is thrown when feeds are not provided
 	errFeedsAreRequired = "feeds are required"
 
 	// errKeywordsAreRequired indicates that keywords are required for the request and creation of HotNews object
 	errKeywordsAreRequired = "keywords are required"
 
-	// errFailedToConstructRequestUrl is an error message which is returned when failed to construct request URL
+	// errFailedToConstructRequestUrl error message which is returned when failed to construct request URL
 	errFailedToConstructRequestUrl = "failed to construct request URL"
 
-	// errFailedToCreateRequest is an error message which is returned when failed to create a new request
+	// errFailedToCreateRequest is returned when failed to create a new request
 	errFailedToCreateRequest = "failed to create a new request"
 
-	// errFailedToSendRequest is an error message which is returned when failed to send a request
+	// errFailedToSendRequest indicates error during sending an HTTP request
 	errFailedToSendRequest = "failed to send a request"
 
-	// errFailedToUnmarshalResponseBody is an error message which is returned when failed to unmarshal response body
+	// errFailedToUnmarshalResponseBody indicates that error occurred when failed to unmarshal response body
 	errFailedToUnmarshalResponseBody = "failed to unmarshal response body"
 
-	// errFailedToCloseResponseBody is an error message which is returned when failed to close response body
+	// errFailedToCloseResponseBody is returned when failed to close response body
 	errFailedToCloseResponseBody = "failed to close response body"
 
-	// errFailedToGetConfigMap is an error message which is returned when failed to get ConfigMap
-	errFailedToGetConfigMap = "failed to get ConfigMap"
-
-	// errFailedToCreateClientSet is an error message which is returned when failed to create a new client set
-	errFailedToCreateClientSet = "failed to create a new client set"
+	// errWrongFeedGroupName is returned when the feed group name is wrong
+	errWrongFeedGroupName = "wrong feed group name, please check the feed group name and try again"
 )
 
 // HotNewsReconciler reconciles a HotNews object
@@ -99,21 +100,26 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	if hotNews.ObjectMeta.CreationTimestamp.IsZero() {
-		err = r.handleCreate(ctx, &hotNews)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-
-	if hotNews.ObjectMeta.DeletionTimestamp.IsZero() {
+	if !hotNews.ObjectMeta.DeletionTimestamp.IsZero() {
 		err = r.handleDelete(ctx, &hotNews)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
 	}
 
-	err = r.handleUpdate(ctx, &hotNews)
+	if !hotNews.ObjectMeta.CreationTimestamp.IsZero() {
+		err = r.handleUpdate(ctx, &hotNews)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
+	err = r.handleCreate(ctx, &hotNews)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	err = r.Client.Status().Update(ctx, &hotNews)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -132,12 +138,7 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // with the specified parameters, and returns an error if something goes wrong.
 func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggregatorv1.HotNews) error {
 	logger := log.FromContext(ctx)
-	requestUrl, err := r.constructRequestUrl(
-		hotNews.Spec.Keywords,
-		hotNews.Spec.DateStart,
-		hotNews.Spec.DateEnd,
-		hotNews.Spec.Feeds,
-	)
+	requestUrl, err := r.constructRequestUrl(hotNews.Spec)
 
 	if err != nil {
 		logger.Error(err, errFailedToConstructRequestUrl)
@@ -153,7 +154,6 @@ func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggre
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 	}
-
 	httpClient := &http.Client{Transport: &http.Transport{TLSClientConfig: tlsConfig}}
 
 	res, err := httpClient.Do(req)
@@ -197,60 +197,75 @@ func (r *HotNewsReconciler) handleDelete(ctx context.Context, hotNews *newsaggre
 // Example:
 // http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&dateEnd=2024-08-06&feeds=abc,bbc
 // http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&feeds=abc,bbc
-func (r *HotNewsReconciler) constructRequestUrl(keywords, dateFrom, dateEnd string, feeds []string) (string, error) {
-	requestUrl := serverUrl
+func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpec) (string, error) {
+	var requestUrl strings.Builder
+	requestUrl.WriteString(serverUrl)
 
-	if keywords == "" {
-		return "", fmt.Errorf(errKeywordsAreRequired)
-	}
+	requestUrl.WriteString("?keywords=%s" + spec.Keywords)
 
-	if len(feeds) < 1 {
+	if len(spec.Feeds) < 1 && spec.FeedGroups == nil {
 		return "", fmt.Errorf(errFeedsAreRequired)
 	}
-	requestUrl += fmt.Sprintf("?keywords=%s", keywords)
 
 	var feedStr strings.Builder
-	for _, feed := range feeds {
+	for _, feed := range spec.Feeds {
 		feedStr.WriteString(feed)
 		feedStr.WriteRune(',')
 	}
 
-	requestUrl += fmt.Sprintf("&sources=%s", feedStr.String()[:len(feedStr.String())-2])
-
-	if dateFrom != "" {
-		requestUrl += fmt.Sprintf("&dateFrom=%s", dateFrom)
+	if spec.FeedGroups != nil {
+		feedGroups, err := r.processFeedGroups(spec)
+		if err != nil {
+			return "", err
+		}
+		for _, feedGroup := range strings.Split(feedGroups, ",") {
+			feedStr.WriteString(feedGroup)
+			feedStr.WriteRune(',')
+		}
 	}
 
-	if dateEnd != "" {
-		requestUrl += fmt.Sprintf("&dateEnd=%s", dateEnd)
+	requestUrl.WriteString("&sources=" + feedStr.String()[:len(feedStr.String())-2])
+
+	if spec.DateStart != "" {
+		requestUrl.WriteString("&dateFrom=" + spec.DateStart)
 	}
 
-	return requestUrl, nil
+	if spec.DateEnd != "" {
+		requestUrl.WriteString("&dateEnd=" + spec.DateEnd)
+	}
+
+	return requestUrl.String(), nil
+}
+
+// processFeedGroups function processes feed groups from the ConfigMap and returns a string with feed sources
+func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec) (string, error) {
+	var sources strings.Builder
+
+	feedGroups, err := r.getFeedGroupsConfigMap(context.Background())
+	if err != nil {
+		return "", err
+	}
+
+	for _, feedKey := range spec.FeedGroups {
+		if val, exists := feedGroups.Data[feedKey]; exists {
+			sources.WriteString(val)
+			sources.WriteRune(',')
+		} else {
+			return "", fmt.Errorf(errWrongFeedGroupName)
+		}
+	}
+
+	return sources.String()[:len(sources.String())-2], nil
 }
 
 // getConfigMapData returns all data from config map named feedGroupsConfigMapName in defaultNamespace
-func (r *HotNewsReconciler) getConfigMapData(ctx context.Context) ([]string, error) {
-	logger := log.FromContext(ctx)
+func (r *HotNewsReconciler) getFeedGroupsConfigMap(ctx context.Context) (v12.ConfigMap, error) {
+	var configMap v12.ConfigMap
 
-	config := ctrl.GetConfigOrDie()
-
-	clientSet, err := kubernetes.NewForConfig(config)
+	err := r.Client.Get(ctx, feedGroupsObjectKey, &configMap)
 	if err != nil {
-		logger.Error(err, errFailedToCreateClientSet)
-		return nil, err
+		return v12.ConfigMap{}, err
 	}
 
-	configMaps, err := clientSet.CoreV1().ConfigMaps(defaultNamespace).List(context.TODO(), v1.ListOptions{})
-	if err != nil {
-		logger.Error(err, errFailedToGetConfigMap)
-		return nil, err
-	}
-
-	var groupData []string
-
-	for _, configMap := range configMaps.Items {
-		groupData = append(groupData, configMap.Data[feedGroupsConfigMapName])
-	}
-
-	return groupData, nil
+	return configMap, nil
 }

@@ -23,6 +23,7 @@ import (
 // HotNewsSpec defines the desired state of HotNews
 type HotNewsSpec struct {
 	// Keywords is a list of specific keywords
+	// +kubebuilder:validation:Required
 	Keywords string `json:"keywords"`
 
 	// DateStart news starting date, can be empty
@@ -43,6 +44,12 @@ type HotNewsSpec struct {
 
 // SummaryConfig struct
 type SummaryConfig struct {
+	// TitlesCount is a number of titles to show in the summary
+	TitlesCount int `json:"titlesCount"`
+}
+
+// HotNewsStatus defines the observed state of HotNews
+type HotNewsStatus struct {
 	// ArticlesCount displays total amount of news by the criteria
 	ArticlesCount int `json:"articlesCount"`
 
@@ -51,12 +58,6 @@ type SummaryConfig struct {
 
 	// ArticlesTitles contains a list of titles of first 10 articles
 	ArticlesTitles []string `json:"articlesTitles"`
-}
-
-// HotNewsStatus defines the observed state of HotNews
-type HotNewsStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 }
 
 // +kubebuilder:object:root=true
@@ -82,4 +83,11 @@ type HotNewsList struct {
 
 func init() {
 	SchemeBuilder.Register(&HotNews{}, &HotNewsList{})
+}
+
+// createStatus func initializes HotNews.Status object with the provided data
+func (r *HotNews) initHotNewsStatus(articlesCount int, requestUrl string, articlesTitles []string) {
+	r.Status.ArticlesCount = articlesCount
+	r.Status.NewsLink = requestUrl
+	r.Status.ArticlesTitles = articlesTitles
 }

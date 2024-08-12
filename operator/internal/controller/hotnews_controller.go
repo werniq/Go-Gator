@@ -24,6 +24,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"net/http"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"strings"
 
@@ -63,14 +64,8 @@ const (
 	// errFailedToSendRequest is an error message which is returned when failed to send a request
 	errFailedToSendRequest = "failed to send a request"
 
-	// errFailedToReadResponseBody is an error message which is returned when failed to read response body
-	errFailedToReadResponseBody = "failed to read response body"
-
 	// errFailedToUnmarshalResponseBody is an error message which is returned when failed to unmarshal response body
 	errFailedToUnmarshalResponseBody = "failed to unmarshal response body"
-
-	// errFailedToGetNews is an error message which is returned when failed to get news
-	errFailedToGetNews = "failed to get news"
 
 	// errFailedToCloseResponseBody is an error message which is returned when failed to close response body
 	errFailedToCloseResponseBody = "failed to close response body"
@@ -129,8 +124,7 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 // SetupWithManager sets up the controller with the Manager.
 func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&newsaggregatorv1.HotNews{}).
-		WithEventFilter(predicate.GenerationChangedPredicate{}).
+		For(&newsaggregatorv1.HotNews{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Complete(r)
 }
 

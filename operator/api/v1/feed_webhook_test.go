@@ -27,7 +27,6 @@ import (
 )
 
 func TestValidateFeed(t *testing.T) {
-	// Test cases
 	var tests = []struct {
 		name           string
 		feed           *Feed

@@ -27,19 +27,20 @@ type HotNewsSpec struct {
 	Keywords string `json:"keywords"`
 
 	// DateStart is a news starting date in format "YYYY-MM-DD", can be empty
-	DateStart string `json:"dateStart"`
+	// +kubebuilder:
+	DateStart string `json:"dateStart,omitempty"`
 
 	// DateEnd is a news final date in format "YYYY-MM-DD", can be empty
-	DateEnd string `json:"dateEnd"`
+	DateEnd string `json:"dateEnd,omitempty"`
 
 	// Feeds is a list of Feeds CRD, which will be used to subscribe to news
-	Feeds []string `json:"feeds"`
+	Feeds []string `json:"feeds,omitempty"`
 
 	// FeedGroups are available sections of feeds from `feed-group-source` ConfigMap
-	FeedGroups []string `json:"feedGroups"`
+	FeedGroups []string `json:"feedGroups,omitempty"`
 
 	// SummaryConfig summary of observed hot news
-	SummaryConfig SummaryConfig `json:"summaryConfig"`
+	SummaryConfig SummaryConfig `json:"summaryConfig,omitempty"`
 }
 
 // SummaryConfig struct

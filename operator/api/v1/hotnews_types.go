@@ -22,17 +22,17 @@ import (
 
 // HotNewsSpec defines the desired state of HotNews
 type HotNewsSpec struct {
-	// Keywords is a list of specific keywords
+	// Keywords is a comma-separated list of keywords which will be used to search news
 	// +kubebuilder:validation:Required
 	Keywords string `json:"keywords"`
 
-	// DateStart news starting date, can be empty
+	// DateStart is a news starting date in format "YYYY-MM-DD", can be empty
 	DateStart string `json:"dateStart"`
 
-	// DateEnd news ending date, can be empty
+	// DateEnd is a news final date in format "YYYY-MM-DD", can be empty
 	DateEnd string `json:"dateEnd"`
 
-	// Feeds is a list of Feed CRD, which will be used to subscribe to news
+	// Feeds is a list of Feeds CRD, which will be used to subscribe to news
 	Feeds []string `json:"feeds"`
 
 	// FeedGroups are available sections of feeds from `feed-group-source` ConfigMap

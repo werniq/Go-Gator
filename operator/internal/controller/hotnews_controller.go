@@ -54,7 +54,7 @@ const (
 	feedGroupsConfigMapName = "feed-group-source"
 
 	// errFeedsAreRequired is thrown when feeds are not provided
-	errFeedsAreRequired = "feeds are required"
+	errFeedsAreRequired = "feeds or feedGroups are required"
 
 	// errKeywordsAreRequired indicates that keywords are required for the request and creation of HotNews object
 	errKeywordsAreRequired = "keywords are required"
@@ -195,24 +195,19 @@ func (r *HotNewsReconciler) handleDelete(ctx context.Context, hotNews *newsaggre
 // to our news aggregator server.
 //
 // Example:
-// http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&dateEnd=2024-08-06&feeds=abc,bbc
-// http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&feeds=abc,bbc
+// http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&dateEnd=2024-08-06&sources=abc,bbc
+// http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&sources=abc,bbc
 func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpec) (string, error) {
 	var requestUrl strings.Builder
-	requestUrl.WriteString(serverUrl)
 
-	requestUrl.WriteString("?keywords=%s" + spec.Keywords)
+	requestUrl.WriteString(serverUrl)
+	requestUrl.WriteString("?keywords=" + spec.Keywords)
 
 	if len(spec.Feeds) < 1 && spec.FeedGroups == nil {
 		return "", fmt.Errorf(errFeedsAreRequired)
 	}
 
 	var feedStr strings.Builder
-	for _, feed := range spec.Feeds {
-		feedStr.WriteString(feed)
-		feedStr.WriteRune(',')
-	}
-
 	if spec.FeedGroups != nil {
 		feedGroups, err := r.processFeedGroups(spec)
 		if err != nil {
@@ -220,6 +215,11 @@ func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpe
 		}
 		for _, feedGroup := range strings.Split(feedGroups, ",") {
 			feedStr.WriteString(feedGroup)
+			feedStr.WriteRune(',')
+		}
+	} else {
+		for _, feed := range spec.Feeds {
+			feedStr.WriteString(feed)
 			feedStr.WriteRune(',')
 		}
 	}
@@ -241,25 +241,25 @@ func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpe
 func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec) (string, error) {
 	var sources strings.Builder
 
-	feedGroups, err := r.getFeedGroupsConfigMap(context.Background())
+	feedGroups, err := r.getFeedGroups(context.Background())
 	if err != nil {
 		return "", err
 	}
 
 	for _, feedKey := range spec.FeedGroups {
-		if val, exists := feedGroups.Data[feedKey]; exists {
-			sources.WriteString(val)
+		if source, exists := feedGroups.Data[feedKey]; exists {
+			sources.WriteString(source)
 			sources.WriteRune(',')
 		} else {
 			return "", fmt.Errorf(errWrongFeedGroupName)
 		}
 	}
 
-	return sources.String()[:len(sources.String())-2], nil
+	return sources.String(), nil
 }
 
 // getConfigMapData returns all data from config map named feedGroupsConfigMapName in defaultNamespace
-func (r *HotNewsReconciler) getFeedGroupsConfigMap(ctx context.Context) (v12.ConfigMap, error) {
+func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (v12.ConfigMap, error) {
 	var configMap v12.ConfigMap
 
 	err := r.Client.Get(ctx, feedGroupsObjectKey, &configMap)

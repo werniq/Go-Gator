@@ -83,6 +83,21 @@ func (r *Feed) validateFeed() (admission.Warnings, error) {
 		return nil, err
 	}
 
+	warn, err := r.checkNameUniqueness()
+	if err != nil {
+		return warn, err
+	}
+
+	warn, err = r.checkLinkUniqueness()
+	if err != nil {
+		return warn, err
+	}
+
+	return nil, nil
+}
+
+// checkNameUniqueness checks if the Spec.name of the feed is unique in the namespace
+func (r *Feed) checkNameUniqueness() (admission.Warnings, error) {
 	feeds := FeedList{}
 	data, err := k8sClient.RESTClient().
 		Get().
@@ -99,10 +114,34 @@ func (r *Feed) validateFeed() (admission.Warnings, error) {
 	}
 
 	for _, feed := range feeds.Items {
-		if feed.Spec.Name == r.Spec.Name {
-			return nil, errors.New("name must be unique")
+		if feed.Spec.Name == r.Spec.Name && feed.Namespace == r.Namespace {
+			return nil, errors.New("name must be unique in the namespace")
 		}
 	}
+	return nil, nil
+}
 
+// checkLinkUniqueness checks if the Spec.link of the feed is unique in the namespace
+func (r *Feed) checkLinkUniqueness() (admission.Warnings, error) {
+	feeds := FeedList{}
+	data, err := k8sClient.RESTClient().
+		Get().
+		AbsPath("/apis/newsaggregator.teamdev.com/v1/feeds").
+		DoRaw(context.TODO())
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(data, &feeds)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, feed := range feeds.Items {
+		if feed.Spec.Link == r.Spec.Link && feed.Namespace == r.Namespace {
+			return nil, errors.New("link must be unique in the namespace")
+		}
+	}
 	return nil, nil
 }

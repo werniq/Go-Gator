@@ -33,10 +33,11 @@ const (
 
 	createdReason = true
 
-
 	// feedStatusConditionsCapacity is a capacity of feed status conditions array
 	feedStatusConditionsCapacity = 3
 
+	FeedCreated = "FeedCreated"
+	FeedUpdated = "FeedUpdated"
 )
 
 // FeedSpec defines the desired state of Feed
@@ -98,21 +99,21 @@ func init() {
 	SchemeBuilder.Register(&Feed{}, &FeedList{})
 }
 
-// SetCreatedCondition sets the created condition of the feed to Created.
-func (r *Feed) SetCreatedCondition(message, reason string) {
-	r.setCondition(TypeFeedCreated, createdReason, reason, message)
+// SetCreatedCondition sets the created condition of the feed to Created
+func (r *Feed) SetCreatedCondition(reason string) {
+	r.setCondition(TypeFeedCreated, createdReason, reason, FeedCreated)
 }
 
-// SetFailedCondition sets the failed condition of the feed to Failed.
+// SetFailedCondition sets the failed condition of the feed to Failed
 //
 // It sets the status to false, the reason to failedToCreateReason and the message with reason to the provided message.
-func (r *Feed) SetFailedCondition(reason, message string) {
-	r.setCondition(TypeFeedFailedToCreate, failedToCreateReason, reason, message)\
+func (r *Feed) SetFailedCondition(message, reason string) {
+	r.setCondition(TypeFeedFailedToCreate, failedToCreateReason, reason, message)
 }
 
-// SetUpdatedCondition sets the updated condition of the feed to Updated.
-func (r *Feed) SetUpdatedCondition(message, reason string) {
-	r.setCondition(TypeFeedUpdated, createdReason, reason, message)
+// SetUpdatedCondition sets the updated condition of the feed to Updated
+func (r *Feed) SetUpdatedCondition(reason string) {
+	r.setCondition(TypeFeedUpdated, createdReason, reason, FeedUpdated)
 }
 
 // setCondition sets the created condition of the feed to the one specified in arguments.

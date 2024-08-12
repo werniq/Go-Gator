@@ -6,9 +6,6 @@ import (
 )
 
 const (
-	// lengthValidationError is a constant that represents the error message for invalid length of keyword
-	lengthValidationError = "length of keyword is invalid: "
-
 	// urlValidationError is a constant that represents the error message for invalid url
 	urlValidationError = "url must contain http or https"
 )
@@ -43,23 +40,6 @@ func (h *BaseHandler) HandleNext() error {
 	return nil
 }
 
-// LengthValidate struct is used to check if the length of keyword is within the required range
-type LengthValidate struct {
-	BaseHandler
-	requiredMinLength int
-	requiredMaxLength int
-	keyword           string
-}
-
-// Validate func in LengthValidate struct is used to check if the length of keyword is within the required range
-func (l *LengthValidate) Validate() error {
-	if len(l.keyword) < l.requiredMinLength ||
-		len(l.keyword) > l.requiredMaxLength {
-		return fmt.Errorf("%s %s(%d)", lengthValidationError, l.keyword, len(l.keyword))
-	}
-	return l.HandleNext()
-}
-
 // UrlValidate struct is used to check if request url is constructed properly
 type UrlValidate struct {
 	BaseHandler
@@ -68,6 +48,7 @@ type UrlValidate struct {
 
 // Validate checks if the url contains http or https
 func (u *UrlValidate) Validate() error {
+	// check by regular expression if the url contains http or https
 	if !strings.Contains(u.url, "http") {
 		return fmt.Errorf(urlValidationError)
 	}

@@ -34,12 +34,15 @@ type HotNewsSpec struct {
 	DateEnd string `json:"dateEnd,omitempty"`
 
 	// Feeds is a list of Feeds CRD, which will be used to subscribe to news
+	// +kubebuilder:validation:Optional
 	Feeds []string `json:"feeds,omitempty"`
 
 	// FeedGroups are available sections of feeds from `feed-group-source` ConfigMap
+	// +kubebuilder:validation:Optional
 	FeedGroups []string `json:"feedGroups,omitempty"`
 
 	// SummaryConfig summary of observed hot news
+	// +kubebuilder:validation:Optional
 	SummaryConfig SummaryConfig `json:"summaryConfig,omitempty"`
 }
 

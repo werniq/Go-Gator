@@ -1,39 +1,59 @@
 package server
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	parsers "gogator/cmd/parsers"
+	"gogator/cmd/parsers"
 	"gogator/cmd/server/handlers"
 	"gogator/cmd/types"
-	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
 var (
-	// ErrFetchNewsJob is thrown when we have problems while doing fetch news job
-	ErrFetchNewsJob = fmt.Errorf("error while doing fetch news job: ")
-
-	// ErrRunningServer is thrown when we have error while running
-	ErrRunningServer = fmt.Errorf("error running server: ")
-
-	// RelativePathToCertsDir is a path to the folder with OpenSSL Certificate and Key
-	RelativePathToCertsDir = filepath.Join("cmd", "server", "certs")
-
-	DefaultCertPaths = filepath.Join("cmd", "server", "certs")
+	// defaultCertsPath is default path to server
+	defaultCertsPath = filepath.Join("cmd", "server", "certs")
 )
 
 const (
-	DefaultUpdatesFrequency = 4
+	// defaultUpdateFrequency is an interval in hours at which program will fetch and parse article feeds
+	defaultUpdateFrequency = 4
 
-	DefaultServerPort = 443
+	// defaultServerPort is a default port on which this server will be running
+	defaultServerPort = 443
 
-	DefaultCertName = "certificate.pem"
+	// defaultCertName represents default name of server's certificate file
+	defaultCertName = "certificate.pem"
 
-	DefaultPkey = "key.pem"
+	// defaultPrivateKey identifies the default name of server's private key
+	defaultPrivateKey = "key.pem"
+
+	// errRunFetchNews is thrown when we have problems while doing fetch news job
+	errRunFetchNews = "error while doing fetch news job: "
+
+	// errNotSpecified helps us to check if error was related to initializing sources file
+	errNotSpecified = "The system cannot find the file specified."
+
+	// errInitializingSources is thrown when func responsible for initialization of sources fails
+	errInitializingSources = "Error initializing sources file: "
+)
+
+const (
+	// DevAddr constant describes the port on which server will operate in Development environment
+	DevAddr = ":8080"
+
+	// ProdAddr is used to run server in production environment
+	ProdAddr = ":443"
+
+	// CertFile is the name of certificate file
+	CertFile = "certificate.pem"
+
+	// KeyFile is the name of the key for the certificate above
+	KeyFile = "key.pem"
 )
 
 // ConfAndRun initializes and runs an HTTPS server using the Gin framework.
@@ -66,20 +86,21 @@ func ConfAndRun() error {
 		// keyFile is the name of the key for the certificate above
 		keyFile string
 
+		// storagePath is a path where all data from application will be stored (sources and files with articles)
 		storagePath string
 	)
 	cwdPath, err := os.Getwd()
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
-	flag.IntVar(&updatesFrequency, "f", DefaultUpdatesFrequency,
+	flag.IntVar(&updatesFrequency, "f", defaultUpdateFrequency,
 		"How many hours fetch news job will wait after each execution")
-	flag.IntVar(&serverPort, "p", DefaultServerPort,
+	flag.IntVar(&serverPort, "p", defaultServerPort,
 		"On which port server will be running")
-	flag.StringVar(&certFile, "c", filepath.Join(cwdPath, DefaultCertPaths, DefaultCertName),
+	flag.StringVar(&certFile, "c", filepath.Join(cwdPath, defaultCertsPath, defaultCertName),
 		"Absolute path to the certificate for the HTTPs server")
-	flag.StringVar(&keyFile, "k", filepath.Join(cwdPath, DefaultCertPaths, DefaultPkey),
+	flag.StringVar(&keyFile, "k", filepath.Join(cwdPath, defaultCertsPath, defaultPrivateKey),
 		"Absolute path to the private key for the HTTPs server")
 	flag.StringVar(&storagePath, "fs", filepath.Join(parsers.CmdDir, parsers.ParsersDir, parsers.DataDir),
 		"Path to directory where all data will be stored")
@@ -89,9 +110,12 @@ func ConfAndRun() error {
 
 	err = parsers.LoadSourcesFile()
 	if err != nil {
-		err = parsers.UpdateSourceFile()
-		if err != nil {
-			log.Println("Error initializing sources file: ", err.Error())
+		if strings.Contains(err.Error(), errNotSpecified) {
+			err = parsers.UpdateSourceFile()
+			if err != nil {
+				return errors.New(errInitializingSources + err.Error())
+			}
+		} else {
 			return err
 		}
 	}
@@ -100,17 +124,17 @@ func ConfAndRun() error {
 
 	setupRoutes(server)
 
-	err = server.RunTLS(fmt.Sprintf(":%d", serverPort),
-		certFile,
-		keyFile)
+	go func(serverPort int, certFile, keyFile string) {
+		err := server.RunTLS(fmt.Sprintf(":%d", serverPort),
+			certFile,
+			keyFile)
+		if err != nil {
+			errChan <- err
+		}
+	}(serverPort, certFile, keyFile)
 
-	if err != nil {
-		log.Fatalln(ErrRunningServer, err)
-	}
-
-	close(errChan)
-
-	for err := range errChan {
+	select {
+	case err := <-errChan:
 		if err != nil {
 			return err
 		}
@@ -128,8 +152,7 @@ func runFetchNewsJob(updatesFrequency int, errChan chan error) {
 
 	err := j.Run()
 	if err != nil {
-		log.Println(ErrFetchNewsJob, err.Error())
-		errChan <- err
+		errChan <- errors.New(errRunFetchNews + err.Error())
 		return
 	}
 

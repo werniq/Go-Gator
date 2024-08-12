@@ -8,6 +8,6 @@ import (
 func main() {
 	err := server.ConfAndRun()
 	if err != nil {
-		log.Fatalln("Error running and configuring the server: ", err)
+		log.Fatalln("Error configuring and running server: ", err)
 	}
 }

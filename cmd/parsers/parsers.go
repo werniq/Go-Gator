@@ -70,8 +70,8 @@ func ParseBySource(source string) ([]types.News, error) {
 		}
 	} else {
 		sources := strings.Split(source, ",")
-		for _, s := range sources {
-			if p, exists := sourceToParser[s]; exists {
+		for _, sourceName := range sources {
+			if p, exists := sourceToParser[sourceName]; exists {
 				wg.Add(1)
 				go fetchNews(p, &news, &wg, &mu, errChannel)
 			}
@@ -100,14 +100,14 @@ func ParseBySource(source string) ([]types.News, error) {
 func fetchNews(p Parser, news *[]types.News, wg *sync.WaitGroup, mu *sync.Mutex, errChannel chan<- error) {
 	defer wg.Done()
 
-	n, err := p.Parse()
+	parsedNews, err := p.Parse()
 	if err != nil {
 		errChannel <- err
 		return
 	}
 
 	mu.Lock()
-	*news = append(*news, n...)
+	*news = append(*news, parsedNews...)
 	mu.Unlock()
 }
 

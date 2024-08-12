@@ -15,7 +15,7 @@ spec:
       labels:
         app: go-gator
     spec:
-      serviceAccountName: user-developer
+      serviceAccountName: go-gator-user
       automountServiceAccountToken: false
       containers:
         - name: go-gator

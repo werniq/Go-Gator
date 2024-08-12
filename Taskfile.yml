@@ -11,10 +11,10 @@ env:
   DOCKERHUB_PASSWORD: '{{ .DOCKERHUB_PASSWORD }}'
 
 tasks:
-  fmt-check:
+  fmt:
     desc: Check if files in the project need formatting
     cmds:
-      - go fmt ./... -l
+      - go fmt ./...
 
   vet:
     desc: Format all code in all subdirectories
@@ -74,3 +74,13 @@ tasks:
     cmds:
       - docker login -u {{ .DOCKERHUB_USERNAME }} -p {{ .DOCKERHUB_PASSWORD }}
       - docker push {{ .DOCKER_USERNAME }}/{{ .DOCKER_IMAGE_NAME }}:{{ .DOCKER_IMAGE_TAG }}
+
+  deploy:
+    desc: Deploy news aggregator app on the Kubernetes cluster
+    cmds:
+      - kubectl apply -f templates/
+
+  undeploy:
+    desc: Remove news-aggregator from kubernetes Cluster
+    cmds:
+      - kubectl delete -f templates/

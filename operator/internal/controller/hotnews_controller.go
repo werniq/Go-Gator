@@ -21,9 +21,12 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	v12 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"strings"
 
@@ -35,17 +38,9 @@ import (
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
-var (
-	// feedGroupsObjectKey - an object key for the ConfigMap which contains feed groups
-	feedGroupsObjectKey = client.ObjectKey{
-		Namespace: feedGroupsNamespace,
-		Name:      feedGroupsConfigMapName,
-	}
-)
-
 const (
 	// feedGroupsNamespace is a namespace where feed groups are stored
-	feedGroupsNamespace = "default"
+	feedGroupsNamespace = "operator-system"
 
 	// serverUrl is a URL to our news aggregator server
 	serverUrl = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
@@ -305,12 +300,17 @@ func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec)
 }
 
 // getConfigMapData returns all data from config map named feedGroupsConfigMapName in defaultNamespace
-func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (v12.ConfigMap, error) {
-	var configMap v12.ConfigMap
+func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (*v1.ConfigMap, error) {
+	c := config.GetConfigOrDie()
 
-	err := r.Client.Get(ctx, feedGroupsObjectKey, &configMap)
+	k8sClient, err := kubernetes.NewForConfig(c)
 	if err != nil {
-		return v12.ConfigMap{}, err
+		return nil, err
+	}
+	configMap, err := k8sClient.CoreV1().ConfigMaps(feedGroupsNamespace).
+		Get(ctx, feedGroupsConfigMapName, v12.GetOptions{})
+	if err != nil {
+		return nil, err
 	}
 
 	return configMap, nil

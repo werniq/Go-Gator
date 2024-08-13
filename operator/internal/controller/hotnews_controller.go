@@ -40,14 +40,8 @@ import (
 )
 
 const (
-	// feedGroupsNamespace is a namespace where feed groups are stored
-	feedGroupsNamespace = "operator-system"
-
 	// serverUrl is a URL to our news aggregator server
 	serverUrl = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
-
-	// feedGroupsConfigMapName is a name of the default ConfigMap which contains our feed groups names and sources
-	feedGroupsConfigMapName = "feed-group-source"
 
 	// errFeedsAreRequired is thrown when feeds are not provided
 	errFeedsAreRequired = "feeds or feedGroups are required"
@@ -138,8 +132,8 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&newsaggregatorv1.HotNews{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Watches(&v1.ConfigMap{
 			ObjectMeta: v12.ObjectMeta{
-				Name:      feedGroupsConfigMapName,
-				Namespace: feedGroupsNamespace,
+				Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+				Namespace: newsaggregatorv1.FeedGroupsNamespace,
 			},
 		},
 			&handler.EnqueueRequestForObject{}).
@@ -304,7 +298,7 @@ func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec)
 	return sourcesBuilder.String(), nil
 }
 
-// getConfigMapData returns all data from config map named feedGroupsConfigMapName in defaultNamespace
+// getConfigMapData returns all data from config map named FeedGroupsConfigMapName in defaultNamespace
 func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (*v1.ConfigMap, error) {
 	c := config.GetConfigOrDie()
 
@@ -312,11 +306,14 @@ func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (*v1.ConfigMap, e
 	if err != nil {
 		return nil, err
 	}
-	configMap, err := k8sClient.CoreV1().ConfigMaps(feedGroupsNamespace).
-		Get(ctx, feedGroupsConfigMapName, v12.GetOptions{})
+	configMap, err := k8sClient.CoreV1().
+		ConfigMaps(newsaggregatorv1.FeedGroupsNamespace).
+		Get(ctx, newsaggregatorv1.FeedGroupsConfigMapName, v12.GetOptions{})
+
 	if err != nil {
 		return nil, err
 	}
+
 	logger := log.FromContext(ctx)
 	for key, item := range configMap.Data {
 		logger.Info("ConfigMap data", key, item)

@@ -17,11 +17,30 @@ limitations under the License.
 package v1
 
 import (
+	"context"
+	"fmt"
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+)
+
+const (
+	// errInvalidDateRange is an error message for wrong date
+	errInvalidDateRange = "DateStart should be before than DateEnd"
+
+	// errWrongFeedGroupName is an error message for wrong feed group name
+	errWrongFeedGroupName = "feed group name is not found in the ConfigMap, please check the feed group name"
+
+	// FeedGroupsNamespace is a namespace where feed groups are stored
+	FeedGroupsNamespace = "operator-system"
+
+	// FeedGroupsConfigMapName is a name of the default ConfigMap which contains our feed groups names and sources
+	FeedGroupsConfigMapName = "feed-group-source"
 )
 
 // log is for logging in this package.
@@ -34,9 +53,7 @@ func (r *HotNews) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-
-// +kubebuilder:webhook:path=/mutate-newsaggregator-teamdev-com-v1-hotnews,mutating=true,failurePolicy=fail,sideEffects=None,groups=newsaggregator.teamdev.com,resources=hotnews,verbs=create;update,versions=v1,name=mhotnews.kb.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-newsaggregator-teamdev-com-v1-hotnews,mutating=true,failurePolicy=fail,sideEffects=None,groups=newsaggregator.teamdev.com,resources=hotnews,verbs=create;update;delete,versions=v1,name=mhotnews.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &HotNews{}
 
@@ -44,13 +61,10 @@ var _ webhook.Defaulter = &HotNews{}
 func (r *HotNews) Default() {
 	hotnewslog.Info("default", "name", r.Name)
 
-	// TODO(user): fill in your defaulting logic.
+	r.Spec.SummaryConfig.TitlesCount = 10
 }
 
-// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// NOTE: The 'path' attribute must follow a specific pattern and should not be modified directly here.
-// Modifying the path for an invalid path can cause API server errors; failing to locate the webhook.
-// +kubebuilder:webhook:path=/validate-newsaggregator-teamdev-com-v1-hotnews,mutating=false,failurePolicy=fail,sideEffects=None,groups=newsaggregator.teamdev.com,resources=hotnews,verbs=create;update,versions=v1,name=vhotnews.kb.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-newsaggregator-teamdev-com-v1-hotnews,mutating=false,failurePolicy=fail,sideEffects=None,groups=newsaggregator.teamdev.com,resources=hotnews,verbs=create;update;delete,versions=v1,name=vhotnews.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &HotNews{}
 
@@ -58,7 +72,6 @@ var _ webhook.Validator = &HotNews{}
 func (r *HotNews) ValidateCreate() (admission.Warnings, error) {
 	hotnewslog.Info("validate create", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object creation.
 	return nil, nil
 }
 
@@ -66,7 +79,6 @@ func (r *HotNews) ValidateCreate() (admission.Warnings, error) {
 func (r *HotNews) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	hotnewslog.Info("validate update", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object update.
 	return nil, nil
 }
 
@@ -74,6 +86,33 @@ func (r *HotNews) ValidateUpdate(old runtime.Object) (admission.Warnings, error)
 func (r *HotNews) ValidateDelete() (admission.Warnings, error) {
 	hotnewslog.Info("validate delete", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil
+}
+
+// validateHotNews
+func (r *HotNews) validateHotNews() error {
+	if r.Spec.DateStart > r.Spec.DateEnd {
+		return fmt.Errorf(errInvalidDateRange)
+	}
+
+	c := config.GetConfigOrDie()
+
+	k8sClient, err := kubernetes.NewForConfig(c)
+	if err != nil {
+		return err
+	}
+	configMap, err := k8sClient.CoreV1().ConfigMaps(FeedGroupsNamespace).
+		Get(context.Background(), FeedGroupsConfigMapName, v12.GetOptions{})
+
+	if err != nil {
+		return err
+	}
+
+	for _, source := range r.Spec.FeedGroups {
+		if _, exists := configMap.Data[source]; !exists {
+			return fmt.Errorf(errWrongFeedGroupName)
+		}
+	}
+
+	return nil
 }

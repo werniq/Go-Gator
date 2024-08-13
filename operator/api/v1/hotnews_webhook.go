@@ -30,7 +30,10 @@ import (
 )
 
 const (
-	// errInvalidDateRange is an error message for wrong date
+	// errNoFeeds is an error message indicating that user hasn't specified any feeds
+	errNoFeeds = "either feeds or feedGroups should be specified"
+
+	// errInvalidDateRange is an error message indicating input of wrong date range
 	errInvalidDateRange = "DateStart should be before than DateEnd"
 
 	// errWrongFeedGroupName is an error message for wrong feed group name
@@ -43,7 +46,6 @@ const (
 	FeedGroupsConfigMapName = "feed-group-source"
 )
 
-// log is for logging in this package.
 var hotnewslog = logf.Log.WithName("hotnews-resource")
 
 // SetupWebhookWithManager will setup the manager to manage the webhooks
@@ -89,10 +91,15 @@ func (r *HotNews) ValidateDelete() (admission.Warnings, error) {
 	return nil, nil
 }
 
-// validateHotNews
+// validateHotNews validates the HotNews resource.
+// In particular, it checks if the DateStart is before DateEnd and if all feed group names are correct.
 func (r *HotNews) validateHotNews() error {
 	if r.Spec.DateStart > r.Spec.DateEnd {
 		return fmt.Errorf(errInvalidDateRange)
+	}
+
+	if r.Spec.Feeds == nil && r.Spec.FeedGroups == nil {
+		return fmt.Errorf(errNoFeeds)
 	}
 
 	c := config.GetConfigOrDie()

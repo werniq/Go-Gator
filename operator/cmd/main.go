@@ -35,8 +35,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
-	"teamdev.com/go-gator/internal/controller"
+	newsaggregatorv1 "teamdev.com/go-gator-operator/api/v1"
+	"teamdev.com/go-gator-operator/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
 

@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
+	newsaggregatorv1 "teamdev.com/go-gator-operator/api/v1"
 )
 
 var _ = Describe("HotNews Controller", func() {

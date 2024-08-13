@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"teamdev.com/go-gator/test/utils"
+	"teamdev.com/go-gator-operator/test/utils"
 )
 
 const namespace = "operator-system"

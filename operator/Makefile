@@ -1,5 +1,5 @@
 # Image URL to use all building/pushing image targets
-IMG ?= qniw984/hotnews-controller:1.2.5
+IMG ?= qniw984/hotnews-controller:1.2.6
 
 ENVTEST_K8S_VERSION = 1.30.0
 

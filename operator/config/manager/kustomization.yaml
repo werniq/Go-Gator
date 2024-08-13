@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: qniw984/hotnews-controller
-  newTag: 1.2.5
+  newTag: 1.2.6

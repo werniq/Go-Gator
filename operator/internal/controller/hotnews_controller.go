@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"strings"
 
@@ -135,6 +136,13 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.HotNews{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Watches(&v1.ConfigMap{
+			ObjectMeta: v12.ObjectMeta{
+				Name:      feedGroupsConfigMapName,
+				Namespace: feedGroupsNamespace,
+			},
+		},
+			&handler.EnqueueRequestForObject{}).
 		Complete(r)
 }
 
@@ -253,17 +261,14 @@ func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpe
 		if err != nil {
 			return "", err
 		}
-		for _, feedGroup := range strings.Split(feedGroups, ",") {
-			feedStr.WriteString(feedGroup)
-			feedStr.WriteRune(',')
-		}
+		feedStr.WriteString(feedGroups)
 	} else if spec.Feeds != nil {
 		for _, feed := range spec.Feeds {
 			feedStr.WriteString(feed)
 			feedStr.WriteRune(',')
 		}
 	}
-	if feedStr.String() == "" {
+	if feedStr.String() != "" {
 		requestUrl.WriteString("&sources=" + feedStr.String()[:len(feedStr.String())-1])
 	}
 
@@ -280,23 +285,23 @@ func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpe
 
 // processFeedGroups function processes feed groups from the ConfigMap and returns a string with feed sources
 func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec) (string, error) {
-	var sources strings.Builder
+	var sourcesBuilder strings.Builder
 
 	feedGroups, err := r.getFeedGroups(context.Background())
 	if err != nil {
 		return "", err
 	}
 
-	for _, feedKey := range spec.FeedGroups {
-		if source, exists := feedGroups.Data[feedKey]; exists {
-			sources.WriteString(source)
-			sources.WriteRune(',')
+	for _, sourceKey := range spec.FeedGroups {
+		if val, exists := feedGroups.Data[sourceKey]; exists {
+			sourcesBuilder.WriteString(val)
+			sourcesBuilder.WriteRune(',')
 		} else {
 			return "", fmt.Errorf(errWrongFeedGroupName)
 		}
 	}
 
-	return sources.String(), nil
+	return sourcesBuilder.String(), nil
 }
 
 // getConfigMapData returns all data from config map named feedGroupsConfigMapName in defaultNamespace
@@ -311,6 +316,10 @@ func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (*v1.ConfigMap, e
 		Get(ctx, feedGroupsConfigMapName, v12.GetOptions{})
 	if err != nil {
 		return nil, err
+	}
+	logger := log.FromContext(ctx)
+	for key, item := range configMap.Data {
+		logger.Info("ConfigMap data", key, item)
 	}
 
 	return configMap, nil

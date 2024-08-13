@@ -35,3 +35,7 @@ spec:
             limits:
               cpu: 200m
               memory: 200Mi
+      volumes:
+        - name: go-gator-pv
+          persistentVolumeClaim:
+            claimName: go-gator-pvc

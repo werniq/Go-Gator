@@ -182,7 +182,11 @@ func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggre
 		return serverErr
 	}
 
-	var articles []article
+	var articles struct {
+		TotalNews int       `json:"totalAmount"`
+		News      []article `json:"news"`
+	}
+
 	err = json.NewDecoder(res.Body).Decode(&articles)
 	if err != nil {
 		logger.Error(err, errFailedToDecodeResBody)
@@ -196,11 +200,12 @@ func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggre
 	}
 
 	var articlesTitles []string
-	for _, a := range articles {
+	for _, a := range articles.News {
 		articlesTitles = append(articlesTitles, a.Title)
 	}
+	logger.Info("Total amoutn of news", "totalAmount", articles.TotalNews)
 
-	hotNews.InitHotNewsStatus(len(articles), requestUrl, articlesTitles)
+	hotNews.InitHotNewsStatus(articles.TotalNews, requestUrl, articlesTitles)
 
 	logger.Info("HotNews.handleCreate has been successfully executed")
 	logger.Info("HotNews object", "HotNews", hotNews)
@@ -257,14 +262,15 @@ func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpe
 			feedStr.WriteString(feedGroup)
 			feedStr.WriteRune(',')
 		}
-	} else {
+	} else if spec.Feeds != nil {
 		for _, feed := range spec.Feeds {
 			feedStr.WriteString(feed)
 			feedStr.WriteRune(',')
 		}
 	}
-
-	requestUrl.WriteString("&sources=" + feedStr.String()[:len(feedStr.String())-1])
+	if feedStr.String() == "" {
+		requestUrl.WriteString("&sources=" + feedStr.String()[:len(feedStr.String())-1])
+	}
 
 	if spec.DateStart != "" {
 		requestUrl.WriteString("&dateFrom=" + spec.DateStart)

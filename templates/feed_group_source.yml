@@ -2,4 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: feed-group-source
-  namespace: go-gator
+  namespace: operator-system
+data:
+  sport: "washingtontimes"
+  politic: "abc,bbc"

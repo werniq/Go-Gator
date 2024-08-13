@@ -81,9 +81,9 @@ type HotNewsReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=hotnews,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=hotnews/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=hotnews/finalizers,verbs=update
+// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=hotnews;configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=hotnews/status;configmaps,verbs=get;update;patch
+// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=hotnews/finalizers;configmaps,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state

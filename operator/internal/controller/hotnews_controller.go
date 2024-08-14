@@ -40,9 +40,11 @@ import (
 )
 
 var (
+	// c is a kubernetes configuration which will be used to create a k8s client
 	c = config.GetConfigOrDie()
 
-	k8sClient *kubernetes.Clientset
+	// k8sClient is a k8s client which will be used to get ConfigMap with hotNew groups
+	clientset *kubernetes.Clientset
 )
 
 const (
@@ -69,6 +71,16 @@ const (
 )
 
 // HotNewsReconciler reconciles a HotNews object
+// Whenever status of HotNews CRD is updated, it sends a request to the news aggregator server
+// to retrieve news with the specified parameters.
+// It also watches for changes in the ConfigMap with the feed groups, and in the Feed CRD.
+//
+// Before sending a request to the news aggregator server, it verifies if the arguments are correct:
+// - keywords are provided
+// - date range is correct
+// - feeds or feed groups are provided
+// Then, it constructs a request URL and sends a request to the news aggregator server, parses the response
+// and updates the HotNews object.
 type HotNewsReconciler struct {
 	serverUrl string
 	client.Client
@@ -133,7 +145,7 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 // It Watches for any changes in the ConfigMap with the feed groups, and also watches for changes in Feed CRD.
 func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string) error {
 	var err error
-	k8sClient, err = kubernetes.NewForConfig(c)
+	clientset, err = kubernetes.NewForConfig(c)
 	if err != nil {
 		return err
 	}
@@ -149,7 +161,18 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string)
 			},
 		},
 			&handler.EnqueueRequestForObject{}).
+		Watches(&newsaggregatorv1.Feed{},
+			&handler.EnqueueRequestForObject{}).
 		Complete(r)
+}
+
+// articles struct is used to parse the response from the news aggregator server
+type article struct {
+	Title       string `json:"title" xml:"title"`
+	PubDate     string `json:"publishedAt" xml:"pubDate"`
+	Description string `json:"description" xml:"description"`
+	Publisher   string `xml:"source" json:"Publisher"`
+	Link        string `json:"url" xml:"link"`
 }
 
 // handleCreate function sends a request to the news aggregator server to retrieve news
@@ -182,13 +205,13 @@ func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggre
 	}
 
 	if res.StatusCode != http.StatusOK {
-		serverErr := &serverError{}
-		err = json.NewDecoder(res.Body).Decode(&serverErr)
+		serverError := &serverErr{}
+		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
 			logger.Error(err, errFailedToDecodeResBody)
 			return err
 		}
-		return serverErr
+		return serverError
 	}
 
 	var articles struct {
@@ -221,15 +244,6 @@ func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggre
 	return nil
 }
 
-// articles struct is used to parse the response from the news aggregator server
-type article struct {
-	Title       string `json:"title" xml:"title"`
-	PubDate     string `json:"publishedAt" xml:"pubDate"`
-	Description string `json:"description" xml:"description"`
-	Publisher   string `xml:"source" json:"Publisher"`
-	Link        string `json:"url" xml:"link"`
-}
-
 // handleUpdate function updates the HotNews object and returns an error if something goes wrong.
 func (r *HotNewsReconciler) handleUpdate(ctx context.Context, hotNews *newsaggregatorv1.HotNews) error {
 	logger := log.FromContext(ctx)
@@ -260,13 +274,13 @@ func (r *HotNewsReconciler) handleUpdate(ctx context.Context, hotNews *newsaggre
 	}
 
 	if res.StatusCode != http.StatusOK {
-		serverErr := &serverError{}
-		err = json.NewDecoder(res.Body).Decode(&serverErr)
+		serverError := &serverErr{}
+		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
 			logger.Error(err, errFailedToDecodeResBody)
 			return err
 		}
-		return serverErr
+		return serverError
 	}
 
 	var articles struct {
@@ -374,7 +388,7 @@ func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec)
 
 // getConfigMapData returns all data from config map named FeedGroupsConfigMapName in FeedGroupsNamespace
 func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (*v1.ConfigMap, error) {
-	configMap, err := k8sClient.CoreV1().
+	configMap, err := clientset.CoreV1().
 		ConfigMaps(newsaggregatorv1.FeedGroupsNamespace).
 		Get(ctx, newsaggregatorv1.FeedGroupsConfigMapName, v12.GetOptions{})
 

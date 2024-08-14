@@ -53,13 +53,13 @@ var (
 	c = config.GetConfigOrDie()
 
 	// k8sClient is a k8s client which will be used to get ConfigMap with hotNew groups
-	k8sClient *kubernetes.Clientset
+	clientset *kubernetes.Clientset
 )
 
 // SetupWebhookWithManager will setup the manager to manage the webhooks
 func (r *HotNews) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	var err error
-	k8sClient, err = kubernetes.NewForConfig(c)
+	clientset, err = kubernetes.NewForConfig(c)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (r *HotNews) validateHotNews() error {
 		return fmt.Errorf(errNoFeeds)
 	}
 
-	configMap, err := k8sClient.CoreV1().ConfigMaps(FeedGroupsNamespace).
+	configMap, err := clientset.CoreV1().ConfigMaps(FeedGroupsNamespace).
 		Get(context.Background(), FeedGroupsConfigMapName, v12.GetOptions{})
 
 	if err != nil {

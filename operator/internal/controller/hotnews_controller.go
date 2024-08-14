@@ -84,6 +84,7 @@ const (
 // and updates the HotNews object.
 type HotNewsReconciler struct {
 	serverUrl string
+	feeds     []string
 	client.Client
 	Scheme *runtime.Scheme
 }

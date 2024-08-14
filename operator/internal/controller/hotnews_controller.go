@@ -235,6 +235,69 @@ type article struct {
 func (r *HotNewsReconciler) handleUpdate(ctx context.Context, hotNews *newsaggregatorv1.HotNews) error {
 	logger := log.FromContext(ctx)
 	logger.Info("handling update")
+
+	requestUrl, err := r.constructRequestUrl(hotNews.Spec)
+	if err != nil {
+		logger.Error(err, errFailedToConstructRequestUrl)
+		return err
+	}
+	logger.Info(requestUrl)
+
+	req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
+	if err != nil {
+		logger.Error(err, errFailedToCreateRequest)
+		return err
+	}
+
+	customTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	customClient := &http.Client{Transport: customTransport}
+
+	res, err := customClient.Do(req)
+	if err != nil {
+		logger.Error(err, errFailedToSendRequest)
+		return err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		serverErr := &serverError{}
+		err = json.NewDecoder(res.Body).Decode(&serverErr)
+		if err != nil {
+			logger.Error(err, errFailedToDecodeResBody)
+			return err
+		}
+		return serverErr
+	}
+
+	var articles struct {
+		TotalNews int       `json:"totalAmount"`
+		News      []article `json:"news"`
+	}
+
+	err = json.NewDecoder(res.Body).Decode(&articles)
+	if err != nil {
+		logger.Error(err, errFailedToDecodeResBody)
+		return err
+	}
+
+	err = res.Body.Close()
+	if err != nil {
+		logger.Error(err, errFailedToCloseResponseBody)
+		return err
+	}
+
+	var articlesTitles []string
+	for _, a := range articles.News {
+		articlesTitles = append(articlesTitles, a.Title)
+	}
+	logger.Info("Total amount of news", "totalAmount", articles.TotalNews)
+
+	hotNews.InitHotNewsStatus(articles.TotalNews, requestUrl, articlesTitles)
+
+	logger.Info("HotNews.handleUpdate has been successfully executed")
+	logger.Info("HotNews object", "HotNews", hotNews)
+
 	return nil
 }
 

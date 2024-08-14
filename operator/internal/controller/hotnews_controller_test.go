@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 
-	newsaggregatorv1 "teamdev.com/go-gator-operator/api/v1"
+	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
 func TestMain(m *testing.M) {

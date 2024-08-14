@@ -22,9 +22,9 @@ import (
 	"testing"
 )
 
-func TestFeed_validateFeed(t *testing.T) {
+func TestFeed_validateHotNews(t *testing.T) {
 	var err error
-	k8sClient, err = kubernetes.NewForConfig(c)
+	clientset, err = kubernetes.NewForConfig(c)
 	assert.Nil(t, err)
 	var tests = []struct {
 		name        string

@@ -1,4 +1,4 @@
-module teamdev.com/go-gator-operator
+module teamdev.com/go-gator
 
 go 1.22.0
 

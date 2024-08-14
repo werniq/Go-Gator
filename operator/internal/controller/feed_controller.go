@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	newsaggregatorv1 "teamdev.com/go-gator-operator/api/v1"
+	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
 // FeedReconciler reconciles a Feed object

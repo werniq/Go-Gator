@@ -37,7 +37,13 @@ spec:
           metadata:
             type: object
           spec:
-            description: HotNewsSpec defines the desired state of HotNews
+            description: |-
+              HotNewsSpec defines the desired state of HotNews.
+
+
+              This struct will be used to retrieve news by the criteria, specified here
+              For example, we can specify keywords, date range, feeds and feed groups
+              And then we will make requests to our news aggregator server with this parameters, and get the news
             properties:
               dateEnd:
                 description: DateEnd is a news final date in format "YYYY-MM-DD",
@@ -48,7 +54,7 @@ spec:
                   can be empty
                 type: string
               feedGroups:
-                description: FeedGroups are available sections of feeds from `feed-group-source`
+                description: FeedGroups are available sections of feeds from `hotNew-group-source`
                   ConfigMap
                 items:
                   type: string

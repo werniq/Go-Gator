@@ -33,3 +33,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - newsaggregator.teamdev.com
+  resources:
+  - feeds
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - newsaggregator.teamdev.com
+  resources:
+  - feeds/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - newsaggregator.teamdev.com
+  resources:
+  - feeds/status
+  verbs:
+  - get
+  - patch
+  - update

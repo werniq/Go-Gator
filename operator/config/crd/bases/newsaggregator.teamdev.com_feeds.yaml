@@ -79,8 +79,10 @@ spec:
                   - reason
                   - status
                   type: object
-                description: Conditions field is a list of conditions that the feed
-                  can have
+                description: |-
+                  Conditions field is a map of conditions that the feed can have
+                  question: i tried to use enum with int iota as mappings keys but i had an error
+                  saying that map keys should be strings, not int
                 type: object
             type: object
         type: object

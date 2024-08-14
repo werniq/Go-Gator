@@ -141,6 +141,10 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	logger.Info("HotNewsReconciler has been successfully executed")
 
+	// question:
+	// if I understood correctly, we should perform the reconciliation every 24 hours
+	// to update the news.
+	// or should it be just set to false and remove requeue after?
 	return ctrl.Result{
 		Requeue:      true,
 		RequeueAfter: time.Second * 60 * 60 * 24,

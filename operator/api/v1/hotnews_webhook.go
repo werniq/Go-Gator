@@ -49,8 +49,10 @@ const (
 var (
 	hotnewslog = logf.Log.WithName("hotnews-resource")
 
+	// c is a kubernetes configuration which will be used to create a k8s client
 	c = config.GetConfigOrDie()
 
+	// k8sClient is a k8s client which will be used to get ConfigMap with hotNew groups
 	k8sClient *kubernetes.Clientset
 )
 

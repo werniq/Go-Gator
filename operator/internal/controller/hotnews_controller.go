@@ -39,9 +39,15 @@ import (
 	newsaggregatorv1 "teamdev.com/go-gator-operator/api/v1"
 )
 
+var (
+	c = config.GetConfigOrDie()
+
+	k8sClient *kubernetes.Clientset
+)
+
 const (
-	// serverUrl is a URL to our news aggregator server
-	serverUrl = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
+	// serverNewsEndpoint is a URL to our news aggregator server
+	serverNewsEndpoint = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
 
 	// errFeedsAreRequired is thrown when feeds are not provided
 	errFeedsAreRequired = "feeds or feedGroups are required"
@@ -128,6 +134,12 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	var err error
+	k8sClient, err = kubernetes.NewForConfig(c)
+	if err != nil {
+		return err
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.HotNews{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Watches(&v1.ConfigMap{
@@ -242,7 +254,7 @@ func (r *HotNewsReconciler) handleDelete(ctx context.Context, hotNews *newsaggre
 func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpec) (string, error) {
 	var requestUrl strings.Builder
 
-	requestUrl.WriteString(serverUrl)
+	requestUrl.WriteString(serverNewsEndpoint)
 	requestUrl.WriteString("?keywords=" + spec.Keywords)
 
 	if len(spec.Feeds) < 1 && spec.FeedGroups == nil {
@@ -300,12 +312,6 @@ func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec)
 
 // getConfigMapData returns all data from config map named FeedGroupsConfigMapName in defaultNamespace
 func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (*v1.ConfigMap, error) {
-	c := config.GetConfigOrDie()
-
-	k8sClient, err := kubernetes.NewForConfig(c)
-	if err != nil {
-		return nil, err
-	}
 	configMap, err := k8sClient.CoreV1().
 		ConfigMaps(newsaggregatorv1.FeedGroupsNamespace).
 		Get(ctx, newsaggregatorv1.FeedGroupsConfigMapName, v12.GetOptions{})

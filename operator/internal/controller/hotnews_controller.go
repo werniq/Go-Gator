@@ -43,12 +43,12 @@ var (
 	c = config.GetConfigOrDie()
 
 	k8sClient *kubernetes.Clientset
+
+	// serverNewsEndpoint is a URL to our news aggregator server
+	serverNewsEndpoint = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
 )
 
 const (
-	// serverNewsEndpoint is a URL to our news aggregator server
-	serverNewsEndpoint = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
-
 	// errFeedsAreRequired is thrown when feeds are not provided
 	errFeedsAreRequired = "feeds or feedGroups are required"
 

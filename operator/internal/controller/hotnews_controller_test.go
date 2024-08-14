@@ -23,6 +23,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
+	"log"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,6 +35,14 @@ import (
 
 	newsaggregatorv1 "teamdev.com/go-gator-operator/api/v1"
 )
+
+func TestMain(m *testing.M) {
+	var err error
+	k8sClient, err = kubernetes.NewForConfig(c)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
 
 func TestHotNewsReconciler_Reconcile(t *testing.T) {
 	scheme := runtime.NewScheme()
@@ -182,7 +194,7 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 					DateStart: "2024-08-05",
 				},
 			},
-			want:    serverNewsEndpoint + "news?keywords=bitcoin&sources=abc,bbc&dateFrom=2024-08-05",
+			want:    serverNewsEndpoint + "?keywords=bitcoin&sources=abc,bbc&dateFrom=2024-08-05",
 			wantErr: false,
 		},
 		{
@@ -194,7 +206,7 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 					Feeds:    []string{"abc", "bbc"},
 				},
 			},
-			want:    serverNewsEndpoint + "news?keywords=bitcoin&sources=abc,bbc",
+			want:    serverNewsEndpoint + "?keywords=bitcoin&sources=abc,bbc",
 			wantErr: false,
 		},
 		{
@@ -206,7 +218,7 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 					FeedGroups: []string{"group1", "group2"},
 				},
 			},
-			want:    serverNewsEndpoint + "news?keywords=bitcoin&sources=group1,group2",
+			want:    serverNewsEndpoint + "?keywords=bitcoin&sources=group1,group2",
 			wantErr: false,
 		},
 		{
@@ -219,7 +231,7 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 					FeedGroups: []string{"group1", "group2"},
 				},
 			},
-			want:    serverNewsEndpoint + "news?keywords=bitcoin&sources=group1,group2",
+			want:    serverNewsEndpoint + "?keywords=bitcoin&sources=group1,group2",
 			wantErr: false,
 		},
 		{
@@ -284,7 +296,6 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 		},
 	}
 
-	// Define a ConfigMap that would be returned in the successful test cases
 	existingConfigMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "feed-group-source",
@@ -402,6 +413,38 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 }
 
 func TestHotNewsReconciler_handleCreate(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = newsaggregatorv1.AddToScheme(scheme)
+
+	existingFeedList := &newsaggregatorv1.HotNewsList{
+		Items: []newsaggregatorv1.HotNews{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "feed-sample",
+				},
+				Spec: newsaggregatorv1.HotNewsSpec{
+					Keywords:  "keyword1,keyword2",
+					DateStart: "2024-08-12",
+					DateEnd:   "2024-08-13",
+				},
+			},
+		},
+	}
+
+	existingConfigMap := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "feed-group-source",
+			Namespace: "operator-system",
+		},
+		Data: map[string]string{
+			"sport":   "washingtontimes",
+			"politic": "abc,bbc",
+		},
+	}
+
+	fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithLists(existingFeedList).Build()
+
 	type fields struct {
 		Client client.Client
 		Scheme *runtime.Scheme
@@ -411,15 +454,148 @@ func TestHotNewsReconciler_handleCreate(t *testing.T) {
 		hotNews *newsaggregatorv1.HotNews
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
+		name       string
+		fields     fields
+		args       args
+		mockServer *httptest.Server
+		wantErr    bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Successful execution",
+			fields: fields{
+				Client: fake.NewClientBuilder().WithScheme(scheme).Build(),
+				Scheme: scheme,
+			},
+			args: args{
+				ctx: context.TODO(),
+				hotNews: &newsaggregatorv1.HotNews{
+					Spec: newsaggregatorv1.HotNewsSpec{
+						Keywords:  "bitcoin",
+						DateStart: "2024-08-05",
+						DateEnd:   "2024-08-06",
+						Feeds:     []string{"abc", "bbc"},
+					},
+				},
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(`{"totalAmount": 2, "news": [{"title": "News 1"}, {"title": "News 2"}]}`))
+			})),
+			wantErr: false,
+		},
+		{
+			name: "Failed to construct request URL",
+			fields: fields{
+				Client: fake.NewClientBuilder().WithScheme(scheme).Build(),
+				Scheme: scheme,
+			},
+			args: args{
+				ctx: context.TODO(),
+				hotNews: &newsaggregatorv1.HotNews{
+					Spec: newsaggregatorv1.HotNewsSpec{
+						Keywords: "bitcoin",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Failed to create HTTP request",
+			fields: fields{
+				Client: fake.NewClientBuilder().WithScheme(scheme).Build(),
+				Scheme: scheme,
+			},
+			args: args{
+				ctx: context.TODO(),
+				hotNews: &newsaggregatorv1.HotNews{
+					Spec: newsaggregatorv1.HotNewsSpec{
+						Keywords:  "bitcoin",
+						DateStart: "2024-08-05",
+						DateEnd:   "2024-08-06",
+						Feeds:     []string{"abc", "bbc"},
+					},
+				},
+			},
+			mockServer: nil,
+			wantErr:    true,
+		},
+		{
+			name: "HTTP request failed",
+			fields: fields{
+				Client: fake.NewClientBuilder().WithScheme(scheme).Build(),
+				Scheme: scheme,
+			},
+			args: args{
+				ctx: context.TODO(),
+				hotNews: &newsaggregatorv1.HotNews{
+					Spec: newsaggregatorv1.HotNewsSpec{
+						Keywords:  "bitcoin",
+						DateStart: "2024-08-05",
+						DateEnd:   "2024-08-06",
+						Feeds:     []string{"abc", "bbc"},
+					},
+				},
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			})),
+			wantErr: true,
+		},
+		{
+			name: "Invalid response body JSON",
+			fields: fields{
+				Client: fake.NewClientBuilder().WithScheme(scheme).Build(),
+				Scheme: scheme,
+			},
+			args: args{
+				ctx: context.TODO(),
+				hotNews: &newsaggregatorv1.HotNews{
+					Spec: newsaggregatorv1.HotNewsSpec{
+						Keywords:  "bitcoin",
+						DateStart: "2024-08-05",
+						DateEnd:   "2024-08-06",
+						Feeds:     []string{"abc", "bbc"},
+					},
+				},
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(`{invalid json}`))
+			})),
+			wantErr: true,
+		},
+		{
+			name: "Response body close failure",
+			fields: fields{
+				Client: fake.NewClientBuilder().WithScheme(scheme).Build(),
+				Scheme: scheme,
+			},
+			args: args{
+				ctx: context.TODO(),
+				hotNews: &newsaggregatorv1.HotNews{
+					Spec: newsaggregatorv1.HotNewsSpec{
+						Keywords:  "bitcoin",
+						DateStart: "2024-08-05",
+						DateEnd:   "2024-08-06",
+						Feeds:     []string{"abc", "bbc"},
+					},
+				},
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(`{"totalAmount": 2, "news": [{"title": "News 1"}, {"title": "News 2"}]}`))
+				w.(http.Flusher).Flush()
+			})),
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.mockServer != nil {
+				defer tt.mockServer.Close()
+				serverNewsEndpoint = tt.mockServer.URL
+			}
+
 			r := &HotNewsReconciler{
 				Client: tt.fields.Client,
 				Scheme: tt.fields.Scheme,

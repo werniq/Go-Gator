@@ -5,6 +5,7 @@ import (
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"gogator/cmd/types"
+	"net/http"
 	"testing"
 )
 
@@ -39,7 +40,7 @@ func TestXmlParser_Parse(t *testing.T) {
 				</rss>`
 
 				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
-					httpmock.NewStringResponder(200, mockXML))
+					httpmock.NewStringResponder(http.StatusOK, mockXML))
 			},
 			expectError: false,
 			expectedNews: []types.News{
@@ -70,7 +71,7 @@ func TestXmlParser_Parse(t *testing.T) {
 				defer httpmock.DeactivateAndReset()
 
 				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
-					httpmock.NewStringResponder(200, ""))
+					httpmock.NewStringResponder(http.StatusOK, ""))
 			},
 			expectError: true,
 		},
@@ -82,7 +83,7 @@ func TestXmlParser_Parse(t *testing.T) {
 
 				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
 					httpmock.NewStringResponder(
-						200,
+						http.StatusOK,
 						`<rss><channel><item><title>Test</title></item></channel></rss>`))
 			},
 			expectError: true,
@@ -95,7 +96,7 @@ func TestXmlParser_Parse(t *testing.T) {
 
 				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
 					httpmock.NewStringResponder(
-						200,
+						http.StatusOK,
 						`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Test Channel</title></channel></rss>`))
 			},
 			expectError:  true,
@@ -109,7 +110,7 @@ func TestXmlParser_Parse(t *testing.T) {
 
 				httpmock.RegisterResponder("GET", sourceToEndpoint[parser.Source],
 					httpmock.NewStringResponder(
-						200,
+						http.StatusOK,
 						`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel></channel></rss>`))
 			},
 			expectError:  false,

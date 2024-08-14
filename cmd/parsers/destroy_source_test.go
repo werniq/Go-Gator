@@ -63,7 +63,7 @@ func TestDestroySource(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name:         "Run without any data",
+			name:         "Execute without any data",
 			argsDate:     "2024-07-22",
 			argsSource:   "bbc",
 			prepData:     []types.News{},
@@ -75,9 +75,9 @@ func TestDestroySource(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if len(tt.prepData) > 0 {
-				data, err := json.Marshal(tt.prepData)
+				fileData, err := json.Marshal(tt.prepData)
 				assert.Nil(t, err)
-				err = os.WriteFile(tt.argsDate+JsonExtension, data, 0644)
+				err = os.WriteFile(tt.argsDate+JsonExtension, fileData, 0644)
 				assert.Nil(t, err)
 			}
 

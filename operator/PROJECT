@@ -15,6 +15,7 @@ resources:
   domain: teamdev.com
   group: newsaggregator
   kind: HotNews
+  kind: Feed
   path: teamdev.com/go-gator/api/v1
   version: v1
   webhooks:

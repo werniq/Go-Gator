@@ -1,7 +1,7 @@
 // Package server is used for initialization, configuration, and execution of HTTPs server for the application.
 //
 // This package could be used just by running RunAndConf function, which initializes server,
-// attaches paths and handlers to it, and runs a server together with concurrent FetchNewsJob.Run()
+// attaches paths and handlers to it, and runs a server together with concurrent FetchNewsJob.Execute()
 // Handlers are used to manage sources, and automatically update file storing them, or
 // in order to retrieve latest news.
 //

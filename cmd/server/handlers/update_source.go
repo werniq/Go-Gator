@@ -57,17 +57,7 @@ func UpdateSource(c *gin.Context) {
 				"error": ErrUpdateSource + err.Error(),
 			})
 			log.Println(ErrUpdateSource + err.Error())
-			return
-		}
-	}
-
-	if reqBody.Format != "" {
-		err = parsers.UpdateSourceFormat(reqBody.Name, reqBody.Format)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": ErrUpdateSource + err.Error(),
-			})
-			log.Println(ErrUpdateSource + err.Error())
+			log.Println(reqBody.Name)
 			return
 		}
 	}

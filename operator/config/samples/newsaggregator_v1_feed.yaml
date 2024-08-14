@@ -1,0 +1,10 @@
+apiVersion: newsaggregator.teamdev.com/v1
+kind: Feed
+metadata:
+  labels:
+    app.kubernetes.io/name: operator
+    app.kubernetes.io/managed-by: kustomize
+  name: feed-sample
+spec:
+  name: abc.com
+  link: https://api.abc.api

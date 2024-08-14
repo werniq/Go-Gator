@@ -15,7 +15,8 @@ var (
 	// different data formats
 	g ParsingFactory
 
-	StoragePath string
+	// StoragePath is the path to folder with all data from application
+	StoragePath string = "/tmp/"
 
 	// sourceToEndpoint maps source names (as strings) to their corresponding filenames
 	sourceToEndpoint = map[string]string{
@@ -35,19 +36,10 @@ var (
 	}
 )
 
-const (
-	ErrNoSource = "no source was detected. please, create source first"
-
-	ErrSourceExists = "this source already exists"
-)
-
 // AddNewSource inserts new source to available sources list and determines the appropriate Parser for it
 //
 // Throws an error, if the source was already registered previously.
 func AddNewSource(format, source, endpoint string) error {
-	if _, exists := sourceToEndpoint[source]; exists {
-		return errors.New(ErrSourceExists)
-	}
 	sourceToEndpoint[source] = endpoint
 	sourceToParser[source] = determineParser(format, source)
 
@@ -77,10 +69,6 @@ func GetSourceDetailed(source string) types.Source {
 //
 // Throws an error, if provided source not exists
 func UpdateSourceEndpoint(source, newEndpoint string) error {
-	if _, exists := sourceToParser[source]; exists {
-		return errors.New(ErrNoSource)
-	}
-
 	sourceToEndpoint[source] = newEndpoint
 	err := UpdateSourceFile()
 	if err != nil {
@@ -94,10 +82,6 @@ func UpdateSourceEndpoint(source, newEndpoint string) error {
 //
 // Throws an error, if provided source not exists
 func UpdateSourceFormat(source, format string) error {
-	if _, exists := sourceToParser[source]; exists {
-		return errors.New(ErrNoSource)
-	}
-
 	sourceToParser[source] = determineParser(format, source)
 	err := UpdateSourceFile()
 	if err != nil {
@@ -109,16 +93,12 @@ func UpdateSourceFormat(source, format string) error {
 
 // DeleteSource removes source from the map
 func DeleteSource(source string) error {
-	if _, exists := sourceToEndpoint[source]; exists {
-		delete(sourceToEndpoint, source)
-		delete(sourceToParser, source)
+	delete(sourceToEndpoint, source)
+	delete(sourceToParser, source)
 
-		err := UpdateSourceFile()
-		if err != nil {
-			return err
-		}
-	} else {
-		return errors.New(ErrNoSource)
+	err := UpdateSourceFile()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -127,28 +107,23 @@ func DeleteSource(source string) error {
 // LoadSourcesFile initializes sourceToParser and sourceToEndpoint with data stored in
 // sources.json file.
 func LoadSourcesFile() error {
-	cwdPath, err := os.Getwd()
+	sourcesFilepath := filepath.Join(StoragePath, sourcesFile)
+
+	file, err := os.Open(sourcesFilepath)
 	if err != nil {
 		return err
 	}
 
-	f := filepath.Join(cwdPath, StoragePath, sourcesFile)
-
-	file, err := os.Open(f)
+	sourcesFileData, err := io.ReadAll(file)
 	if err != nil {
 		return err
 	}
-
-	data, err := io.ReadAll(file)
-	if err != nil {
-		return err
-	}
-	if data == nil {
+	if sourcesFileData == nil {
 		return nil
 	}
 
 	var sources []types.Source
-	err = json.Unmarshal(data, &sources)
+	err = json.Unmarshal(sourcesFileData, &sources)
 	if err != nil {
 		return err
 	}
@@ -168,18 +143,13 @@ func LoadSourcesFile() error {
 // the file cannot be created or opened,
 // or if the file content cannot be written or closed properly.
 func UpdateSourceFile() error {
-	cwdPath, err := os.Getwd()
-	if err != nil {
-		return err
-	}
+	sourcesFilePath := filepath.Join(StoragePath, sourcesFile)
 
-	f := filepath.Join(cwdPath, StoragePath, sourcesFile)
-
-	file, err := os.Create(f)
+	file, err := os.Create(sourcesFilePath)
 	if err != nil {
 		switch {
 		case errors.Is(err, os.ErrExist):
-			file, err = os.Open(f)
+			file, err = os.Open(sourcesFilePath)
 		case err != nil:
 			return err
 		}
@@ -196,12 +166,12 @@ func UpdateSourceFile() error {
 		})
 	}
 
-	out, err := json.Marshal(sources)
+	sourcesFileData, err := json.Marshal(sources)
 	if err != nil {
 		return err
 	}
 
-	_, err = file.Write(out)
+	_, err = file.Write(sourcesFileData)
 	if err != nil {
 		return err
 	}

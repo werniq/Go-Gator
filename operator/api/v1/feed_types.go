@@ -20,8 +20,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type FeedConditionType string
-
 const (
 	// TypeFeedCreated represents the Created condition type
 	TypeFeedCreated = "Created"

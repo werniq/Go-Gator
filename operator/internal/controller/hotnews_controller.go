@@ -184,7 +184,7 @@ type article struct {
 func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggregatorv1.HotNews) error {
 	logger := log.FromContext(ctx)
 
-	requestUrl, err := r.constructRequestUrl(hotNews.Spec)
+	requestUrl, err := r.constructRequestUrl(ctx, hotNews.Spec)
 	if err != nil {
 		logger.Error(err, errFailedToConstructRequestUrl)
 		return err
@@ -253,7 +253,7 @@ func (r *HotNewsReconciler) handleUpdate(ctx context.Context, hotNews *newsaggre
 	logger := log.FromContext(ctx)
 	logger.Info("handling update")
 
-	requestUrl, err := r.constructRequestUrl(hotNews.Spec)
+	requestUrl, err := r.constructRequestUrl(ctx, hotNews.Spec)
 	if err != nil {
 		logger.Error(err, errFailedToConstructRequestUrl)
 		return err
@@ -331,7 +331,7 @@ func (r *HotNewsReconciler) handleDelete(ctx context.Context, hotNews *newsaggre
 // Example:
 // http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&dateEnd=2024-08-06&sources=abc,bbc
 // http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&sources=abc,bbc
-func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpec) (string, error) {
+func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsaggregatorv1.HotNewsSpec) (string, error) {
 	var requestUrl strings.Builder
 
 	requestUrl.WriteString(r.serverUrl)
@@ -348,12 +348,36 @@ func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpe
 			return "", err
 		}
 		feedStr.WriteString(feedGroups)
-	} else if spec.Feeds != nil {
-		for _, feed := range spec.Feeds {
-			feedStr.WriteString(feed)
+	} else {
+		var feeds []newsaggregatorv1.Feed
+		var err error
+
+		if spec.Feeds == nil {
+			feeds, err = r.getAllFeedsInCurrentNamespace(ctx)
+			if err != nil {
+				return "", err
+			}
+		} else {
+			feeds, err = r.getAllFeedsInCurrentNamespace(ctx)
+			if err != nil {
+				return "", err
+			}
+
+			for _, feed := range spec.Feeds {
+				if !r.feedInNamespace(spec.Feeds, feed) {
+					return "", fmt.Errorf("feed %s is not in the current namespace", feed)
+				} else {
+					feeds = append(feeds, newsaggregatorv1.Feed{Spec: newsaggregatorv1.FeedSpec{Name: feed}})
+				}
+			}
+		}
+
+		for _, feed := range feeds {
+			feedStr.WriteString(feed.Spec.Name)
 			feedStr.WriteRune(',')
 		}
 	}
+
 	if feedStr.String() != "" {
 		requestUrl.WriteString("&sources=" + feedStr.String()[:len(feedStr.String())-1])
 	}
@@ -388,6 +412,27 @@ func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec)
 	}
 
 	return sourcesBuilder.String(), nil
+}
+
+// feedInNamespace returns true if feed is in the namespace, otherwise - false
+func (r *HotNewsReconciler) feedInNamespace(namespace []string, feed string) bool {
+	for _, source := range namespace {
+		if source == feed {
+			return true
+		}
+	}
+	return false
+}
+
+// getAllFeedsInCurrentNamespace returns all feeds in the current namespace
+func (r *HotNewsReconciler) getAllFeedsInCurrentNamespace(ctx context.Context) ([]newsaggregatorv1.Feed, error) {
+	var feeds newsaggregatorv1.FeedList
+	err := r.Client.List(ctx, &feeds)
+	if err != nil {
+		return nil, err
+	}
+
+	return feeds.Items, nil
 }
 
 // getConfigMapData returns all data from config map named FeedGroupsConfigMapName in FeedGroupsNamespace

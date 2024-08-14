@@ -84,7 +84,6 @@ const (
 // and updates the HotNews object.
 type HotNewsReconciler struct {
 	serverUrl string
-	feeds     []string
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -95,9 +94,12 @@ type HotNewsReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state
+//
 // This function will be called when a HotNews object is created, updated or deleted
 // It will send a request to the news aggregator server to retrieve news with the parameters,
 // specified in the HotNews object.
+// Additionally, it is watching for changes in the ConfigMap with the feed groups, and in the Feed CRD.
+// If there were any changes, it will also affect the HotNews object.
 func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
@@ -379,9 +381,7 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsag
 		}
 	}
 
-	if feedStr.String() != "" {
-		requestUrl.WriteString("&sources=" + feedStr.String()[:len(feedStr.String())-1])
-	}
+	requestUrl.WriteString("&sources=" + feedStr.String()[:len(feedStr.String())-1])
 
 	if spec.DateStart != "" {
 		requestUrl.WriteString("&dateFrom=" + spec.DateStart)
@@ -394,7 +394,8 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsag
 	return requestUrl.String(), nil
 }
 
-// processFeedGroups function processes feed groups from the ConfigMap and returns a string with feed sources
+// processFeedGroups function processes feed groups from the ConfigMap and returns a string containing comma-separated
+// feed sources
 func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec) (string, error) {
 	var sourcesBuilder strings.Builder
 
@@ -415,27 +416,6 @@ func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec)
 	return sourcesBuilder.String(), nil
 }
 
-// feedInNamespace returns true if feed is in the namespace, otherwise - false
-func (r *HotNewsReconciler) feedInNamespace(namespace []string, feed string) bool {
-	for _, source := range namespace {
-		if source == feed {
-			return true
-		}
-	}
-	return false
-}
-
-// getAllFeedsInCurrentNamespace returns all feeds in the current namespace
-func (r *HotNewsReconciler) getAllFeedsInCurrentNamespace(ctx context.Context) ([]newsaggregatorv1.Feed, error) {
-	var feeds newsaggregatorv1.FeedList
-	err := r.Client.List(ctx, &feeds)
-	if err != nil {
-		return nil, err
-	}
-
-	return feeds.Items, nil
-}
-
 // getConfigMapData returns all data from config map named FeedGroupsConfigMapName in FeedGroupsNamespace
 func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (*v1.ConfigMap, error) {
 	configMap, err := clientset.CoreV1().
@@ -452,4 +432,25 @@ func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (*v1.ConfigMap, e
 	}
 
 	return configMap, nil
+}
+
+// getAllFeedsInCurrentNamespace returns all feeds in the current namespace
+func (r *HotNewsReconciler) getAllFeedsInCurrentNamespace(ctx context.Context) ([]newsaggregatorv1.Feed, error) {
+	var feeds newsaggregatorv1.FeedList
+	err := r.Client.List(ctx, &feeds)
+	if err != nil {
+		return nil, err
+	}
+
+	return feeds.Items, nil
+}
+
+// feedInNamespace returns true if feed is in the namespace, otherwise - false
+func (r *HotNewsReconciler) feedInNamespace(namespace []string, feed string) bool {
+	for _, source := range namespace {
+		if source == feed {
+			return true
+		}
+	}
+	return false
 }

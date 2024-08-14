@@ -45,6 +45,26 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+const (
+	// defaultMetricsBindAddress is the default address the metric endpoint should bind to
+	defaultMetricsBindAddress = "0"
+
+	// defaultHealthProbeBindAddress is the default address the health probe endpoint will bind to
+	defaultHealthProbeBindAddress = ":8081"
+
+	// defaultEnableLeaderElection is the default value for enabling leader election
+	defaultEnableLeaderElection = false
+
+	// defaultEnableSecureMetrics is the default value for enabling secure metrics
+	defaultEnableSecureMetrics = true
+
+	// defaultEnableHttp2 is the default value for enabling HTTP/2
+	defaultEnableHttp2 = false
+
+	// defaultServerUrl is a default url address of the news aggregator server
+	defaultServerUrl = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
+)
+
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
@@ -53,30 +73,35 @@ func init() {
 }
 
 func main() {
-	var metricsAddr string
-	var enableLeaderElection bool
-	var probeAddr string
-	var secureMetrics bool
-	var enableHTTP2 bool
-	var tlsOpts []func(*tls.Config)
-	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
+	var (
+		metricsAddr          string
+		enableLeaderElection bool
+		probeAddr            string
+		secureMetrics        bool
+		serverUrl            string
+		enableHTTP2          bool
+		tlsOpts              []func(*tls.Config)
+	)
+	flag.StringVar(&metricsAddr, "metrics-bind-address", defaultMetricsBindAddress, "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
+	flag.StringVar(&serverUrl, "server-url", defaultServerUrl, "Url address of the news aggregator server")
+	flag.StringVar(&probeAddr, "health-probe-bind-address", defaultHealthProbeBindAddress, "The address the probe endpoint binds to.")
+	flag.BoolVar(&enableLeaderElection, "leader-elect", defaultEnableLeaderElection,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.BoolVar(&secureMetrics, "metrics-secure", true,
+	flag.BoolVar(&secureMetrics, "metrics-secure", defaultEnableSecureMetrics,
 		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
-	flag.BoolVar(&enableHTTP2, "enable-http2", false,
+	flag.BoolVar(&enableHTTP2, "enable-http2", defaultEnableHttp2,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
+
 	opts := zap.Options{
 		Development: true,
 	}
+
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
-
 	disableHTTP2 := func(c *tls.Config) {
 		setupLog.Info("disabling http/2")
 		c.NextProtos = []string{"http/1.1"}
@@ -116,7 +141,7 @@ func main() {
 	if err = (&controller.HotNewsReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, serverUrl); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "HotNews")
 		os.Exit(1)
 	}

@@ -156,6 +156,7 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 }
 
 func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
+	serverNewsEndpoint := "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
 	type fields struct {
 		Client client.Client
 		Scheme *runtime.Scheme
@@ -385,6 +386,7 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 }
 
 func TestHotNewsReconciler_handleCreate(t *testing.T) {
+	serverNewsEndpoint := "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
 	scheme := runtime.NewScheme()
 	_ = newsaggregatorv1.AddToScheme(scheme)
 
@@ -540,8 +542,9 @@ func TestHotNewsReconciler_handleCreate(t *testing.T) {
 			}
 
 			r := &HotNewsReconciler{
-				Client: tt.fields.Client,
-				Scheme: tt.fields.Scheme,
+				Client:    tt.fields.Client,
+				Scheme:    tt.fields.Scheme,
+				serverUrl: serverNewsEndpoint,
 			}
 			if err := r.handleCreate(tt.args.ctx, tt.args.hotNews); (err != nil) != tt.wantErr {
 				t.Errorf("handleCreate() error = %v, wantErr %v", err, tt.wantErr)
@@ -551,6 +554,7 @@ func TestHotNewsReconciler_handleCreate(t *testing.T) {
 }
 
 func TestHotNewsReconciler_handleUpdate(t *testing.T) {
+	serverNewsEndpoint := "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
 	scheme := runtime.NewScheme()
 	_ = newsaggregatorv1.AddToScheme(scheme)
 
@@ -706,8 +710,9 @@ func TestHotNewsReconciler_handleUpdate(t *testing.T) {
 			}
 
 			r := &HotNewsReconciler{
-				Client: tt.fields.Client,
-				Scheme: tt.fields.Scheme,
+				Client:    tt.fields.Client,
+				Scheme:    tt.fields.Scheme,
+				serverUrl: serverNewsEndpoint,
 			}
 			if err := r.handleUpdate(tt.args.ctx, tt.args.hotNews); (err != nil) != tt.wantErr {
 				t.Errorf("handleCreate() error = %v, wantErr %v", err, tt.wantErr)

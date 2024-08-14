@@ -43,9 +43,6 @@ var (
 	c = config.GetConfigOrDie()
 
 	k8sClient *kubernetes.Clientset
-
-	// serverNewsEndpoint is a URL to our news aggregator server
-	serverNewsEndpoint = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
 )
 
 const (
@@ -73,6 +70,7 @@ const (
 
 // HotNewsReconciler reconciles a HotNews object
 type HotNewsReconciler struct {
+	serverUrl string
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -83,12 +81,13 @@ type HotNewsReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state
+// This function will be called when a HotNews object is created, updated or deleted
+// It will send a request to the news aggregator server to retrieve news with the parameters,
+// specified in the HotNews object.
 func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
 	var hotNews newsaggregatorv1.HotNews
-
-	logger.Info("Entering reconciler")
 
 	err := r.Client.Get(ctx, req.NamespacedName, &hotNews)
 	if err != nil {
@@ -97,7 +96,6 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if !hotNews.ObjectMeta.DeletionTimestamp.IsZero() {
-		logger.Info("HotNews is deleting")
 		err = r.handleDelete(ctx, &hotNews)
 		if err != nil {
 			return ctrl.Result{}, err
@@ -107,19 +105,17 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if !hotNews.ObjectMeta.CreationTimestamp.IsZero() {
-		logger.Info("HotNews is creating")
 		err = r.handleCreate(ctx, &hotNews)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		logger.Info("HotNews has been created")
+		logger.Info("HotNews object has been created")
 	} else {
-		logger.Info("HotNews is updating")
 		err = r.handleUpdate(ctx, &hotNews)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		logger.Info("HotNews has been updated")
+		logger.Info("HotNews object has been updated")
 	}
 
 	err = r.Client.Status().Update(ctx, &hotNews)
@@ -132,13 +128,17 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{}, nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager) error {
+// SetupWithManager sets up the controller with the Manager, and initializes the k8s client
+// to work with feedGroup Config Map.
+// It Watches for any changes in the ConfigMap with the feed groups, and also watches for changes in Feed CRD.
+func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string) error {
 	var err error
 	k8sClient, err = kubernetes.NewForConfig(c)
 	if err != nil {
 		return err
 	}
+
+	r.serverUrl = serverUrl
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.HotNews{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
@@ -212,12 +212,11 @@ func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggre
 	for _, a := range articles.News {
 		articlesTitles = append(articlesTitles, a.Title)
 	}
-	logger.Info("Total amoutn of news", "totalAmount", articles.TotalNews)
+	logger.Info("Total amount of news", "totalAmount", articles.TotalNews)
 
 	hotNews.InitHotNewsStatus(articles.TotalNews, requestUrl, articlesTitles)
 
 	logger.Info("HotNews.handleCreate has been successfully executed")
-	logger.Info("HotNews object", "HotNews", hotNews)
 
 	return nil
 }
@@ -317,7 +316,7 @@ func (r *HotNewsReconciler) handleDelete(ctx context.Context, hotNews *newsaggre
 func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpec) (string, error) {
 	var requestUrl strings.Builder
 
-	requestUrl.WriteString(serverNewsEndpoint)
+	requestUrl.WriteString(r.serverUrl)
 	requestUrl.WriteString("?keywords=" + spec.Keywords)
 
 	if len(spec.Feeds) < 1 && spec.FeedGroups == nil {
@@ -373,7 +372,7 @@ func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec)
 	return sourcesBuilder.String(), nil
 }
 
-// getConfigMapData returns all data from config map named FeedGroupsConfigMapName in defaultNamespace
+// getConfigMapData returns all data from config map named FeedGroupsConfigMapName in FeedGroupsNamespace
 func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (*v1.ConfigMap, error) {
 	configMap, err := k8sClient.CoreV1().
 		ConfigMaps(newsaggregatorv1.FeedGroupsNamespace).

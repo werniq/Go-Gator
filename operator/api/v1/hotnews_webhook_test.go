@@ -17,31 +17,76 @@ limitations under the License.
 package v1
 
 import (
-	. "github.com/onsi/ginkgo/v2"
+	"github.com/stretchr/testify/assert"
+	"k8s.io/client-go/kubernetes"
+	"testing"
 )
 
-var _ = Describe("HotNews Webhook", func() {
+func TestFeed_validateFeed(t *testing.T) {
+	var err error
+	k8sClient, err = kubernetes.NewForConfig(c)
+	assert.Nil(t, err)
+	var tests = []struct {
+		name        string
+		hotNew      *HotNews
+		expectedErr bool
+	}{
+		{
+			name: "Successful validation",
+			hotNew: &HotNews{
+				Spec: HotNewsSpec{
+					Keywords:   "test",
+					DateStart:  "2021-01-01",
+					DateEnd:    "2021-01-02",
+					FeedGroups: []string{"sport"},
+				},
+			},
+			expectedErr: false,
+		},
+		{
+			name: "Validation failure due to invalid hotNew date range",
+			hotNew: &HotNews{
+				Spec: HotNewsSpec{
+					Keywords:  "test",
+					DateStart: "2021-01-03",
+					DateEnd:   "2021-01-02",
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "Validation failure because of empty feeds and feedGroups",
+			hotNew: &HotNews{
+				Spec: HotNewsSpec{
+					Keywords:  "test",
+					DateStart: "2021-01-01",
+					DateEnd:   "2021-01-02",
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "Validation failure because of empty feeds and feedGroups",
+			hotNew: &HotNews{
+				Spec: HotNewsSpec{
+					Keywords:   "test",
+					DateStart:  "2021-01-01",
+					DateEnd:    "2021-01-02",
+					FeedGroups: []string{"non-existing-feed"},
+				},
+			},
+			expectedErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.hotNew.validateHotNews()
 
-	Context("When creating HotNews under Defaulting Webhook", func() {
-		It("Should fill in the default value if a required field is empty", func() {
-
-			// TODO(user): Add your logic here
-
+			if tt.expectedErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
 		})
-	})
-
-	Context("When creating HotNews under Validating Webhook", func() {
-		It("Should deny if a required field is empty", func() {
-
-			// TODO(user): Add your logic here
-
-		})
-
-		It("Should admit if all required fields are provided", func() {
-
-			// TODO(user): Add your logic here
-
-		})
-	})
-
-})
+	}
+}

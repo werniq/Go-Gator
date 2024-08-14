@@ -36,20 +36,32 @@ const (
 	// errInvalidDateRange is an error message indicating input of wrong date range
 	errInvalidDateRange = "DateStart should be before than DateEnd"
 
-	// errWrongFeedGroupName is an error message for wrong feed group name
-	errWrongFeedGroupName = "feed group name is not found in the ConfigMap, please check the feed group name"
+	// errWrongFeedGroupName is an error message for wrong hotNew group name
+	errWrongFeedGroupName = "hotNew group name is not found in the ConfigMap, please check the hotNew group name"
 
-	// FeedGroupsNamespace is a namespace where feed groups are stored
+	// FeedGroupsNamespace is a namespace where hotNew groups are stored
 	FeedGroupsNamespace = "operator-system"
 
-	// FeedGroupsConfigMapName is a name of the default ConfigMap which contains our feed groups names and sources
+	// FeedGroupsConfigMapName is a name of the default ConfigMap which contains our hotNew groups names and sources
 	FeedGroupsConfigMapName = "feed-group-source"
 )
 
-var hotnewslog = logf.Log.WithName("hotnews-resource")
+var (
+	hotnewslog = logf.Log.WithName("hotnews-resource")
+
+	c = config.GetConfigOrDie()
+
+	k8sClient *kubernetes.Clientset
+)
 
 // SetupWebhookWithManager will setup the manager to manage the webhooks
 func (r *HotNews) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	var err error
+	k8sClient, err = kubernetes.NewForConfig(c)
+	if err != nil {
+		return err
+	}
+
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -63,7 +75,9 @@ var _ webhook.Defaulter = &HotNews{}
 func (r *HotNews) Default() {
 	hotnewslog.Info("default", "name", r.Name)
 
-	r.Spec.SummaryConfig.TitlesCount = 10
+	if r.Spec.SummaryConfig.TitlesCount == 0 {
+		r.Spec.SummaryConfig.TitlesCount = 10
+	}
 }
 
 // +kubebuilder:webhook:path=/validate-newsaggregator-teamdev-com-v1-hotnews,mutating=false,failurePolicy=fail,sideEffects=None,groups=newsaggregator.teamdev.com,resources=hotnews,verbs=create;update;delete,versions=v1,name=vhotnews.kb.io,admissionReviewVersions=v1
@@ -73,6 +87,10 @@ var _ webhook.Validator = &HotNews{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *HotNews) ValidateCreate() (admission.Warnings, error) {
 	hotnewslog.Info("validate create", "name", r.Name)
+	err := r.validateHotNews()
+	if err != nil {
+		return nil, err
+	}
 
 	return nil, nil
 }
@@ -80,6 +98,10 @@ func (r *HotNews) ValidateCreate() (admission.Warnings, error) {
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *HotNews) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	hotnewslog.Info("validate update", "name", r.Name)
+	err := r.validateHotNews()
+	if err != nil {
+		return nil, err
+	}
 
 	return nil, nil
 }
@@ -92,7 +114,7 @@ func (r *HotNews) ValidateDelete() (admission.Warnings, error) {
 }
 
 // validateHotNews validates the HotNews resource.
-// In particular, it checks if the DateStart is before DateEnd and if all feed group names are correct.
+// In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct.
 func (r *HotNews) validateHotNews() error {
 	if r.Spec.DateStart > r.Spec.DateEnd {
 		return fmt.Errorf(errInvalidDateRange)
@@ -102,12 +124,6 @@ func (r *HotNews) validateHotNews() error {
 		return fmt.Errorf(errNoFeeds)
 	}
 
-	c := config.GetConfigOrDie()
-
-	k8sClient, err := kubernetes.NewForConfig(c)
-	if err != nil {
-		return err
-	}
 	configMap, err := k8sClient.CoreV1().ConfigMaps(FeedGroupsNamespace).
 		Get(context.Background(), FeedGroupsConfigMapName, v12.GetOptions{})
 

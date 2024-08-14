@@ -37,7 +37,7 @@ type HotNewsSpec struct {
 	// +optional
 	Feeds []string `json:"feeds,omitempty"`
 
-	// FeedGroups are available sections of feeds from `feed-group-source` ConfigMap
+	// FeedGroups are available sections of feeds from `hotNew-group-source` ConfigMap
 	// +optional
 	FeedGroups []string `json:"feedGroups,omitempty"`
 

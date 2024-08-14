@@ -81,10 +81,6 @@ tasks:
       - kubectl apply -f templates/
 
   undeploy:
-<<<<<<< HEAD
     desc: Remove news aggregator from kubernetes Cluster
-=======
-    desc: Remove news-aggregator from kubernetes Cluster
->>>>>>> 8c98ae30f2389118af82a03ddfa45ac98a6f4867
     cmds:
       - kubectl delete -f templates/

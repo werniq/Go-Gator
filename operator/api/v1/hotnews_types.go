@@ -20,7 +20,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// HotNewsSpec defines the desired state of HotNews
+// HotNewsSpec defines the desired state of HotNews.
+//
+// This struct will be used to retrieve news by the criteria, specified here
+// For example, we can specify keywords, date range, feeds and feed groups
+// And then we will make requests to our news aggregator server with this parameters, and get the news
 type HotNewsSpec struct {
 	// Keywords is a comma-separated list of keywords which will be used to search news
 	// +optional
@@ -46,7 +50,8 @@ type HotNewsSpec struct {
 	SummaryConfig SummaryConfig `json:"summaryConfig,omitempty"`
 }
 
-// SummaryConfig struct
+// SummaryConfig struct defines the configuration for the summary of hot news
+// It stores the number of titles to show and store in HotNewsStatus.ArticlesTitles
 type SummaryConfig struct {
 	// TitlesCount is a number of titles to show in the summary
 	TitlesCount int `json:"titlesCount"`
@@ -93,5 +98,10 @@ func init() {
 func (r *HotNews) InitHotNewsStatus(articlesCount int, requestUrl string, articlesTitles []string) {
 	r.Status.ArticlesCount = articlesCount
 	r.Status.NewsLink = requestUrl
-	r.Status.ArticlesTitles = articlesTitles
+
+	var articles []string
+	for i := 0; i <= r.Spec.SummaryConfig.TitlesCount; i++ {
+		articles = append(articles, articlesTitles[i])
+	}
+	r.Status.ArticlesTitles = articles
 }

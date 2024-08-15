@@ -127,7 +127,7 @@ func (r *HotNews) validateHotNews() error {
 	}
 
 	configMap, err := clientset.CoreV1().ConfigMaps(FeedGroupsNamespace).
-		Get(context.Background(), FeedGroupsConfigMapName, v12.GetOptions{})
+		Get(context.TODO(), FeedGroupsConfigMapName, v12.GetOptions{})
 
 	if err != nil {
 		return err

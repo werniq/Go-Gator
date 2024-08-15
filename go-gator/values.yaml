@@ -3,27 +3,32 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
-namespace: default
+namespace: go-gator
 
 image:
   repository: qniw984/go-gator
   pullPolicy: IfNotPresent
   tag: "1.3.0"
 
-serviceAccount:
-  create: true
-  automount: true
-  annotations: {}
-  name: go-gator-service
-
 service:
   type: ClusterIP
-  selector:
-    app: go-gator
-  ports:
-    - protocol: TCP
-      port: 443
-      targetPort: 443
+  port: 80
+
+serviceAccount:
+  create: true
+  automount: false
+  name: go-gator-service
+  namespace: go-gator
+
+ingress:
+  enabled: false
+  className: ""
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
 
 resources:
    limits:
@@ -41,6 +46,7 @@ autoscaling:
 
 volumes:
   - name: go-gator-pv
+    namespace: go-gator
     persistentVolumeClaim:
       claimName: go-gator-pvc
 

@@ -1,0 +1,214 @@
+version: '3'
+
+vars:
+  IMG:
+    default: 'qniw984/hotnews-controller:1.2.6'
+  ENVTEST_K8S_VERSION:
+    default: '1.30.0'
+  CONTAINER_TOOL:
+    default: 'docker'
+  LOCALBIN:
+    sh: pwd + '/bin'
+  GOBIN:
+    sh: 'go env GOBIN || go env GOPATH/bin'
+  PLATFORMS:
+    default: 'linux/arm64,linux/amd64,linux/s390x,linux/ppc64le'
+  KUBECTL:
+    default: 'kubectl'
+  KUSTOMIZE:
+    default: '{{.LOCALBIN}}/kustomize'
+  CONTROLLER_GEN:
+    default: '{{.LOCALBIN}}/controller-gen'
+  ENVTEST:
+    default: '{{.LOCALBIN}}/setup-envtest'
+  GOLANGCI_LINT:
+    default: '{{.LOCALBIN}}/golangci-lint'
+  KUSTOMIZE_VERSION:
+    default: 'v5.4.2'
+  CONTROLLER_TOOLS_VERSION:
+    default: 'v0.15.0'
+  ENVTEST_VERSION:
+    default: 'release-0.18'
+  GOLANGCI_LINT_VERSION:
+    default: 'v1.59.1'
+
+tasks:
+  all:
+    desc: Build the project
+    cmds:
+      - task: build
+
+  manifests:
+    desc: Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+    cmds:
+      - '{{.CONTROLLER_GEN}} rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases'
+
+  generate:
+    desc: Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+    cmds:
+      - '{{.CONTROLLER_GEN}} object:headerFile="hack/boilerplate.go.txt" paths="./..."'
+
+  fmt:
+    desc: Run go fmt against code.
+    cmds:
+      - 'go fmt ./...'
+
+  vet:
+    desc: Run go vet against code.
+    cmds:
+      - 'go vet ./...'
+
+  test:
+    desc: Run tests.
+    cmds:
+      - |
+        KUBEBUILDER_ASSETS="$(ENVTEST) use {{.ENVTEST_K8S_VERSION}} --bin-dir {{.LOCALBIN}} -p path" go test $(go list ./... | grep -v /e2e) -coverprofile cover.out
+
+  test-e2e:
+    desc: Run the e2e tests against a Kind k8s instance that is spun up.
+    cmds:
+      - 'go test ./test/e2e/ -v -ginkgo.v'
+
+  lint:
+    desc: Run golangci-lint linter.
+    cmds:
+      - '{{.GOLANGCI_LINT}} run'
+
+  lint-fix:
+    desc: Run golangci-lint linter and perform fixes.
+    cmds:
+      - '{{.GOLANGCI_LINT}} run --fix'
+
+  build:
+    desc: Build manager binary.
+    cmds:
+      - task: manifests
+      - task: generate
+      - task: fmt
+      - task: vet
+      - 'go build -o bin/manager cmd/main.go'
+
+  run:
+    desc: Run a controller from your host.
+    cmds:
+      - task: manifests
+      - task: generate
+      - task: fmt
+      - task: vet
+      - 'go run ./cmd/main.go'
+
+  docker-build:
+    desc: Build docker image with the manager.
+    cmds:
+      - '{{.CONTAINER_TOOL}} build -t {{.IMG}} .'
+
+  docker-push:
+    desc: Push docker image with the manager.
+    cmds:
+      - '{{.CONTAINER_TOOL}} push {{.IMG}}'
+
+  docker-buildx:
+    desc: Build and push docker image for the manager for cross-platform support.
+    cmds:
+      - 'sed -e ''1 s/\(^FROM\)/FROM --platform=\$$\{BUILDPLATFORM\}/; t'' -e ''1,// s//FROM --platform=\$$\{BUILDPLATFORM\}/'' Dockerfile > Dockerfile.cross'
+      - '- {{.CONTAINER_TOOL}} buildx create --name operator-builder'
+      - '{{.CONTAINER_TOOL}} buildx use operator-builder'
+      - '- {{.CONTAINER_TOOL}} buildx build --push --platform={{.PLATFORMS}} --tag {{.IMG}} -f Dockerfile.cross .'
+      - '- {{.CONTAINER_TOOL}} buildx rm operator-builder'
+      - 'rm Dockerfile.cross'
+
+  build-installer:
+    desc: Generate a consolidated YAML with CRDs and deployment.
+    cmds:
+      - task: manifests
+      - task: generate
+      - task: kustomize
+      - 'mkdir -p dist'
+      - 'cd config/manager && {{.KUSTOMIZE}} edit set image controller={{.IMG}}'
+      - '{{.KUSTOMIZE}} build config/default > dist/install.yaml'
+
+  install:
+    desc: Install CRDs into the K8s cluster specified in ~/.kube/config.
+    cmds:
+      - '{{.KUSTOMIZE}} build config/crd | {{.KUBECTL}} apply -f -'
+
+  uninstall:
+    desc: Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
+    cmds:
+      - '{{.KUSTOMIZE}} build config/crd | {{.KUBECTL}} delete --ignore-not-found=$(ignore-not-found) -f -'
+
+  deploy:
+    desc: Deploy controller to the K8s cluster specified in ~/.kube/config.
+    cmds:
+      - 'cd config/manager && {{.KUSTOMIZE}} edit set image controller={{.IMG}}'
+      - '{{.KUSTOMIZE}} build config/default | {{.KUBECTL}} apply -f -'
+
+  undeploy:
+    desc: Undeploy controller from the K8s cluster specified in ~/.kube/config.
+    cmds:
+      - '{{.KUSTOMIZE}} build config/default | {{.KUBECTL}} delete --ignore-not-found=$(ignore-not-found) -f -'
+
+  kustomize:
+    desc: Download kustomize locally if necessary.
+    cmds:
+      - task: {{.LOCALBIN}}
+      - |
+        [ -f "{{.KUSTOMIZE}}-{{.KUSTOMIZE_VERSION}}" ] || { \
+        set -e; \
+        package=sigs.k8s.io/kustomize/kustomize/v5@{{.KUSTOMIZE_VERSION}} ;\
+        echo "Downloading $${package}" ;\
+        rm -f {{.KUSTOMIZE}} || true ;\
+        GOBIN={{.LOCALBIN}} go install $${package} ;\
+        mv {{.KUSTOMIZE}} {{.KUSTOMIZE}}-{{.KUSTOMIZE_VERSION}} ;\
+        } ;\
+        ln -sf {{.KUSTOMIZE}}-{{.KUSTOMIZE_VERSION}} {{.KUSTOMIZE}}
+
+  controller-gen:
+    desc: Download controller-gen locally if necessary.
+    cmds:
+      - task: {{.LOCALBIN}}
+      - |
+        [ -f "{{.CONTROLLER_GEN}}-{{.CONTROLLER_TOOLS_VERSION}}" ] || { \
+        set -e; \
+        package=sigs.k8s.io/controller-tools/cmd/controller-gen@{{.CONTROLLER_TOOLS_VERSION}} ;\
+        echo "Downloading $${package}" ;\
+        rm -f {{.CONTROLLER_GEN}} || true ;\
+        GOBIN={{.LOCALBIN}} go install $${package} ;\
+        mv {{.CONTROLLER_GEN}} {{.CONTROLLER_GEN}}-{{.CONTROLLER_TOOLS_VERSION}} ;\
+        } ;\
+        ln -sf {{.CONTROLLER_GEN}}-{{.CONTROLLER_TOOLS_VERSION}} {{.CONTROLLER_GEN}}
+
+  envtest:
+    desc: Download setup-envtest locally if necessary.
+    cmds:
+      - task: {{.LOCALBIN}}
+      - |
+        [ -f "{{.ENVTEST}}-{{.ENVTEST_VERSION}}" ] || { \
+        set -e; \
+        package=sigs.k8s.io/controller-runtime/tools/setup-envtest@{{.ENVTEST_VERSION}} ;\
+        echo "Downloading $${package}" ;\
+        rm -f {{.ENVTEST}} || true ;\
+        GOBIN={{.LOCALBIN}} go install $${package} ;\
+        mv {{.ENVTEST}} {{.ENVTEST}}-{{.ENVTEST_VERSION}} ;\
+        } ;\
+        ln -sf {{.ENVTEST}}-{{.ENVTEST_VERSION}} {{.ENVTEST}}
+
+  golangci-lint:
+    desc: Download golangci-lint locally if necessary.
+    cmds:
+      - task: {{.LOCALBIN}}
+      - |
+        [ -f "{{.GOLANGCI_LINT}}-{{.GOLANGCI_LINT_VERSION}}" ] || { \
+        set -e; \
+        package=github.com/golangci/golangci-lint/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}} ;\
+        echo "Downloading $${package}" ;\
+        rm -f {{.GOLANGCI_LINT}} || true ;\
+        GOBIN={{.LOCALBIN}} go install $${package} ;\
+        mv {{.GOLANGCI_LINT}} {{.GOLANGCI_LINT}}-{{.GOLANGCI_LINT_VERSION}} ;\
+        } ;\
+        ln -sf {{.GOLANGCI_LINT}}-{{.GOLANGCI_LINT_VERSION}} {{.GOLANGCI_LINT}}
+
+  {{.LOCALBIN}}:
+  desc: Create bin directory if it doesn't exist.
+  cmds:
+    - mkdir -p {{.LOCALBIN}}

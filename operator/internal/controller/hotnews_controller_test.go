@@ -38,7 +38,7 @@ import (
 
 func TestMain(m *testing.M) {
 	var err error
-	k8sClient, err = kubernetes.NewForConfig(c)
+	clientset, err = kubernetes.NewForConfig(c)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -240,7 +240,7 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 				Client: tt.fields.Client,
 				Scheme: tt.fields.Scheme,
 			}
-			got, err := r.constructRequestUrl(tt.args.spec)
+			got, err := r.constructRequestUrl(context.Background(), tt.args.spec)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("constructRequestUrl() error = %v, wantErr %v", err, tt.wantErr)
 				return

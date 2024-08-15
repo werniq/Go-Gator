@@ -85,3 +85,18 @@ tasks:
     desc: Remove go-gator from kubernetes Cluster
     cmds:
       - kubectl delete -f templates/
+
+  createChart:
+    desc: Created a new Helm chart with all needed resources for news aggregator
+    cmds:
+      - helm create go-gator
+
+  installChart:
+    desc: Install the Helm chart on the Kubernetes cluster
+    cmds:
+      - helm install go-gator ./go-gator
+
+  uninstallChart:
+    desc: Uninstall the Helm chart from the Kubernetes cluster
+    cmds:
+      - helm uninstall go-gator

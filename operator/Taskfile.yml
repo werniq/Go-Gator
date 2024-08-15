@@ -172,24 +172,24 @@ tasks:
   kustomize:
     desc: Download kustomize locally if necessary.
     deps:
-      - kustomize-install-tool
+      - install-kustomize
 
   controller-gen:
     desc: Download controller-gen locally if necessary.
     deps:
-      - controller-gen-install-tool
+      - install-controller-gen
 
   envtest:
     desc: Download setup-envtest locally if necessary.
     deps:
-      - envtest-install-tool
+      - install-envtest
 
   golangci-lint:
     desc: Download golangci-lint locally if necessary.
     deps:
-      - golangci-lint-install-tool
+      - install-golanci-lint
 
-  kustomize-install-tool:
+  install-kustomize:
     vars:
       KUSTOMIZE: '{{ .LOCALBIN }}/kustomize'
       KUSTOMIZE_VERSION: '{{ .KUSTOMIZE_VERSION | default "v5.4.2" }}'
@@ -202,7 +202,7 @@ tasks:
           GO111MODULE=on GOBIN={{ .LOCALBIN }} go install {{ .KUSTOMIZE_PKG }}@{{ .KUSTOMIZE_VERSION }}
         fi
 
-  controller-gen-install-tool:
+  install-controller-gen:
     vars:
       PACKAGE: '{{ .LOCALBIN }}/controller-gen'
       PACKAGE_VERSION: '{{ .CONTROLLER_TOOLS_VERSION | default "v0.15.0" }}'
@@ -219,8 +219,7 @@ tasks:
         fi
         ln -sf "{{ .PACKAGE_VERSION }}-{{ .VERSION }}" {{ .PKG_NAME }}
 
-
-  envtest-install-tool:
+  install-envtest:
     vars:
       PACKAGE: '{{ .LOCALBIN }}/setup-envtest'
       PACKAGE_VERSION: '{{ .ENVTEST_VERSION | default "release-0.18" }}'
@@ -236,7 +235,7 @@ tasks:
         fi
         ln -sf "{{ .PKG_NAME }}-{{ .PACKAGE_VERSION }}" {{ .PACKAGE }}
 
-  golangci-lint-install-tool:
+  install-golanci-lint:
     vars:
       PACKAGE: '{{ .LOCALBIN }}/golangci-lint'
       PACKAGE_VERSION: '{{ .GOLANGCI_LINT_VERSION | default "v1.59.1" }}'

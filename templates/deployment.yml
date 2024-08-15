@@ -26,10 +26,8 @@ spec:
               name: "go-gator-server"
           volumeMounts:
             - mountPath: /tmp/
-            - mountPath: /tmp/data/
               name: go-gator-pv
           args: ["-fs=/tmp/"]
-          args: [ "-fs=/tmp/data/" ]
           resources:
             requests:
               cpu: 100m

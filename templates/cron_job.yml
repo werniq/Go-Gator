@@ -17,7 +17,7 @@ spec:
               image: qniw984/news-fetching-job:1.1.0
               imagePullPolicy: IfNotPresent
               volumeMounts:
-                - mountPath: /tmp/data/
+                - mountPath: /tmp/
                   name: go-gator-pv
           restartPolicy: OnFailure
           volumes:

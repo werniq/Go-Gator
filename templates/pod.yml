@@ -16,6 +16,6 @@ spec:
           hostPort: 443
           name: "go-gator-server"
       volumeMounts:
-        - mountPath: /tmp/data/
+        - mountPath: /tmp/
           name: go-gator-pv
-      args: ["-fs=/tmp/data/"]
+      args: ["-fs=/tmp/"]

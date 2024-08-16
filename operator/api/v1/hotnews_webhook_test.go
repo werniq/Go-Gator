@@ -17,7 +17,10 @@ limitations under the License.
 package v1
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"testing"
 )
@@ -26,6 +29,27 @@ func TestFeed_validateHotNews(t *testing.T) {
 	var err error
 	clientset, err = kubernetes.NewForConfig(c)
 	assert.Nil(t, err)
+
+	_, err = clientset.CoreV1().Namespaces().Create(context.TODO(), &v1.Namespace{
+		ObjectMeta: v12.ObjectMeta{
+			Name: FeedGroupsNamespace,
+		},
+	}, v12.CreateOptions{
+		FieldManager: "test",
+	})
+	if err != nil {
+		assert.Contains(t, err.Error(), "already exists")
+	}
+
+	_, err = clientset.CoreV1().ConfigMaps(FeedGroupsNamespace).Create(context.TODO(), &v1.ConfigMap{
+		ObjectMeta: v12.ObjectMeta{
+			Name: FeedGroupsConfigMapName,
+		},
+	}, v12.CreateOptions{
+		FieldManager: "test",
+	})
+	assert.Nil(t, err)
+
 	var tests = []struct {
 		name        string
 		hotNew      *HotNews
@@ -35,10 +59,10 @@ func TestFeed_validateHotNews(t *testing.T) {
 			name: "Successful validation",
 			hotNew: &HotNews{
 				Spec: HotNewsSpec{
-					Keywords:   "test",
-					DateStart:  "2021-01-01",
-					DateEnd:    "2021-01-02",
-					FeedGroups: []string{"sport"},
+					Keywords:  "test",
+					DateStart: "2021-01-01",
+					DateEnd:   "2021-01-02",
+					Feeds:     []string{"feed1"},
 				},
 			},
 			expectedErr: false,

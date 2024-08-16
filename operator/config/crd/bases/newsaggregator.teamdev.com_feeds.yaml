@@ -17,7 +17,9 @@ spec:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: Feed is the Schema for the feeds API
+        description: |-
+          Feed is the Schema for the feeds API
+          This is the main struct that represents the Feed object, including its specification and status.
         properties:
           apiVersion:
             description: |-
@@ -37,15 +39,22 @@ spec:
           metadata:
             type: object
           spec:
-            description: FeedSpec defines the desired state of Feed
+            description: |-
+              FeedSpec defines the desired state of Feed
+              This struct specifies the configuration and parameters that describe
+              how the Feed should be structured and behave.
             properties:
               link:
-                description: Link field is a string that represents the URL of the
-                  feed
+                description: |-
+                  Link field is a string that represents the URL of the feed
+                  This is a required field that indicates the link associated
+                  with the feed.
                 type: string
               name:
-                description: Name field is a string that represents the name of the
-                  feed
+                description: |-
+                  Name field is a string that represents the name of the feed
+                  This is a required field with a minimum length of 1 character
+                  and a maximum length of 20 characters.
                 maxLength: 20
                 minLength: 1
                 type: string
@@ -55,23 +64,30 @@ spec:
             properties:
               conditions:
                 additionalProperties:
-                  description: FeedConditions are the cond
+                  description: |-
+                    FeedConditions provides detailed information about a specific condition associated with a Feed.
+                    It includes the status, reason, and other metadata related to the condition.
                   properties:
                     lastUpdateTime:
-                      description: LastUpdateTime is a time when an object changes
-                        it's state
+                      description: |-
+                        LastUpdateTime is a time when an object changes its state
+                        This timestamp indicates the last time the condition was updated.
                       type: string
                     message:
-                      description: Message field is a string which is populated if
-                        status is false
+                      description: |-
+                        Message field is a string which is populated if status is false
+                        It provides additional details or a message about the condition.
                       type: string
                     reason:
-                      description: Reason field is a string which is populated if
-                        status is false
+                      description: |-
+                        Reason field is a string which is populated if status is false
+                        It explains the reason for the current status.
                       type: string
                     status:
-                      description: Status field is a boolean that represents the status
-                        of the condition
+                      description: |-
+                        Status field is a boolean that represents the status of the condition
+                        A value of true typically indicates the condition is met, while
+                        false indicates it is not.
                       type: boolean
                   required:
                   - lastUpdateTime
@@ -79,8 +95,10 @@ spec:
                   - reason
                   - status
                   type: object
-                description: Conditions field is a list of conditions that the feed
-                  can have
+                description: |-
+                  Conditions field is a map of conditions that the feed can have
+                  question: i tried to use enum with int iota as mappings keys but i had an error
+                  saying that map keys should be strings, not int
                 type: object
             type: object
         type: object

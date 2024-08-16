@@ -8,7 +8,7 @@ import (
 
 const (
 	// defaultStoragePath contains the default path to the directory where all data will be stored
-	defaultStoragePath = "/tmp/data"
+	defaultStoragePath = "/tmp/"
 )
 
 func main() {

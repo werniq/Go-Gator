@@ -44,7 +44,6 @@ var k8sClient client.Client
 
 const (
 	// defaultSourceFormat identifies default data format which should be used for new feed
-	defaultSourceFormat = "xml"
 
 	// feedFinalizerName is a title of finalizer which will be added to feed object
 	// for proper deletion of feed in news aggregator
@@ -164,7 +163,6 @@ type sourceBody struct {
 func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
 	source := sourceBody{
 		Name:     feed.Spec.Name,
-		Format:   defaultSourceFormat,
 		Endpoint: feed.Spec.Link,
 	}
 
@@ -216,7 +214,6 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
 	source := sourceBody{
 		Name:     feed.Spec.Name,
-		Format:   defaultSourceFormat,
 		Endpoint: feed.Spec.Link,
 	}
 
@@ -266,7 +263,6 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
 	source := sourceBody{
 		Name:     feed.Spec.Name,
-		Format:   defaultSourceFormat,
 		Endpoint: feed.Spec.Link,
 	}
 

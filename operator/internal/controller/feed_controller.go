@@ -85,7 +85,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		}
 	} else {
 		if controllerutil.ContainsFinalizer(&feed, feedFinalizerName) {
-			logger.Info("Calling the delete handler")
+			logger.Info("Handling the delete event")
 			if _, err = r.handleDelete(ctx, &feed); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -108,10 +108,10 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		feed.Status.Conditions[newsaggregatorv1.TypeFeedCreated].Status == false
 
 	if isNew {
-		logger.Info("Calling the create handler")
+		logger.Info("Handling the create event")
 		res, err = r.handleCreate(ctx, &feed)
 	} else {
-		logger.Info("Calling the update handler")
+		logger.Info("Handling the update event")
 		res, err = r.handleUpdate(ctx, &feed)
 	}
 
@@ -268,10 +268,6 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 		Name:     feed.Spec.Name,
 		Format:   defaultSourceFormat,
 		Endpoint: feed.Spec.Link,
-	}
-
-	if feed.Name == "" {
-		return ctrl.Result{}, nil
 	}
 
 	sourceData, err := json.Marshal(source)

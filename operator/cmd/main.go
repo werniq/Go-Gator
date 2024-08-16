@@ -137,7 +137,7 @@ func main() {
 	if err = (&controller.FeedReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, serverAddr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Feed")
 		os.Exit(1)
 	}

@@ -10,7 +10,6 @@ func TestValidate(t *testing.T) {
 		name    string
 		input   FeedSpec
 		wantErr bool
-		errMsg  string
 	}{
 		{
 			name: "Valid name and URL",
@@ -27,7 +26,6 @@ func TestValidate(t *testing.T) {
 				Link: "bbc:/example.com",
 			},
 			wantErr: true,
-			errMsg:  "url must contain http or https",
 		},
 		{
 			name: "Valid name with no protocol in URL",
@@ -36,7 +34,6 @@ func TestValidate(t *testing.T) {
 				Link: "ftp:/examplecom",
 			},
 			wantErr: true,
-			errMsg:  "url must contain http or https",
 		},
 	}
 

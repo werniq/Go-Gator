@@ -47,7 +47,7 @@ func TestRunJob(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
 
-			err := RunJob()
+			err := RunJob("/tmp/")
 
 			if tt.expectErr {
 				assert.Error(t, err)

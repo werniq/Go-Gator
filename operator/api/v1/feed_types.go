@@ -32,6 +32,12 @@ const (
 	// TypeFeedUpdated represents the Updated condition type
 	TypeFeedUpdated = "Updated"
 
+	// FeedCreated represents the reason for created condition
+	FeedCreated = "FeedCreated"
+
+	// FeedUpdated represents the reason for updated condition
+	FeedUpdated = "FeedUpdated"
+
 	// failedToCreateReason is a constant that represents the reason for failed to create condition
 	failedToCreateReason = false
 
@@ -40,23 +46,24 @@ const (
 
 	// feedStatusConditionsCapacity is a capacity of feed status conditions array
 	feedStatusConditionsCapacity = 3
-
-	// FeedCreated represents the reason for created condition
-	FeedCreated = "FeedCreated"
-
-	// FeedUpdated represents the reason for updated condition
-	FeedUpdated = "FeedUpdated"
 )
 
 // FeedSpec defines the desired state of Feed
+// This struct specifies the configuration and parameters that describe
+// how the Feed should be structured and behave.
 type FeedSpec struct {
 	// Name field is a string that represents the name of the feed
+	// This is a required field with a minimum length of 1 character
+	// and a maximum length of 20 characters.
+	//
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=20
 	// +kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
 
 	// Link field is a string that represents the URL of the feed
+	// This is a required field that indicates the link associated
+	// with the feed.
 	// +kubebuilder:validation:Required
 	Link string `json:"link,omitempty"`
 }
@@ -69,18 +76,24 @@ type FeedStatus struct {
 	Conditions map[string]FeedConditions `json:"conditions,omitempty"`
 }
 
-// FeedConditions are the cond
+// FeedConditions provides detailed information about a specific condition associated with a Feed.
+// It includes the status, reason, and other metadata related to the condition.
 type FeedConditions struct {
 	// Status field is a boolean that represents the status of the condition
+	// A value of true typically indicates the condition is met, while
+	// false indicates it is not.
 	Status bool `json:"status"`
 
 	// Reason field is a string which is populated if status is false
+	// It explains the reason for the current status.
 	Reason string `json:"reason"`
 
 	// Message field is a string which is populated if status is false
+	// It provides additional details or a message about the condition.
 	Message string `json:"message"`
 
-	// LastUpdateTime is a time when an object changes it's state
+	// LastUpdateTime is a time when an object changes its state
+	// This timestamp indicates the last time the condition was updated.
 	LastUpdateTime string `json:"lastUpdateTime"`
 }
 
@@ -88,6 +101,7 @@ type FeedConditions struct {
 // +kubebuilder:subresource:status
 
 // Feed is the Schema for the feeds API
+// This is the main struct that represents the Feed object, including its specification and status.
 type Feed struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

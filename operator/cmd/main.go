@@ -45,6 +45,9 @@ var (
 )
 
 const (
+	// defaultServerAddress is the default address for the news aggregator service
+	defaultServerAddress = "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
+
 	// defaultMetricsBindAddress is the default address the metric endpoint should bind to
 	defaultMetricsBindAddress = "0"
 
@@ -71,12 +74,14 @@ func init() {
 func main() {
 	var (
 		metricsAddr          string
+		serverAddr           string
 		enableLeaderElection bool
 		probeAddr            string
 		secureMetrics        bool
 		enableHTTP2          bool
 		tlsOpts              []func(*tls.Config)
 	)
+	flag.StringVar(&serverAddr, "server-addr", defaultServerAddress, "The address of the news aggregator service, to perform CRUD operations on feeds.")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", defaultMetricsBindAddress, "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", defaultHealthProbeBindAddress, "The address the probe endpoint binds to.")

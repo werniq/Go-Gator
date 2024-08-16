@@ -35,6 +35,7 @@ import (
 
 // FeedReconciler reconciles a Feed object
 type FeedReconciler struct {
+	serverAddress string
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -42,9 +43,6 @@ type FeedReconciler struct {
 var k8sClient client.Client
 
 const (
-	// serverUri is the link to our news-aggregator
-	serverUri = "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
-
 	// defaultSourceFormat identifies default data format which should be used for new feed
 	defaultSourceFormat = "xml"
 
@@ -137,7 +135,8 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager, serverAddr string) error {
+	r.serverAddress = serverAddr
 	k8sClient = mgr.GetClient()
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.Feed{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
@@ -176,7 +175,7 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	requestBody := bytes.NewBuffer(sourceData)
 
-	req, err := http.NewRequest(http.MethodPost, serverUri, requestBody)
+	req, err := http.NewRequest(http.MethodPost, r.serverAddress, requestBody)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -228,7 +227,7 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 
 	requestBody := bytes.NewBuffer(sourceData)
 
-	req, err := http.NewRequest(http.MethodPut, serverUri, requestBody)
+	req, err := http.NewRequest(http.MethodPut, r.serverAddress, requestBody)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -282,7 +281,7 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 
 	requestBody := bytes.NewBuffer(sourceData)
 
-	req, err := http.NewRequest(http.MethodDelete, serverUri, requestBody)
+	req, err := http.NewRequest(http.MethodDelete, r.serverAddress, requestBody)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

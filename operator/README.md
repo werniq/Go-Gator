@@ -1,8 +1,19 @@
-# operator
-// TODO(user): Add simple overview of use/purpose
+### Operator Overview
 
-## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+The `HotNewsReconciler` is a Kubernetes controller responsible for managing the `HotNews` custom resource. 
+It ensures that the status of the `HotNews` resource is always up-to-date by interfacing with a news aggregator server
+to fetch the latest news based on specified parameters.
+
+### Description
+
+The `HotNewsReconciler` performs the following key tasks:
+- Monitors the status of `HotNews` custom resources and triggers updates whenever the resource is created, updated, or deleted.
+- Sends requests to a news aggregator server to retrieve news articles based on specified keywords, date ranges, and sources.
+- Validates the input parameters (keywords, date range, and feeds) before making a request to ensure accuracy.
+- Watches for changes in the `ConfigMap` containing feed groups and in the `Feed` CRD, and updates the `HotNews` resource accordingly.
+- Handles the creation, update, and deletion of `HotNews` resources, ensuring that the Kubernetes cluster state aligns with the desired state.
+
+The reconciler requeues and reconciles every 24 hours to keep the news content fresh and updated.
 
 ## Getting Started
 

@@ -1,7 +1,7 @@
 ### Operator Overview
 
 The `HotNewsReconciler` is a Kubernetes controller responsible for managing the `HotNews` custom resource. 
-It ensures that the status of the `HotNews` resource is always up-to-date by interfacing with a news aggregator server
+It ensures that the status of the `HotNews` resource is always up-to-date by interacting with a news aggregator server
 to fetch the latest news based on specified parameters.
 
 ### Description

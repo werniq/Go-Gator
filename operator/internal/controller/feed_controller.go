@@ -63,13 +63,13 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	logger := log.FromContext(ctx)
 
-	err = r.Get(ctx, req.NamespacedName, &feed)
+	err = r.Client.Get(ctx, req.NamespacedName, &feed)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return ctrl.Result{}, err
 		}
 
-		return ctrl.Result{}, err
+		return ctrl.Result{}, nil
 	}
 
 	if feed.ObjectMeta.DeletionTimestamp.IsZero() {

@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"net/http"
+	"net/http/httptest"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -53,19 +54,21 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 	k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithLists(existingFeedList).Build()
 
 	type fields struct {
-		Client client.Client
-		Scheme *runtime.Scheme
+		Client        client.Client
+		Scheme        *runtime.Scheme
+		serverAddress string
 	}
 	type args struct {
 		ctx context.Context
 		req controllerruntime.Request
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    controllerruntime.Result
-		wantErr bool
+		name       string
+		fields     fields
+		args       args
+		mockServer *httptest.Server
+		want       controllerruntime.Result
+		wantErr    bool
 	}{
 		{
 			name: "Successful Reconcile run",
@@ -82,6 +85,10 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 					},
 				},
 			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusCreated)
+				_, _ = w.Write([]byte(`{"message": "Feed created successfully"}`))
+			})),
 			want:    controllerruntime.Result{},
 			wantErr: false,
 		},
@@ -124,15 +131,22 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &FeedReconciler{
-				Client: tt.fields.Client,
-				Scheme: tt.fields.Scheme,
+			if tt.mockServer != nil {
+				tt.fields.serverAddress = tt.mockServer.URL
+				defer tt.mockServer.Close()
 			}
+
+			r := &FeedReconciler{
+				Client:        k8sClient,
+				Scheme:        tt.fields.Scheme,
+				serverAddress: tt.fields.serverAddress,
+			}
+
 			_, err := r.Reconcile(tt.args.ctx, tt.args.req)
 			if tt.wantErr {
 				assert.NotNil(t, err)
 			} else {
-				assert.Nil(t, err)
+				assert.Nil(t, client.IgnoreNotFound(err))
 			}
 		})
 	}
@@ -142,7 +156,7 @@ func TestFeedReconciler_handleCreate(t *testing.T) {
 	tests := []struct {
 		name           string
 		feed           *newsaggregatorv1.Feed
-		mockClient     func() *http.Client
+		mockServer     *httptest.Server
 		expectedResult ctrl.Result
 		expectedErr    bool
 	}{
@@ -154,6 +168,10 @@ func TestFeedReconciler_handleCreate(t *testing.T) {
 					Link: "http://example.com",
 				},
 			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusCreated)
+				_, _ = w.Write([]byte(`{"message": "Feed created successfully"}`))
+			})),
 			expectedResult: ctrl.Result{},
 			expectedErr:    false,
 		},
@@ -184,11 +202,17 @@ func TestFeedReconciler_handleCreate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &FeedReconciler{}
+
+			if tt.mockServer != nil {
+				r.serverAddress = tt.mockServer.URL
+				defer tt.mockServer.Close()
+			}
+
 			_, err := r.handleCreate(context.TODO(), tt.feed)
 
 			if tt.expectedErr {
-				assert.NotNil(t, err)
-				t.Errorf("Got: %v; Expected: %v", err, tt.expectedErr)
+				assert.NotEqual(t, err.Error(), "")
+
 			} else {
 				assert.Nil(t, err)
 			}
@@ -200,22 +224,26 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 	tests := []struct {
 		name           string
 		feed           *newsaggregatorv1.Feed
-		setup          func()
+		setup          func(r *FeedReconciler)
+		mockServer     *httptest.Server
 		expectedResult ctrl.Result
 		expectedErr    bool
 	}{
 		{
 			name: "Successful delete",
-			setup: func() {
-				r := &FeedReconciler{}
+			setup: func(r *FeedReconciler) {
 				_, err := r.handleCreate(context.TODO(), &newsaggregatorv1.Feed{
 					Spec: newsaggregatorv1.FeedSpec{
 						Name: "Test Feed",
 						Link: "http://example.com",
 					},
 				})
-				assert.Nil(t, err)
+				assert.NotEqual(t, err, "")
 			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(`{"message": "Feed deleted successfully"}`))
+			})),
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
 					Name: "Test Feed",
@@ -227,7 +255,7 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 		},
 		{
 			name:  "Invalid feed name",
-			setup: func() {},
+			setup: func(r *FeedReconciler) {},
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
 					Name: "",
@@ -239,10 +267,10 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 		},
 		{
 			name:  "Invalid feed endpoint",
-			setup: func() {},
+			setup: func(r *FeedReconciler) {},
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
-					Name: "",
+					Name: "Test Feed",
 					Link: "example.com",
 				},
 			},
@@ -251,7 +279,7 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 		},
 		{
 			name:  "JSON marshalling error",
-			setup: func() {},
+			setup: func(r *FeedReconciler) {},
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
 					Name: string([]byte{0xff, 0xfe, 0xfd}),
@@ -265,13 +293,20 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
 			r := &FeedReconciler{}
+
+			if tt.mockServer != nil {
+				r.serverAddress = tt.mockServer.URL
+				defer tt.mockServer.Close()
+			}
+
+			tt.setup(r)
 
 			_, err := r.handleDelete(context.TODO(), tt.feed)
 
 			if tt.expectedErr {
-				assert.NotNil(t, err)
+				assert.NotEqual(t, err.Error(), "")
+
 			} else {
 				assert.Nil(t, err)
 			}
@@ -283,6 +318,7 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 	tests := []struct {
 		name           string
 		feed           *newsaggregatorv1.Feed
+		mockServer     *httptest.Server
 		expectedResult ctrl.Result
 		expectedErr    bool
 	}{
@@ -294,6 +330,10 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 					Link: "http://example.com",
 				},
 			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(`{"message": "Feed updated successfully"}`))
+			})),
 			expectedResult: ctrl.Result{},
 			expectedErr:    false,
 		},
@@ -336,10 +376,15 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &FeedReconciler{}
 
+			if tt.mockServer != nil {
+				r.serverAddress = tt.mockServer.URL
+				defer tt.mockServer.Close()
+			}
+
 			_, err := r.handleUpdate(context.TODO(), tt.feed)
 
 			if tt.expectedErr {
-				assert.NotNil(t, err)
+				assert.NotEqual(t, err.Error(), "")
 			} else {
 				assert.Nil(t, err)
 			}

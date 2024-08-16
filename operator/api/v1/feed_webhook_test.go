@@ -56,7 +56,7 @@ func TestFeed_validateFeed(t *testing.T) {
 			expectedErr: false,
 		},
 		{
-			name: "Validation failure due to invalid feed name",
+			name: "Validation failure due to invalid feed link",
 			feed: &Feed{
 				Spec: FeedSpec{
 					Name: "SuperVeryLongNameThatIsNotValid",
@@ -66,11 +66,21 @@ func TestFeed_validateFeed(t *testing.T) {
 			expectedErr: true,
 		},
 		{
-			name: "Validation failure due to invalid feed link",
+			name: "Validation failure due to duplicate name",
 			feed: &Feed{
 				Spec: FeedSpec{
-					Name: "SuperVeryLongNameThatIsNotValid",
-					Link: "",
+					Name: "ExistingFeedName",
+					Link: "https://example.com/feed",
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "Validation failure due to invalid feed link v2",
+			feed: &Feed{
+				Spec: FeedSpec{
+					Name: "",
+					Link: "ftp:/example.com",
 				},
 			},
 			expectedErr: true,

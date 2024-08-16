@@ -20,6 +20,7 @@ import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"testing"
@@ -38,8 +39,11 @@ func TestFeed_validateHotNews(t *testing.T) {
 		FieldManager: "test",
 	})
 	if err != nil {
-		assert.Contains(t, err.Error(), "already exists")
+		if errors.IsAlreadyExists(err) {
+			err = nil
+		}
 	}
+	assert.Nil(t, err)
 
 	_, err = clientset.CoreV1().ConfigMaps(FeedGroupsNamespace).Create(context.TODO(), &v1.ConfigMap{
 		ObjectMeta: v12.ObjectMeta{

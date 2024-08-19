@@ -64,26 +64,11 @@ func ConfAndRun() error {
 		// serverPort identifies port on which Server will be running
 		serverPort int
 
-		// certFile is the name of certificate file
-		certFile string
-
-		// keyFile is the name of the key for the certificate above
-		keyFile string
-
 		// storagePath is a path where all data from application will be stored (sources and files with articles)
 		storagePath string
 	)
-	cwdPath, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
 	flag.IntVar(&serverPort, "p", defaultServerPort,
 		"On which port server will be running")
-	flag.StringVar(&certFile, "c", filepath.Join(cwdPath, defaultCertsPath, defaultCertName),
-		"Absolute path to the certificate for the HTTPs server")
-	flag.StringVar(&keyFile, "k", filepath.Join(cwdPath, defaultCertsPath, defaultPrivateKey),
-		"Absolute path to the private key for the HTTPs server")
 	flag.StringVar(&storagePath, "fs", defaultDataDirPath,
 		"Path to directory where all data will be stored")
 	flag.Parse()

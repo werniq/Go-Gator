@@ -20,8 +20,7 @@ var (
 	defaultCertsPath = filepath.Join("cmd", "server", "certs")
 
 	// defaultDataDirPath is a default path to the directory where all data will be stored
-	defaultDataDirPath = filepath.Join("cmd", "parsers", "data")
-	//defaultDataDirPath = "/tmp/"
+	defaultDataDirPath = "/tmp/"
 
 	// defaultCertificatesNamespace is a default namespace where certificates are stored
 	defaultCertificatesNamespace = "go-gator"

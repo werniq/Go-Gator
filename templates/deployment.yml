@@ -15,11 +15,11 @@ spec:
       labels:
         app: go-gator
     spec:
-      serviceAccountName: go-gator-user
+      serviceAccountName: go-gator-service
       automountServiceAccountToken: false
       containers:
         - name: go-gator
-          image: qniw984/go-gator:1.1.0
+          image: qniw984/go-gator:1.1.
           ports:
             - containerPort: 443
           resources:

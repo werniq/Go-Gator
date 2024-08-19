@@ -91,9 +91,10 @@ var _ webhook.Validator = &HotNews{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 //
+// It is called when the HotNews resource is created
 // Validating webhook will check if the HotNews resource is correct
 // In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct
-// Also, it checks if user-specified feeds or feedGroups are correct by this criteria:
+// Also, it checks if user-specified feeds or feedGroups are correct by these criteria:
 // FeedGroups should be present in the feed-group-source ConfigMap
 func (r *HotNews) ValidateCreate() (admission.Warnings, error) {
 	hotnewslog.Info("validate create", "name", r.Name)
@@ -106,6 +107,12 @@ func (r *HotNews) ValidateCreate() (admission.Warnings, error) {
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+//
+// ValidateUpdate is called when the HotNews resource is Updated
+// Validating webhook will check if the HotNews resource is correct
+// In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct
+// Also, it checks if user-specified feeds or feedGroups are correct by these criteria:
+// FeedGroups should be present in the feed-group-source ConfigMap
 func (r *HotNews) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	hotnewslog.Info("validate update", "name", r.Name)
 	err := r.validateHotNews()

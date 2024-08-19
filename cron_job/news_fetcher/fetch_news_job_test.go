@@ -80,8 +80,6 @@ func TestFetchingJob_Execute(t *testing.T) {
 		job       *NewsFetchingJob
 		args      string
 		expectErr bool
-		setup     func()
-		finish    func()
 	}{
 		{
 			name: "Default job run",
@@ -90,8 +88,6 @@ func TestFetchingJob_Execute(t *testing.T) {
 			},
 			args:      storagePath,
 			expectErr: false,
-			setup:     func() {},
-			finish:    func() {},
 		},
 		{
 			name: "Invalid date format",
@@ -100,8 +96,6 @@ func TestFetchingJob_Execute(t *testing.T) {
 			},
 			args:      storagePath,
 			expectErr: true,
-			setup:     func() {},
-			finish:    func() {},
 		},
 		{
 			name: "Invalid storage path",
@@ -110,18 +104,12 @@ func TestFetchingJob_Execute(t *testing.T) {
 			},
 			args:      "\\invalid-path\\invalid-dir\\",
 			expectErr: true,
-			setup: func() {
-			},
-			finish: func() {
-			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.setup()
 			tc.job.storagePath = tc.args
-			defer tc.finish()
 
 			err := tc.job.Execute()
 			if tc.expectErr {

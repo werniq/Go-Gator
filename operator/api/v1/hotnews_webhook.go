@@ -74,6 +74,9 @@ func (r *HotNews) SetupWebhookWithManager(mgr ctrl.Manager) error {
 var _ webhook.Defaulter = &HotNews{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
+//
+// This webhook will set the default values for the HotNews resource
+// In particular, if the user hasn't specified the number of titles to show in the summary, we will set it to 10
 func (r *HotNews) Default() {
 	hotnewslog.Info("default", "name", r.Name)
 
@@ -87,6 +90,11 @@ func (r *HotNews) Default() {
 var _ webhook.Validator = &HotNews{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+//
+// Validating webhook will check if the HotNews resource is correct
+// In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct
+// Also, it checks if user-specified feeds or feedGroups are correct by this criteria:
+// FeedGroups should be present in the feed-group-source ConfigMap
 func (r *HotNews) ValidateCreate() (admission.Warnings, error) {
 	hotnewslog.Info("validate create", "name", r.Name)
 	err := r.validateHotNews()

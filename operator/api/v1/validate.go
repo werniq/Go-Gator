@@ -1,8 +1,8 @@
 package v1
 
 import (
-	"fmt"
-	"strings"
+	"errors"
+	"net/url"
 )
 
 const (
@@ -46,11 +46,15 @@ type urlValidate struct {
 	url string
 }
 
-// Validate checks if the url contains http or https
+// Validate checks if the url is valid by using url.Parse
 func (u *urlValidate) Validate() error {
-	// check by regular expression if the url contains http or https
-	if !strings.Contains(u.url, "http") {
-		return fmt.Errorf(urlValidationError)
+	link, err := url.Parse(u.url)
+	if err != nil {
+		return err
 	}
-	return u.HandleNext()
+	if link.Scheme != "" && link.Host != "" {
+		return u.HandleNext()
+	}
+
+	return errors.New(urlValidationError)
 }

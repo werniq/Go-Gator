@@ -46,6 +46,9 @@ var (
 )
 
 const (
+	// defaultServerAddress is the default address for the news aggregator service
+	defaultServerAddress = "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
+
 	// defaultMetricsBindAddress is the default address the metric endpoint should bind to
 	defaultMetricsBindAddress = "0"
 
@@ -75,6 +78,7 @@ func init() {
 func main() {
 	var (
 		metricsAddr          string
+		serverAddr           string
 		enableLeaderElection bool
 		probeAddr            string
 		secureMetrics        bool
@@ -82,6 +86,7 @@ func main() {
 		enableHTTP2          bool
 		tlsOpts              []func(*tls.Config)
 	)
+	flag.StringVar(&serverAddr, "server-addr", defaultServerAddress, "The address of the news aggregator service, to perform CRUD operations on feeds.")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", defaultMetricsBindAddress, "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&serverUrl, "server-url", defaultServerUrl, "Url address of the news aggregator server")
@@ -141,8 +146,8 @@ func main() {
 	if err = (&controller.HotNewsReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr, serverUrl); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "HotNews")
+	}).SetupWithManager(mgr, serverAddr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Feed")
 		os.Exit(1)
 	}
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {

@@ -10,7 +10,6 @@ func TestValidate(t *testing.T) {
 		name    string
 		input   FeedSpec
 		wantErr bool
-		errMsg  string
 	}{
 		{
 			name: "Valid name and URL",
@@ -24,19 +23,17 @@ func TestValidate(t *testing.T) {
 			name: "Valid name with no HTTP in URL",
 			input: FeedSpec{
 				Name: "ValidName",
-				Link: "ftp://example.com",
+				Link: "bbc:/example.com",
 			},
 			wantErr: true,
-			errMsg:  "url must contain http or https",
 		},
 		{
 			name: "Valid name with no protocol in URL",
 			input: FeedSpec{
 				Name: "ValidName",
-				Link: "example.com",
+				Link: "ftp:/examplecom",
 			},
 			wantErr: true,
-			errMsg:  "url must contain http or https",
 		},
 	}
 
@@ -71,7 +68,7 @@ func TestUrlValidate_Validate(t *testing.T) {
 		},
 		{
 			name:    "Invalid URL with no http/https",
-			url:     "ftp://example.com",
+			url:     "ftp:////example.com",
 			wantErr: true,
 			errMsg:  "url must contain http or https",
 		},

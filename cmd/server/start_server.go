@@ -1,35 +1,14 @@
 package server
 
 import (
-	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	parsers "gogator/cmd/parsers"
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"os"
 	"path/filepath"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"strings"
-)
-
-var (
-	// defaultCertsPath is default path to server
-	defaultCertsPath = filepath.Join("cmd", "server", "certs")
-
-	// defaultDataDirPath is a default path to the directory where all data will be stored
-	defaultDataDirPath = "/tmp/"
-
-	// defaultCertificatesNamespace is a default namespace where certificates are stored
-	defaultCertificatesNamespace = "go-gator"
-
-	// defaultSecretName is a default name of the secret where certificates are stored
-	defaultSecretName = "test-ca-secret"
-
-	// defaultPrivateKey identifies the default name of server's private key
-	defaultPrivateKey = "tls.key"
 )
 
 const (
@@ -37,7 +16,10 @@ const (
 	defaultServerPort = 443
 
 	// defaultCertName represents default name of server's certificate file
-	defaultCertName = "tls.crt"
+	defaultCertName = "certificate.pem"
+
+	// defaultPrivateKey identifies the default name of server's private key
+	defaultPrivateKey = "key.pem"
 
 	// errNotSpecified helps us to check if error was related to initializing sources file
 	errNotSpecified = "no such file or directory"
@@ -63,11 +45,26 @@ func ConfAndRun() error {
 		// serverPort identifies port on which Server will be running
 		serverPort int
 
+		// certFile is the name of certificate file
+		certFile string
+
+		// keyFile is the name of the key for the certificate above
+		keyFile string
+
 		// storagePath is a path where all data from application will be stored (sources and files with articles)
 		storagePath string
 	)
+	cwdPath, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
 	flag.IntVar(&serverPort, "p", defaultServerPort,
 		"On which port server will be running")
+	flag.StringVar(&certFile, "c", filepath.Join(cwdPath, defaultCertsPath, defaultCertName),
+		"Absolute path to the certificate for the HTTPs server")
+	flag.StringVar(&keyFile, "k", filepath.Join(cwdPath, defaultCertsPath, defaultPrivateKey),
+		"Absolute path to the private key for the HTTPs server")
 	flag.StringVar(&storagePath, "fs", defaultDataDirPath,
 		"Path to directory where all data will be stored")
 	flag.Parse()
@@ -88,62 +85,9 @@ func ConfAndRun() error {
 
 	setupRoutes(server)
 
-	certPath, keyPath, err := loadCertsFromSecrets()
-
 	err = server.RunTLS(fmt.Sprintf(":%d", serverPort),
-		certPath,
-		keyPath)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// loadCertsFromSecrets loads certificates from Kubernetes secrets
-func loadCertsFromSecrets() (string, string, error) {
-	c := config.GetConfigOrDie()
-
-	clientset, err := kubernetes.NewForConfig(c)
-	if err != nil {
-		return "", "", err
-	}
-
-	secret, err := clientset.CoreV1().Secrets(defaultCertificatesNamespace).
-		Get(context.Background(),
-			defaultSecretName,
-			v12.GetOptions{})
-	if err != nil {
-		return "", "", err
-	}
-
-	certData := secret.Data[defaultCertName]
-	keyData := secret.Data[defaultPrivateKey]
-
-	cwdPath, err := os.Getwd()
-	if err != nil {
-		return "", "", err
-
-	}
-
-	defaultCertPath := filepath.Join(cwdPath, defaultCertsPath, defaultCertName)
-	err = createFileFromDataAndPath(certData, defaultCertPath)
-	if err != nil {
-		return "", "", err
-	}
-
-	defaultPrivateKeyPath := filepath.Join(cwdPath, defaultCertsPath, defaultPrivateKey)
-	err = createFileFromDataAndPath(keyData, defaultPrivateKeyPath)
-	if err != nil {
-		return "", "", err
-	}
-
-	return defaultCertPath, defaultPrivateKeyPath, nil
-}
-
-// createFileFromDataAndPath creates a file based on given file data and path
-func createFileFromDataAndPath(fileData []byte, filepath string) error {
-	err := os.WriteFile(filepath, fileData, 0644)
+		certFile,
+		keyFile)
 	if err != nil {
 		return err
 	}

@@ -39,8 +39,6 @@ const (
 // which is fetching news feeds at a specified frequency.
 //
 // Optional parameters (specified via flags):
-// / -f (updatesFrequency): Specifies the interval in hours at which the program
-// /   will fetch and parse news feeds. Default value is used if not specified.
 // / -p (serverPort): Specifies the port on which the server will run. Defaults to 443 if not specified.
 // / -c (certFile): Specifies the absolute path to the certificate file for the HTTPS server. Defaults to a predefined path if not specified.
 // / -k (keyFile): Specifies the absolute path to the private key file for the HTTPS server. Defaults to a predefined path if not specified.

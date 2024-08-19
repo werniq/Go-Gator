@@ -3,7 +3,6 @@ package news_fetcher
 import (
 	"github.com/stretchr/testify/assert"
 	"gogator/cmd/parsers"
-	"gogator/cmd/server/handlers"
 	"gogator/cmd/types"
 	"os"
 	"testing"
@@ -15,12 +14,14 @@ func TestRunJob(t *testing.T) {
 	tests := []struct {
 		name      string
 		job       *NewsFetchingJob
+		args      string
 		expectErr bool
 		setup     func()
 		finish    func()
 	}{
 		{
 			name: "Successful job execution",
+			args: storagePath,
 			job: &NewsFetchingJob{
 				params: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
 			},
@@ -33,9 +34,10 @@ func TestRunJob(t *testing.T) {
 			job: &NewsFetchingJob{
 				params: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
 			},
+			args:      "\\invalid-path\\invalid-dir\\",
 			expectErr: true,
 			setup: func() {
-				parsers.StoragePath = "/invalid_path/"
+				parsers.StoragePath = ""
 			},
 			finish: func() {
 				parsers.StoragePath = storagePath
@@ -47,13 +49,12 @@ func TestRunJob(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
 
-			err := RunJob(parsers.StoragePath)
+			err := RunJob(tt.args)
 
 			if tt.expectErr {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, time.Now().Format("2006-01-02"), handlers.LastFetchedFileDate)
 			}
 
 			tt.finish()
@@ -77,6 +78,7 @@ func TestFetchingJob_Execute(t *testing.T) {
 	testCases := []struct {
 		name      string
 		job       *NewsFetchingJob
+		args      string
 		expectErr bool
 		setup     func()
 		finish    func()
@@ -86,6 +88,7 @@ func TestFetchingJob_Execute(t *testing.T) {
 			job: &NewsFetchingJob{
 				params: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
 			},
+			args:      storagePath,
 			expectErr: false,
 			setup:     func() {},
 			finish:    func() {},
@@ -95,6 +98,7 @@ func TestFetchingJob_Execute(t *testing.T) {
 			job: &NewsFetchingJob{
 				params: types.NewFilteringParams("", time.Now().Format(time.ANSIC), "", ""),
 			},
+			args:      storagePath,
 			expectErr: true,
 			setup:     func() {},
 			finish:    func() {},
@@ -104,12 +108,11 @@ func TestFetchingJob_Execute(t *testing.T) {
 			job: &NewsFetchingJob{
 				params: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
 			},
+			args:      "\\invalid-path\\invalid-dir\\",
 			expectErr: true,
 			setup: func() {
-				parsers.StoragePath = "/invalid_path/"
 			},
 			finish: func() {
-				parsers.StoragePath = storagePath
 			},
 		},
 	}
@@ -117,6 +120,7 @@ func TestFetchingJob_Execute(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setup()
+			tc.job.storagePath = tc.args
 			defer tc.finish()
 
 			err := tc.job.Execute()

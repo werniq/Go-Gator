@@ -5,4 +5,4 @@ bin/*
 coverage
 cover
 kubebuilder
-autoscaler/
+autoscaler

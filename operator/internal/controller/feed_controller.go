@@ -21,7 +21,8 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"k8s.io/apimachinery/pkg/api/errors"
+	errors "errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -43,11 +44,24 @@ type FeedReconciler struct {
 var k8sClient client.Client
 
 const (
-	// defaultSourceFormat identifies default data format which should be used for new feed
-
 	// feedFinalizerName is a title of finalizer which will be added to feed object
 	// for proper deletion of feed in news aggregator
 	feedFinalizerName = "feed.finalizers"
+
+	// errMarshallingJSON is thrown when an error occurs while trying to marshal JSON
+	errMarshallingJSON = "Error while trying to marshal JSON: "
+
+	// errCreatingRequest says that there was an error while creating request
+	errCreatingRequest = "Error while trying to create request: "
+
+	// errExecutingRequest identifies that an error occurred while trying to execute request
+	errExecutingRequest = "Error while trying to execute request: "
+
+	// errDecodingResponse says that there was an error while decoding response
+	errDecodingResponse = "Error while trying to decode server response: "
+
+	// errClosingBody indicates that an error occurred while trying to close the response body
+	errClosingBody = "Error while trying to close response body: "
 )
 
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds,verbs=get;list;watch;create;update;patch;delete
@@ -65,7 +79,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	err = r.Client.Get(ctx, req.NamespacedName, &feed)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if k8serrors.IsNotFound(err) {
 			return ctrl.Result{}, err
 		}
 
@@ -168,14 +182,13 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	sourceData, err := json.Marshal(source)
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, errors.New(errMarshallingJSON + err.Error())
 	}
-
 	requestBody := bytes.NewBuffer(sourceData)
 
 	req, err := http.NewRequest(http.MethodPost, r.serverAddress, requestBody)
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, errors.New(errCreatingRequest + err.Error())
 	}
 
 	customTransport := &http.Transport{
@@ -185,15 +198,14 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	res, err := customClient.Do(req)
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, errors.New(errExecutingRequest + err.Error())
 	}
-
 	if res.StatusCode != http.StatusCreated {
 		serverError := &serverErr{}
 
 		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, errors.New(errDecodingResponse + err.Error())
 		}
 
 		return ctrl.Result{}, serverError
@@ -201,7 +213,7 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 
 	err = res.Body.Close()
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, errors.New(errClosingBody + err.Error())
 	}
 
 	return ctrl.Result{}, nil
@@ -219,14 +231,14 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 
 	sourceData, err := json.Marshal(source)
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, errors.New(errMarshallingJSON + err.Error())
 	}
 
 	requestBody := bytes.NewBuffer(sourceData)
 
 	req, err := http.NewRequest(http.MethodPut, r.serverAddress, requestBody)
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, errors.New(errCreatingRequest + err.Error())
 	}
 
 	customTransport := &http.Transport{
@@ -236,21 +248,21 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 
 	res, err := customClient.Do(req)
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, errors.New(errExecutingRequest + err.Error())
 	}
 
 	if res.StatusCode != http.StatusOK {
 		serverError := &serverErr{}
 		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, errors.New(errDecodingResponse + err.Error())
 		}
 		return ctrl.Result{}, serverError
 	}
 
 	err = res.Body.Close()
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, errors.New(errClosingBody + err.Error())
 	}
 
 	return ctrl.Result{}, nil
@@ -268,14 +280,14 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 
 	sourceData, err := json.Marshal(source)
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, errors.New(errMarshallingJSON + err.Error())
 	}
 
 	requestBody := bytes.NewBuffer(sourceData)
 
 	req, err := http.NewRequest(http.MethodDelete, r.serverAddress, requestBody)
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, errors.New(errCreatingRequest + err.Error())
 	}
 
 	customTransport := &http.Transport{
@@ -285,21 +297,21 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 
 	res, err := customClient.Do(req)
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, errors.New(errExecutingRequest + err.Error())
 	}
 
 	if res.StatusCode != http.StatusOK {
 		var serverError *serverErr
 		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, errors.New(errDecodingResponse + err.Error())
 		}
 		return ctrl.Result{}, serverError
 	}
 
 	err = res.Body.Close()
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, errors.New(errClosingBody + err.Error())
 	}
 
 	return ctrl.Result{}, nil

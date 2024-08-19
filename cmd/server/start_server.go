@@ -47,9 +47,8 @@ const (
 // / -fs (storagePath): Specifies the path to the directory where all data will be stored. Defaults to a predefined path if not specified.
 func ConfAndRun() error {
 	var (
-		errChan = make(chan error, 1)
-		server  = gin.Default()
-		err     error
+		server = gin.Default()
+		err    error
 
 		// serverPort identifies port on which Server will be running
 		serverPort int
@@ -94,20 +93,12 @@ func ConfAndRun() error {
 
 	setupRoutes(server)
 
-	go func(serverPort int, certFile, keyFile string) {
-		err := server.RunTLS(fmt.Sprintf(":%d", serverPort),
-			certFile,
-			keyFile)
-		if err != nil {
-			errChan <- err
-		}
-	}(serverPort, certFile, keyFile)
+	err = server.RunTLS(fmt.Sprintf(":%d", serverPort),
+		certFile,
+		keyFile)
 
-	select {
-	case err := <-errChan:
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
 	}
 
 	return nil

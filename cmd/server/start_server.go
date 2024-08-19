@@ -11,6 +11,14 @@ import (
 	"strings"
 )
 
+var (
+	// defaultCertsPath is default path to server
+	defaultCertsPath = filepath.Join("cmd", "server", "certs")
+
+	// defaultDataDirPath is a default path to the directory where all data will be stored
+	defaultDataDirPath = filepath.Join("cmd", "parsers", "data")
+)
+
 const (
 	// defaultServerPort is a default port on which this server will be running
 	defaultServerPort = 443

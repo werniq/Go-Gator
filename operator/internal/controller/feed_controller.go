@@ -163,9 +163,6 @@ type sourceBody struct {
 	// Name field describes this source name
 	Name string `json:"name"`
 
-	// Format identifies parser which should be used for this particular source
-	Format string `json:"format"`
-
 	// Endpoint is a link to this feeds endpoint, where we will go to parse articles.
 	Endpoint string `json:"endpoint"`
 }

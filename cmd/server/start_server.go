@@ -22,6 +22,11 @@ var (
 	// defaultDataDirPath is a default path to the directory where all data will be stored
 	defaultDataDirPath = filepath.Join("cmd", "parsers", "data")
 	//defaultDataDirPath = "/tmp/"
+)
+
+const (
+	// defaultServerPort is a default port on which this server will be running
+	defaultServerPort = 443
 
 	// defaultCertificatesNamespace is a default namespace where certificates are stored
 	defaultCertificatesNamespace = "go-gator"
@@ -31,11 +36,6 @@ var (
 
 	// defaultPrivateKey identifies the default name of server's private key
 	defaultPrivateKey = "tls.key"
-)
-
-const (
-	// defaultServerPort is a default port on which this server will be running
-	defaultServerPort = 443
 
 	// defaultCertName represents default name of server's certificate file
 	defaultCertName = "tls.crt"

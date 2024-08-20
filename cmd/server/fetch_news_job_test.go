@@ -50,7 +50,7 @@ func TestFetchNewsJob_Run(t *testing.T) {
 			},
 			setup: func() {
 				supportedSources := parsers.GetAllSources()
-				for source, _ := range supportedSources {
+				for source := range supportedSources {
 					err := parsers.DeleteSource(source)
 					if err != nil {
 						t.Fatal(err)

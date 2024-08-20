@@ -133,11 +133,8 @@ func ConfAndRun() error {
 		}
 	}(serverPort, certFile, keyFile)
 
-	select {
-	case err := <-errChan:
-		if err != nil {
-			return err
-		}
+	if err := <-errChan; err != nil {
+		return err
 	}
 
 	return nil

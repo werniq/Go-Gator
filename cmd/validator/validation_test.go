@@ -73,9 +73,11 @@ func TestSourceValidationHandler_Handle(t *testing.T) {
 		expectErr error
 	}{
 		{"ValidSources", "abc,bbc", nil},
-		{"InvalidSource", "abc,xyz", errors.New(
-			fmt.Sprintf("%v%s%v", ErrFailedSourceValidation, "unsupported source: xyz. Supported sources are: ",
-				parsers.GetAllSources()))},
+		{"InvalidSource", "abc,xyz", fmt.Errorf("%s%s%v",
+			ErrFailedSourceValidation,
+			"unsupported source: xyz. Supported sources are: ",
+			parsers.GetAllSources()),
+		},
 
 		{"EmptySources", "", nil},
 	}

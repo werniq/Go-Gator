@@ -1,1 +1,0 @@
-[{"name":"abc","format":"xml","endpoint":"https://abcnews.go.com/abcnews/internationalheadlines"},{"name":"bbc","format":"xml","endpoint":"https://feeds.bbci.co.uk/news/rss.xml"},{"name":"usatoday","format":"html","endpoint":"https://usatoday.com"},{"name":"washingtontimes","format":"xml","endpoint":"https://www.washingtontimes.com/rss/headlines/news/world"}]

@@ -29,9 +29,16 @@ docker build -t {IMAGE_TAG_TITLE} .
 docker run -it {IMAGE_TAG_TITLE}
 ```
 
-### Using taskfile
+### Using taskfile (golang)
 
 ```sh
 task build
 ./news-fetching-job
+```
+
+### Using taskfile (docker)
+
+```sh
+task docker-build
+task docker-run
 ```

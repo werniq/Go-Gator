@@ -1,4 +1,4 @@
-package news_fetcher
+package main
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"gogator/cmd/filters"
 	"gogator/cmd/parsers"
 	"gogator/cmd/types"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -68,6 +69,13 @@ func (j *NewsFetchingJob) Execute() error {
 		return errors.New(errCreatingFile + err.Error())
 	}
 
+	defer func(articlesFile *os.File) {
+		err = articlesFile.Close()
+		if err != nil {
+			log.Fatalln(errClosingFile + err.Error())
+		}
+	}(articlesFile)
+
 	news, err := parsers.ParseBySource(parsers.AllSources)
 	if err != nil {
 		return errors.New(errParsingSources + err.Error())
@@ -83,11 +91,6 @@ func (j *NewsFetchingJob) Execute() error {
 	_, err = articlesFile.Write(articlesData)
 	if err != nil {
 		return errors.New(errWritingData + err.Error())
-	}
-
-	err = articlesFile.Close()
-	if err != nil {
-		return errors.New(errClosingFile + err.Error())
 	}
 
 	return nil

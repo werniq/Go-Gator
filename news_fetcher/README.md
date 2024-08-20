@@ -33,5 +33,5 @@ docker run -it {IMAGE_TAG_TITLE}
 
 ```sh
 task build
-task run
+./news-fetching-job
 ```

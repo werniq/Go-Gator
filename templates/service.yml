@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: go-gator
+  namespace: go-gator
+
+spec:
+  type: ClusterIP
+  selector:
+    app: go-gator
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 443

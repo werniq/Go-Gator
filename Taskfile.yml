@@ -102,4 +102,9 @@ tasks:
   installMetricsServer:
     desc: Install metrics server
     cmds:
-      - kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+      - kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.1/components.yaml
+
+  enableMetricsAddon:
+    desc: Enable metrics addon in minikube
+    cmds:
+      - minikube addons enable metrics-server

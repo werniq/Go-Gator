@@ -13,3 +13,16 @@ spec:
     - ReadWriteOnce
   hostPath:
     path: /tmp/
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: go-gator-pvc
+  namespace: go-gator
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 512Mi

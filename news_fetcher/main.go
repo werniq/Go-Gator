@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"gogator/cron_job/news_fetcher"
 	"log"
 )
 

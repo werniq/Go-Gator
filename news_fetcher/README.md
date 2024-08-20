@@ -28,3 +28,10 @@ current date in the format `YYYY-MM-DD`.
 docker build -t {IMAGE_TAG_TITLE} .
 docker run -it {IMAGE_TAG_TITLE}
 ```
+
+### Using taskfile
+
+```sh
+task build
+task run
+```

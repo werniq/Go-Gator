@@ -12,7 +12,7 @@
 // DEPRECATED:
 // FetchNewsJob was used to fetch and parse articles feeds, and then writes the parsed data to a
 // JSON file named with the current date.
-// This job is deprecated now, and it's functionality is moved to the cron_job folder.
+// This job is deprecated now, and it's functionality is moved to the news_fetcher folder.
 // You can run this job in separate container, as a Kubernetes CronJob object.
 //
 // It was updated in the way that FetchNewsJob is running as separate container, and uses PersistentVolume for storage.

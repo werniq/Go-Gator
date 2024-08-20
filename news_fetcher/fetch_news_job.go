@@ -1,4 +1,4 @@
-package news_fetcher
+package main
 
 import (
 	"encoding/json"

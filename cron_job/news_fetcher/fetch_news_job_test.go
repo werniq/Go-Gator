@@ -5,6 +5,7 @@ import (
 	"gogator/cmd/parsers"
 	"gogator/cmd/types"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -69,7 +70,12 @@ func TestFetchingJob_Execute(t *testing.T) {
 		t.Fatalf("failed to create temp directory: %v", err)
 	}
 	defer func(path string) {
-		err := os.RemoveAll(path)
+		time.Sleep(time.Second * 5)
+		err := os.Remove(filepath.Join(path, time.Now().Format(time.DateOnly)+".json"))
+		if err != nil {
+			t.Fatalf("failed to remove data file: %v", err)
+		}
+		err = os.RemoveAll(path)
 		if err != nil {
 			t.Fatalf("failed to remove temp directory: %v", err)
 		}
@@ -80,14 +86,21 @@ func TestFetchingJob_Execute(t *testing.T) {
 		job       *NewsFetchingJob
 		args      string
 		expectErr bool
+		setup     func()
+		finish    func()
 	}{
 		{
 			name: "Default job run",
 			job: &NewsFetchingJob{
-				params: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
+				params: types.NewFilteringParams("", time.Now().Format(time.DateOnly), "", ""),
 			},
 			args:      storagePath,
 			expectErr: false,
+			setup:     func() {},
+			finish: func() {
+				err := os.Remove(time.Now().Format(time.DateOnly) + ".json")
+				assert.Nil(t, err)
+			},
 		},
 		{
 			name: "Invalid date format",
@@ -96,19 +109,52 @@ func TestFetchingJob_Execute(t *testing.T) {
 			},
 			args:      storagePath,
 			expectErr: true,
+			setup:     func() {},
+			finish: func() {
+			},
 		},
 		{
 			name: "Invalid storage path",
 			job: &NewsFetchingJob{
-				params: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
+				params: types.NewFilteringParams("", time.Now().Format(time.DateOnly), "", ""),
 			},
 			args:      "\\invalid-path\\invalid-dir\\",
 			expectErr: true,
+			setup:     func() {},
+			finish:    func() {},
+		},
+		{
+			name: "File creation error",
+			job: &NewsFetchingJob{
+				params: types.NewFilteringParams("", string([]byte{0x00, 0x3C, 0x3E, 0x7C}), "", ""),
+			},
+			args:      tempDir,
+			expectErr: true,
+			setup:     func() {},
+			finish:    func() {},
+		},
+		{
+			name: "Parse by source error",
+			job: &NewsFetchingJob{
+				params: types.NewFilteringParams("", time.Now().Format(time.DateOnly), "", ""),
+			},
+			args:      tempDir,
+			expectErr: true,
+			setup: func() {
+				err := parsers.AddNewSource("xml", "nonexistent", "nonexistent")
+				assert.Nil(t, err)
+			},
+			finish: func() {
+				err := parsers.DeleteSource("nonexistent")
+				assert.Nil(t, err)
+			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			tc.setup()
+			defer tc.finish()
 			tc.job.storagePath = tc.args
 
 			err := tc.job.Execute()

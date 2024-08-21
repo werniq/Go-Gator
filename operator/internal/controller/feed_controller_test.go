@@ -69,6 +69,8 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 		mockServer *httptest.Server
 		want       controllerruntime.Result
 		wantErr    bool
+		setup      func()
+		finish     func()
 	}{
 		{
 			name: "Successful Reconcile run",
@@ -89,7 +91,13 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 				w.WriteHeader(http.StatusCreated)
 				_, _ = w.Write([]byte(`{"message": "Feed created successfully"}`))
 			})),
-			want:    controllerruntime.Result{},
+			want: controllerruntime.Result{},
+			setup: func() {
+
+			},
+			finish: func() {
+
+			},
 			wantErr: false,
 		},
 		{
@@ -106,6 +114,12 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 						Namespace: "non-existent-namespace",
 					},
 				},
+			},
+			setup: func() {
+
+			},
+			finish: func() {
+
 			},
 			want:    controllerruntime.Result{},
 			wantErr: true,
@@ -125,12 +139,20 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 					},
 				},
 			},
+			setup: func() {
+
+			},
+			finish: func() {
+
+			},
 			want:    controllerruntime.Result{},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+			defer tt.finish()
 			if tt.mockServer != nil {
 				tt.fields.serverAddress = tt.mockServer.URL
 				defer tt.mockServer.Close()

@@ -1,5 +1,5 @@
 # Image URL to use all building/pushing image targets
-IMG ?= qniw984/hotnews-controller:1.2.6
+IMG ?= qniw984/hotnews-controller:1.2.8
 ENVTEST_K8S_VERSION = 1.30.0
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)

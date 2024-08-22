@@ -47,7 +47,7 @@ var (
 
 const (
 	// defaultServerAddress is the default address for the news aggregator service
-	defaultServerAddress = "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
+	defaultServerAddress = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
 
 	// defaultMetricsBindAddress is the default address the metric endpoint should bind to
 	defaultMetricsBindAddress = "0"

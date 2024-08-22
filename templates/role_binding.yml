@@ -9,7 +9,6 @@ subjects:
     apiGroup: ""
     namespace: go-gator
 roleRef:
-  apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: go-gator-service
   apiGroup: rbac.authorization.k8s.io

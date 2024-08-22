@@ -1,13 +1,11 @@
 package v1
 
 import (
-	"context"
-	"fmt"
-	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
+	"net/http"
 )
 
 // validateConfigMapWebhook validates the ConfigMap webhook by checking if the feeds with certain names exist
@@ -47,17 +45,16 @@ func validateConfigMapWebhook() error {
 }
 
 func checkIfFeedExists(configMap *v1.ConfigMap) error {
-	// Check if feed exists
-	var feedList FeedList
+	serverUrl := "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
 
-	err := clientset.RESTClient().Get().AbsPath("/apis/newsaggregator/v1/feeds").Do(context.TODO()).Into(&feedList)
-	if err != nil {
-		return errors.New("failed to retrieve feeds using rest client" + err.Error())
-	}
+	for _, source := range configMap.Data {
+		res, err := http.Get(serverUrl + "/" + source)
+		if err != nil {
+			return err
+		}
 
-	for _, feed := range configMap.Data {
-		if !isInArray(feedList.Items, feed) {
-			return fmt.Errorf("feed %s not found", feed)
+		if res.StatusCode != http.StatusOK {
+			return err
 		}
 	}
 

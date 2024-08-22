@@ -79,7 +79,7 @@ const (
 // Before sending a request to the news aggregator server, it verifies if the arguments are correct:
 // - keywords are provided
 // - date range is correct
-// - feeds or feed groups are provided
+// - feeds or feed groups are provided, and they exists in news aggregator server
 // Then, it constructs a request URL and sends a request to the news aggregator server, parses the response
 // and updates the HotNews object.
 type HotNewsReconciler struct {

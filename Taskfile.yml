@@ -1,8 +1,6 @@
 version: '3'
 
 env:
-  # this variables can be specified when running task like this
-  # task publish DOCKER_IMAGE_NAME=new-image-title DOCKER_IMAGE_TAG=1.0.1
   DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "go-gator" }}'
   DOCKER_USERNAME:   '{{ .DOCKER_USERNAME | default "qniw984" }}'
   DOCKER_IMAGE_TAG:  '{{ .DOCKER_IMAGE_TAG | default "latest" }}'
@@ -82,6 +80,6 @@ tasks:
       - kubectl apply -f templates/
 
   undeploy:
-    desc: Remove go-gator from kubernetes Cluster
+    desc: Remove news aggregator from kubernetes Cluster
     cmds:
       - kubectl delete -f templates/

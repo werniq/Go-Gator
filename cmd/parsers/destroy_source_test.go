@@ -63,7 +63,7 @@ func TestDestroySource(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name:         "Execute without any data",
+			name:         "Run without any data",
 			argsDate:     "2024-07-22",
 			argsSource:   "bbc",
 			prepData:     []types.News{},

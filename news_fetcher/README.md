@@ -26,4 +26,19 @@ current date in the format `YYYY-MM-DD`.
 
 ```sh
 docker build -t {IMAGE_TAG_TITLE} .
+docker run -it {IMAGE_TAG_TITLE}
+```
+
+### Using taskfile (golang)
+
+```sh
+task build
+./news-fetching-job
+```
+
+### Using taskfile (docker)
+
+```sh
+task docker-build
+task docker-run
 ```

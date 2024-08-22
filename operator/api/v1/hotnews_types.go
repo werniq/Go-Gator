@@ -101,7 +101,7 @@ func (r *HotNews) InitHotNewsStatus(articlesCount int, requestUrl string, articl
 
 	var articles []string
 
-	for i := 0; i <= len(articlesTitles)-1 && i < r.Spec.SummaryConfig.TitlesCount-1; i++ {
+	for i := 0; i <= len(articlesTitles)-1 && i < r.Spec.SummaryConfig.TitlesCount; i++ {
 		articles = append(articles, articlesTitles[i])
 	}
 	r.Status.ArticlesTitles = articles

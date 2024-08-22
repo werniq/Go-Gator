@@ -57,7 +57,6 @@ func UpdateSource(c *gin.Context) {
 				"error": ErrUpdateSource + err.Error(),
 			})
 			log.Println(ErrUpdateSource + err.Error())
-			log.Println(reqBody.Name)
 			return
 		}
 	}

@@ -23,10 +23,8 @@ import (
 	"fmt"
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"strings"
@@ -40,18 +38,7 @@ import (
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
-var (
-	// c is a kubernetes configuration which will be used to create a k8s client
-	c = config.GetConfigOrDie()
-
-	// k8sClient is a k8s client which will be used to get ConfigMap with hotNew groups
-	clientset *kubernetes.Clientset
-)
-
 const (
-	// errFeedsAreRequired is thrown when feeds are not provided
-	errFeedsAreRequired = "feeds or feedGroups are required"
-
 	// errFailedToConstructRequestUrl error message which is returned when failed to construct request URL
 	errFailedToConstructRequestUrl = "failed to construct request URL"
 
@@ -91,8 +78,8 @@ type HotNewsReconciler struct {
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=hotnews;feeds,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=hotnews/status;feeds,verbs=get;update;patch
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=hotnews/finalizers;feeds,verbs=update
-// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=configmaps,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state
@@ -164,7 +151,7 @@ type article struct {
 // processHotNews function updates the HotNews object and returns an error if something goes wrong.
 func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsaggregatorv1.HotNews) error {
 	logger := log.FromContext(ctx)
-	logger.Info("handling update")
+	logger.Info("processing hot news object...")
 
 	requestUrl, err := r.constructRequestUrl(ctx, hotNews.Spec)
 	if err != nil {
@@ -190,6 +177,13 @@ func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsagg
 		return err
 	}
 
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			logger.Error(err, errFailedToCloseResponseBody)
+		}
+	}()
+
 	if res.StatusCode != http.StatusOK {
 		serverError := &serverErr{}
 		err = json.NewDecoder(res.Body).Decode(&serverError)
@@ -208,12 +202,6 @@ func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsagg
 	err = json.NewDecoder(res.Body).Decode(&articles)
 	if err != nil {
 		logger.Error(err, errFailedToDecodeResBody)
-		return err
-	}
-
-	err = res.Body.Close()
-	if err != nil {
-		logger.Error(err, errFailedToCloseResponseBody)
 		return err
 	}
 
@@ -316,15 +304,15 @@ func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec)
 }
 
 // getConfigMapData returns all data from config map named FeedGroupsConfigMapName in FeedGroupsNamespace
-func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (*v1.ConfigMap, error) {
-	var configMap *v1.ConfigMap
+func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (v1.ConfigMap, error) {
+	var configMap v1.ConfigMap
 	err := r.Client.Get(ctx, client.ObjectKey{
 		Namespace: newsaggregatorv1.FeedGroupsNamespace,
 		Name:      newsaggregatorv1.FeedGroupsConfigMapName,
-	}, configMap)
+	}, &configMap)
 
 	if err != nil {
-		return nil, err
+		return v1.ConfigMap{}, err
 	}
 
 	// TODO: remove this after debugging

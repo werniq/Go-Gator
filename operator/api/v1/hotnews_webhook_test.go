@@ -17,42 +17,23 @@ limitations under the License.
 package v1
 
 import (
-	"context"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 )
 
 func TestFeed_validateHotNews(t *testing.T) {
-	var err error
-	clientset, err = kubernetes.NewForConfig(c)
-	assert.Nil(t, err)
-
-	_, err = clientset.CoreV1().Namespaces().Create(context.TODO(), &v1.Namespace{
-		ObjectMeta: v12.ObjectMeta{
-			Name: FeedGroupsNamespace,
-		},
-	}, v12.CreateOptions{
-		FieldManager: "test",
-	})
-	if err != nil {
-		if errors.IsAlreadyExists(err) {
-			err = nil
-		}
-	}
-	assert.Nil(t, err)
-
-	_, err = clientset.CoreV1().ConfigMaps(FeedGroupsNamespace).Create(context.TODO(), &v1.ConfigMap{
-		ObjectMeta: v12.ObjectMeta{
-			Name: FeedGroupsConfigMapName,
-		},
-	}, v12.CreateOptions{
-		FieldManager: "test",
-	})
-	assert.Nil(t, err)
+	k8sClient = fake.NewClientBuilder().
+		WithObjects(&v1.ConfigMap{
+			ObjectMeta: v12.ObjectMeta{
+				Namespace: FeedGroupsNamespace,
+				Name:      FeedGroupsConfigMapName,
+			},
+			Data: nil,
+		}).
+		Build()
 
 	var tests = []struct {
 		name        string
@@ -83,24 +64,12 @@ func TestFeed_validateHotNews(t *testing.T) {
 			expectedErr: true,
 		},
 		{
-			name: "Validation failure because of empty feeds and feedGroups",
+			name: "Validation failure due to invalid dates",
 			hotNew: &HotNews{
 				Spec: HotNewsSpec{
 					Keywords:  []string{"test"},
-					DateStart: "2021-01-01",
-					DateEnd:   "2021-01-02",
-				},
-			},
-			expectedErr: true,
-		},
-		{
-			name: "Validation failure because of empty feeds and feedGroups",
-			hotNew: &HotNews{
-				Spec: HotNewsSpec{
-					Keywords:   []string{"test"},
-					DateStart:  "2021-01-01",
-					DateEnd:    "2021-01-02",
-					FeedGroups: []string{"non-existing-feed"},
+					DateStart: "ABCC-AA-BB",
+					DateEnd:   "BBCA-AA-BB",
 				},
 			},
 			expectedErr: true,

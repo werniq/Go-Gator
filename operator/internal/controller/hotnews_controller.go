@@ -113,28 +113,11 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	if !hotNews.ObjectMeta.DeletionTimestamp.IsZero() {
-		err = r.handleDelete(ctx, &hotNews)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		logger.Info("HotNews has been deleted")
-		return ctrl.Result{}, nil
+	err = r.processHotNews(ctx, &hotNews)
+	if err != nil {
+		return ctrl.Result{}, err
 	}
-
-	if !hotNews.ObjectMeta.CreationTimestamp.IsZero() {
-		err = r.handleCreate(ctx, &hotNews)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		logger.Info("HotNews object has been created")
-	} else {
-		err = r.handleUpdate(ctx, &hotNews)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		logger.Info("HotNews object has been updated")
-	}
+	logger.Info("HotNews object has been updated")
 
 	err = r.Client.Status().Update(ctx, &hotNews)
 	if err != nil {
@@ -143,10 +126,6 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	logger.Info("HotNewsReconciler has been successfully executed")
 
-	// question:
-	// if I understood correctly, we should perform the reconciliation every 24 hours
-	// to update the news.
-	// or should it be just set to false and remove requeue after?
 	return ctrl.Result{
 		Requeue:      true,
 		RequeueAfter: time.Second * 60 * 60 * 24,
@@ -157,12 +136,6 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 // to work with feedGroup Config Map.
 // It Watches for any changes in the ConfigMap with the feed groups, and also watches for changes in Feed CRD.
 func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string) error {
-	var err error
-	clientset, err = kubernetes.NewForConfig(c)
-	if err != nil {
-		return err
-	}
-
 	r.serverUrl = serverUrl
 
 	return ctrl.NewControllerManagedBy(mgr).
@@ -188,77 +161,8 @@ type article struct {
 	Link        string `json:"url" xml:"link"`
 }
 
-// handleCreate function sends a request to the news aggregator server to retrieve news
-// with the specified parameters, and returns an error if something goes wrong.
-func (r *HotNewsReconciler) handleCreate(ctx context.Context, hotNews *newsaggregatorv1.HotNews) error {
-	logger := log.FromContext(ctx)
-
-	requestUrl, err := r.constructRequestUrl(ctx, hotNews.Spec)
-	if err != nil {
-		logger.Error(err, errFailedToConstructRequestUrl)
-		return err
-	}
-	logger.Info(requestUrl)
-
-	req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
-	if err != nil {
-		logger.Error(err, errFailedToCreateRequest)
-		return err
-	}
-
-	customTransport := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	customClient := &http.Client{Transport: customTransport}
-
-	res, err := customClient.Do(req)
-	if err != nil {
-		logger.Error(err, errFailedToSendRequest)
-		return err
-	}
-
-	if res.StatusCode != http.StatusOK {
-		serverError := &serverErr{}
-		err = json.NewDecoder(res.Body).Decode(&serverError)
-		if err != nil {
-			logger.Error(err, errFailedToDecodeResBody)
-			return err
-		}
-		return serverError
-	}
-
-	var articles struct {
-		TotalNews int       `json:"totalAmount"`
-		News      []article `json:"news"`
-	}
-
-	err = json.NewDecoder(res.Body).Decode(&articles)
-	if err != nil {
-		logger.Error(err, errFailedToDecodeResBody)
-		return err
-	}
-
-	err = res.Body.Close()
-	if err != nil {
-		logger.Error(err, errFailedToCloseResponseBody)
-		return err
-	}
-
-	var articlesTitles []string
-	for _, a := range articles.News {
-		articlesTitles = append(articlesTitles, a.Title)
-	}
-	logger.Info("Total amount of news", "totalAmount", articles.TotalNews)
-
-	hotNews.InitHotNewsStatus(articles.TotalNews, requestUrl, articlesTitles)
-
-	logger.Info("HotNews.handleCreate has been successfully executed")
-
-	return nil
-}
-
-// handleUpdate function updates the HotNews object and returns an error if something goes wrong.
-func (r *HotNewsReconciler) handleUpdate(ctx context.Context, hotNews *newsaggregatorv1.HotNews) error {
+// processHotNews function updates the HotNews object and returns an error if something goes wrong.
+func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsaggregatorv1.HotNews) error {
 	logger := log.FromContext(ctx)
 	logger.Info("handling update")
 
@@ -321,16 +225,9 @@ func (r *HotNewsReconciler) handleUpdate(ctx context.Context, hotNews *newsaggre
 
 	hotNews.InitHotNewsStatus(articles.TotalNews, requestUrl, articlesTitles)
 
-	logger.Info("HotNews.handleUpdate has been successfully executed")
+	logger.Info("HotNews.processHotNews has been successfully executed")
 	logger.Info("HotNews object", "HotNews", hotNews)
 
-	return nil
-}
-
-// handleDelete function deletes the HotNews object and returns an error if something goes wrong.
-func (r *HotNewsReconciler) handleDelete(ctx context.Context, hotNews *newsaggregatorv1.HotNews) error {
-	logger := log.FromContext(ctx)
-	logger.Info("handling delete")
 	return nil
 }
 
@@ -344,50 +241,31 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsag
 	var requestUrl strings.Builder
 
 	requestUrl.WriteString(r.serverUrl)
-	requestUrl.WriteString("?keywords=" + spec.Keywords)
+	requestUrl.WriteString("?keywords=")
 
-	if len(spec.Feeds) < 1 && spec.FeedGroups == nil {
-		return "", fmt.Errorf(errFeedsAreRequired)
+	var keywordStr strings.Builder
+	for _, keyword := range spec.Keywords {
+		keywordStr.WriteString(keyword)
+		keywordStr.WriteString(",")
 	}
+	requestUrl.WriteString(keywordStr.String()[:len(keywordStr.String())-1])
 
 	var feedStr strings.Builder
 	if spec.FeedGroups != nil {
-		feedGroups, err := r.processFeedGroups(spec)
+		feedGroupsStr, err := r.processFeedGroups(spec)
 		if err != nil {
 			return "", err
 		}
-		feedStr.WriteString(feedGroups)
+		feedStr.WriteString(feedGroupsStr)
 	} else {
-		var feeds []newsaggregatorv1.Feed
-		var err error
-
-		if spec.Feeds == nil {
-			feeds, err = r.getAllFeedsInCurrentNamespace(ctx)
-			if err != nil {
-				return "", err
-			}
-		} else {
-			feeds, err = r.getAllFeedsInCurrentNamespace(ctx)
-			if err != nil {
-				return "", err
-			}
-
-			for _, feed := range spec.Feeds {
-				if !r.feedInNamespace(spec.Feeds, feed) {
-					return "", fmt.Errorf("feed %s is not in the current namespace", feed)
-				} else {
-					feeds = append(feeds, newsaggregatorv1.Feed{Spec: newsaggregatorv1.FeedSpec{Name: feed}})
-				}
-			}
+		feedsStr, err := r.processFeeds(spec)
+		if err != nil {
+			return "", err
 		}
-
-		for _, feed := range feeds {
-			feedStr.WriteString(feed.Spec.Name)
-			feedStr.WriteRune(',')
-		}
+		feedStr.WriteString(feedsStr)
 	}
 
-	requestUrl.WriteString("&sources=" + feedStr.String()[:len(feedStr.String())-1])
+	requestUrl.WriteString("&sources=" + feedStr.String())
 
 	if spec.DateStart != "" {
 		requestUrl.WriteString("&dateFrom=" + spec.DateStart)
@@ -400,12 +278,27 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsag
 	return requestUrl.String(), nil
 }
 
+// processFeeds returns a string containing comma-separated feed sources
+func (r *HotNewsReconciler) processFeeds(spec newsaggregatorv1.HotNewsSpec) (string, error) {
+	var sourcesBuilder strings.Builder
+
+	for _, feed := range spec.Feeds {
+		sourcesBuilder.WriteString(feed)
+		sourcesBuilder.WriteRune(',')
+	}
+
+	return sourcesBuilder.String()[:len(sourcesBuilder.String())-1], nil
+}
+
 // processFeedGroups function processes feed groups from the ConfigMap and returns a string containing comma-separated
 // feed sources
 func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec) (string, error) {
 	var sourcesBuilder strings.Builder
 
-	feedGroups, err := r.getFeedGroups(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	feedGroups, err := r.getFeedGroups(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -424,39 +317,21 @@ func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec)
 
 // getConfigMapData returns all data from config map named FeedGroupsConfigMapName in FeedGroupsNamespace
 func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (*v1.ConfigMap, error) {
-	configMap, err := clientset.CoreV1().
-		ConfigMaps(newsaggregatorv1.FeedGroupsNamespace).
-		Get(ctx, newsaggregatorv1.FeedGroupsConfigMapName, v12.GetOptions{})
+	var configMap *v1.ConfigMap
+	err := r.Client.Get(ctx, client.ObjectKey{
+		Namespace: newsaggregatorv1.FeedGroupsNamespace,
+		Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+	}, configMap)
 
 	if err != nil {
 		return nil, err
 	}
 
+	// TODO: remove this after debugging
 	logger := log.FromContext(ctx)
 	for key, item := range configMap.Data {
 		logger.Info("ConfigMap data", key, item)
 	}
 
 	return configMap, nil
-}
-
-// getAllFeedsInCurrentNamespace returns all feeds in the current namespace
-func (r *HotNewsReconciler) getAllFeedsInCurrentNamespace(ctx context.Context) ([]newsaggregatorv1.Feed, error) {
-	var feeds newsaggregatorv1.FeedList
-	err := r.Client.List(ctx, &feeds)
-	if err != nil {
-		return nil, err
-	}
-
-	return feeds.Items, nil
-}
-
-// feedInNamespace returns true if feed is in the namespace, otherwise - false
-func (r *HotNewsReconciler) feedInNamespace(namespace []string, feed string) bool {
-	for _, source := range namespace {
-		if source == feed {
-			return true
-		}
-	}
-	return false
 }

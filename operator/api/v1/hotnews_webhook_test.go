@@ -63,7 +63,7 @@ func TestFeed_validateHotNews(t *testing.T) {
 			name: "Successful validation",
 			hotNew: &HotNews{
 				Spec: HotNewsSpec{
-					Keywords:  "test",
+					Keywords:  []string{"test"},
 					DateStart: "2021-01-01",
 					DateEnd:   "2021-01-02",
 					Feeds:     []string{"feed1"},
@@ -75,7 +75,7 @@ func TestFeed_validateHotNews(t *testing.T) {
 			name: "Validation failure due to invalid hotNew date range",
 			hotNew: &HotNews{
 				Spec: HotNewsSpec{
-					Keywords:  "test",
+					Keywords:  []string{"test"},
 					DateStart: "2021-01-03",
 					DateEnd:   "2021-01-02",
 				},
@@ -86,7 +86,7 @@ func TestFeed_validateHotNews(t *testing.T) {
 			name: "Validation failure because of empty feeds and feedGroups",
 			hotNew: &HotNews{
 				Spec: HotNewsSpec{
-					Keywords:  "test",
+					Keywords:  []string{"test"},
 					DateStart: "2021-01-01",
 					DateEnd:   "2021-01-02",
 				},
@@ -97,7 +97,7 @@ func TestFeed_validateHotNews(t *testing.T) {
 			name: "Validation failure because of empty feeds and feedGroups",
 			hotNew: &HotNews{
 				Spec: HotNewsSpec{
-					Keywords:   "test",
+					Keywords:   []string{"test"},
 					DateStart:  "2021-01-01",
 					DateEnd:    "2021-01-02",
 					FeedGroups: []string{"non-existing-feed"},

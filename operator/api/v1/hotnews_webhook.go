@@ -22,6 +22,7 @@ import (
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	"log"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -80,8 +81,23 @@ var _ webhook.Defaulter = &HotNews{}
 func (r *HotNews) Default() {
 	hotnewslog.Info("default", "name", r.Name)
 
+	var err error
+	var feeds []Feed
+
 	if r.Spec.SummaryConfig.TitlesCount == 0 {
 		r.Spec.SummaryConfig.TitlesCount = 10
+	}
+
+	if r.Spec.Feeds == nil && r.Spec.FeedGroups == nil {
+		feeds, err = r.getAllFeedsInCurrentNamespace(context.TODO())
+	}
+
+	for _, feed := range feeds {
+		r.Spec.Feeds = append(r.Spec.Feeds, feed.Spec.Name)
+	}
+
+	if err != nil {
+		log.Fatalln(err)
 	}
 }
 
@@ -135,8 +151,6 @@ func (r *HotNews) ValidateDelete() (admission.Warnings, error) {
 // In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct, and
 // if feeds or feedGroups exists in our news aggregator.
 func (r *HotNews) validateHotNews() error {
-	var ok bool
-
 	if r.Spec.DateStart > r.Spec.DateEnd {
 		return fmt.Errorf(errInvalidDateRange)
 	}
@@ -160,4 +174,15 @@ func (r *HotNews) validateHotNews() error {
 	}
 
 	return nil
+}
+
+// getAllFeedsInCurrentNamespace returns all feeds in the current namespace
+func (r *HotNews) getAllFeedsInCurrentNamespace(ctx context.Context) ([]Feed, error) {
+	var feeds FeedList
+	err := k8sClient.List(ctx, &feeds)
+	if err != nil {
+		return nil, err
+	}
+
+	return feeds.Items, nil
 }

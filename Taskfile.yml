@@ -91,7 +91,12 @@ tasks:
       - echo "Waiting for cert manager to working..."
       - sleep 10
       - cd operator
+      - make generate
       - make manifests
       - make install
       - make deploy
       - kubectl apply -f ../templates/
+
+  installTask:
+    cmds:
+      - go install github.com/go-task/task/v3/cmd/task@latest

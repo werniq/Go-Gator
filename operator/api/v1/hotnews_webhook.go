@@ -18,18 +18,15 @@ package v1
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
-	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-	"strings"
 )
 
 const (
@@ -138,8 +135,6 @@ func (r *HotNews) ValidateDelete() (admission.Warnings, error) {
 // In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct, and
 // if feeds or feedGroups exists in our news aggregator.
 func (r *HotNews) validateHotNews() error {
-	var ok bool
-
 	if r.Spec.DateStart > r.Spec.DateEnd {
 		return fmt.Errorf(errInvalidDateRange)
 	}
@@ -162,53 +157,5 @@ func (r *HotNews) validateHotNews() error {
 		}
 	}
 
-	if r.Spec.Feeds != nil {
-		ok, err = validateFeeds(r.Spec.Feeds)
-		if err != nil {
-			return err
-		}
-
-		if !ok {
-			return fmt.Errorf("some feeds do not exists in the go-gator")
-		}
-	} else {
-		for _, feedGroup := range configMap.Data {
-			ok, err = validateFeeds(strings.Split(feedGroup, ","))
-			if err != nil {
-				return err
-			}
-
-			if !ok {
-				return fmt.Errorf("some feed groups do not exists in the go-gator")
-			}
-		}
-	}
 	return nil
-}
-
-// validateFeeds verifies if given array of feeds exists in our news aggregator
-func validateFeeds(feeds []string) (bool, error) {
-	serverUrl := "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
-	for _, feed := range feeds {
-		req, err := http.NewRequest("GET", serverUrl+"/"+feed, nil)
-		if err != nil {
-			return false, err
-		}
-
-		customTransport := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-		customClient := &http.Client{Transport: customTransport}
-
-		res, err := customClient.Do(req)
-		if err != nil {
-			return false, err
-		}
-
-		if res.StatusCode != http.StatusOK {
-			return false, err
-		}
-	}
-
-	return true, nil
 }

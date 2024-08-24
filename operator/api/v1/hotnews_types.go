@@ -27,7 +27,7 @@ import (
 // And then we will make requests to our news aggregator server with this parameters, and get the news
 type HotNewsSpec struct {
 	// Keywords is a comma-separated list of keywords which will be used to search news
-	// +optional
+	// +kubebuilder:validation:Required
 	Keywords string `json:"keywords"`
 
 	// DateStart is a news starting date in format "YYYY-MM-DD", can be empty

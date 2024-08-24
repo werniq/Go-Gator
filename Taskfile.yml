@@ -83,3 +83,15 @@ tasks:
     desc: Remove news aggregator from kubernetes Cluster
     cmds:
       - kubectl delete -f templates/
+
+  start:
+    cmds:
+      - minikube start
+      - kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml
+      - echo "Waiting for cert manager to working..."
+      - sleep 10
+      - cd operator
+      - make manifests
+      - make install
+      - make deploy
+      - kubectl apply -f ../templates/

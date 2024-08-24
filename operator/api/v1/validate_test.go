@@ -39,7 +39,7 @@ func TestValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := Validate(tt.input)
+			err := validateFeeds(tt.input)
 			if tt.wantErr {
 				assert.NotNil(t, err)
 			} else {
@@ -87,10 +87,10 @@ func TestUrlValidate_Validate(t *testing.T) {
 			}
 			err := urlValidator.Validate()
 			if (err != nil) != tt.wantErr {
-				t.Errorf("urlValidate.Validate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("urlValidate.validateFeeds() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if err != nil && err.Error() != tt.errMsg {
-				t.Errorf("urlValidate.Validate() error = %v, expected error message %v", err.Error(), tt.errMsg)
+				t.Errorf("urlValidate.validateFeeds() error = %v, expected error message %v", err.Error(), tt.errMsg)
 			}
 		})
 	}

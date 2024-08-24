@@ -19,12 +19,11 @@ package v1
 import (
 	"context"
 	"fmt"
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes"
 	"log"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -49,22 +48,10 @@ const (
 
 var (
 	hotnewslog = logf.Log.WithName("hotnews-resource")
-
-	// c is a kubernetes configuration which will be used to create a k8s client
-	c = config.GetConfigOrDie()
-
-	// k8sClient is a k8s client which will be used to get ConfigMap with hotNew groups
-	clientset *kubernetes.Clientset
 )
 
 // SetupWebhookWithManager will setup the manager to manage the webhooks
 func (r *HotNews) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	var err error
-	clientset, err = kubernetes.NewForConfig(c)
-	if err != nil {
-		return err
-	}
-
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -151,25 +138,26 @@ func (r *HotNews) ValidateDelete() (admission.Warnings, error) {
 // In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct, and
 // if feeds or feedGroups exists in our news aggregator.
 func (r *HotNews) validateHotNews() error {
-	if r.Spec.DateStart > r.Spec.DateEnd {
-		return fmt.Errorf(errInvalidDateRange)
+	err := validateHotNews(r.Spec)
+	if err != nil {
+		return err
 	}
 
-	if r.Spec.Feeds == nil && r.Spec.FeedGroups == nil {
-		return fmt.Errorf(errNoFeeds)
-	}
-
-	configMap, err := clientset.CoreV1().ConfigMaps(FeedGroupsNamespace).
-		Get(context.TODO(), FeedGroupsConfigMapName, v12.GetOptions{})
+	var configMaps v1.ConfigMapList
+	err = k8sClient.List(context.TODO(), &configMaps, &client.ListOptions{
+		Namespace: FeedGroupsNamespace,
+	})
 
 	if err != nil {
-		hotnewslog.Info("Error retireving config map")
+		hotnewslog.Info("Error retrieving config map")
 		return err
 	}
 
 	for _, source := range r.Spec.FeedGroups {
-		if _, exists := configMap.Data[source]; !exists {
-			return fmt.Errorf(errWrongFeedGroupName)
+		for _, configMap := range configMaps.Items {
+			if configMap.Data[source] == "" {
+				return fmt.Errorf(errWrongFeedGroupName)
+			}
 		}
 	}
 

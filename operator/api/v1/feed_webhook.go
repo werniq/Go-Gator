@@ -72,7 +72,7 @@ func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 
 // validateFeed calls to our validation package to validate the feed configuration
 func (r *Feed) validateFeed() (admission.Warnings, error) {
-	err := Validate(r.Spec)
+	err := validateFeeds(r.Spec)
 	if err != nil {
 		return nil, err
 	}

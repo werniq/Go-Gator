@@ -44,7 +44,7 @@ func TestFeed_validateHotNews(t *testing.T) {
 			name: "Successful validation",
 			hotNew: &HotNews{
 				Spec: HotNewsSpec{
-					Keywords:  []string{"test"},
+					Keywords:  "test",
 					DateStart: "2021-01-01",
 					DateEnd:   "2021-01-02",
 					Feeds:     []string{"feed1"},
@@ -56,7 +56,7 @@ func TestFeed_validateHotNews(t *testing.T) {
 			name: "Validation failure due to invalid hotNew date range",
 			hotNew: &HotNews{
 				Spec: HotNewsSpec{
-					Keywords:  []string{"test"},
+					Keywords:  "test",
 					DateStart: "2021-01-03",
 					DateEnd:   "2021-01-02",
 				},
@@ -67,7 +67,7 @@ func TestFeed_validateHotNews(t *testing.T) {
 			name: "Validation failure due to invalid dates",
 			hotNew: &HotNews{
 				Spec: HotNewsSpec{
-					Keywords:  []string{"test"},
+					Keywords:  "test",
 					DateStart: "ABCC-AA-BB",
 					DateEnd:   "BBCA-AA-BB",
 				},

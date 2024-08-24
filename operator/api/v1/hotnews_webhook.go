@@ -23,7 +23,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -48,22 +47,10 @@ const (
 
 var (
 	hotnewslog = logf.Log.WithName("hotnews-resource")
-
-	// c is a kubernetes configuration which will be used to create a k8s client
-	c = config.GetConfigOrDie()
-
-	// k8sClient is a k8s client which will be used to get ConfigMap with hotNew groups
-	clientset *kubernetes.Clientset
 )
 
 // SetupWebhookWithManager will setup the manager to manage the webhooks
 func (r *HotNews) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	var err error
-	clientset, err = kubernetes.NewForConfig(c)
-	if err != nil {
-		return err
-	}
-
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -143,17 +130,23 @@ func (r *HotNews) validateHotNews() error {
 		return fmt.Errorf(errNoFeeds)
 	}
 
-	configMap, err := clientset.CoreV1().ConfigMaps(FeedGroupsNamespace).
-		Get(context.TODO(), FeedGroupsConfigMapName, v12.GetOptions{})
-
+	// TODO: ask about EOF error
+	config := ctrl.GetConfigOrDie()
+	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		hotnewslog.Info("Error retireving config map")
+		return err
+	}
+
+	configMaps, err := clientset.CoreV1().ConfigMaps(FeedGroupsNamespace).List(context.TODO(), v12.ListOptions{})
+	if err != nil {
 		return err
 	}
 
 	for _, source := range r.Spec.FeedGroups {
-		if _, exists := configMap.Data[source]; !exists {
-			return fmt.Errorf(errWrongFeedGroupName)
+		for _, configMap := range configMaps.Items {
+			if _, exists := configMap.Data[source]; !exists {
+				return fmt.Errorf(errWrongFeedGroupName)
+			}
 		}
 	}
 

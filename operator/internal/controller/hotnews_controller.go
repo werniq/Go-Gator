@@ -266,6 +266,10 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsag
 		requestUrl.WriteString("&dateFrom=" + spec.DateStart)
 	}
 
+	if spec.DateEnd != "" {
+		requestUrl.WriteString("&dateEnd=" + spec.DateEnd)
+	}
+
 	return requestUrl.String(), nil
 }
 
@@ -289,39 +293,42 @@ func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	feedGroups, err := r.getFeedGroups(ctx)
+	configMaps, err := r.getFeedGroups(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	for _, sourceKey := range spec.FeedGroups {
-		if val, exists := feedGroups.Data[sourceKey]; exists {
-			sourcesBuilder.WriteString(val)
-			sourcesBuilder.WriteRune(',')
-		} else {
-			return "", fmt.Errorf(errWrongFeedGroupName)
+	for _, feedGroup := range spec.FeedGroups {
+		for _, configMap := range configMaps.Items {
+			if _, ok := configMap.Data[feedGroup]; !ok {
+				return "", fmt.Errorf(errWrongFeedGroupName)
+			} else {
+				sourcesBuilder.WriteString(configMap.Data[feedGroup])
+				sourcesBuilder.WriteRune(',')
+			}
 		}
 	}
 
-	return sourcesBuilder.String(), nil
+	return sourcesBuilder.String()[:len(sourcesBuilder.String())-1], nil
 }
 
 // getConfigMapData returns all data from config map named FeedGroupsConfigMapName in FeedGroupsNamespace
-func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (*v1.ConfigMap, error) {
-	configMap, err := clientset.CoreV1().
-		ConfigMaps(newsaggregatorv1.FeedGroupsNamespace).
-		Get(ctx, newsaggregatorv1.FeedGroupsConfigMapName, v12.GetOptions{})
+func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (v1.ConfigMapList, error) {
+	var configMaps v1.ConfigMapList
+	err := r.Client.List(ctx, &configMaps, client.InNamespace(newsaggregatorv1.FeedGroupsNamespace))
 
 	if err != nil {
-		return nil, err
+		return v1.ConfigMapList{}, err
 	}
 
 	logger := log.FromContext(ctx)
-	for key, item := range configMap.Data {
-		logger.Info("ConfigMap data", key, item)
+	for _, configMap := range configMaps.Items {
+		for key, item := range configMap.Data {
+			logger.Info("ConfigMap data", key, item)
+		}
 	}
 
-	return configMap, nil
+	return configMaps, nil
 }
 
 // getAllFeedsInCurrentNamespace returns all feeds in the current namespace

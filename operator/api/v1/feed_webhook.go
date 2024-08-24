@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -37,12 +36,6 @@ var (
 
 // SetupWebhookWithManager will set up the manager to manage the webhooks
 func (r *Feed) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	var err error
-	clientset, err = kubernetes.NewForConfig(c)
-	if err != nil {
-		return err
-	}
-
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -72,7 +65,7 @@ func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 
 // validateFeed calls to our validation package to validate the feed configuration
 func (r *Feed) validateFeed() (admission.Warnings, error) {
-	err := Validate(r.Spec)
+	err := validateFeeds(r.Spec)
 	if err != nil {
 		return nil, err
 	}

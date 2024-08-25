@@ -16,10 +16,10 @@ var (
 
 const (
 	// tlsCertFile is the path to the certificate file used for serving the webhook over HTTPS
-	tlsCertFile = "operator/config_map_webhook/tls/tls.crt"
+	tlsCertFile = "./config_map_webhook/certs/tls.crt"
 
 	// tlsKeyFile is the path to the private key file used for serving the webhook over HTTPS
-	tlsKeyFile = "operator/config_map_webhook/tls/tls.key"
+	tlsKeyFile = "./config_map_webhook/certs/tls.key"
 )
 
 func init() {

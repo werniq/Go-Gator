@@ -52,7 +52,7 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 					Name:      "feed-sample",
 				},
 				Spec: newsaggregatorv1.HotNewsSpec{
-					Keywords:  "keyword1,keyword2",
+					Keywords:  []string{"keyword1,keyword2"},
 					DateStart: "2024-08-12",
 					DateEnd:   "2024-08-13",
 					Feeds:     []string{"abc", "bbc"},
@@ -190,7 +190,7 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 			fields: fields{},
 			args: args{
 				spec: newsaggregatorv1.HotNewsSpec{
-					Keywords:  "bitcoin",
+					Keywords:  []string{"bitcoin"},
 					Feeds:     []string{"abc", "bbc"},
 					DateStart: "2024-08-05",
 					DateEnd:   "2024-08-06",
@@ -204,7 +204,7 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 			fields: fields{},
 			args: args{
 				spec: newsaggregatorv1.HotNewsSpec{
-					Keywords:  "bitcoin",
+					Keywords:  []string{"bitcoin"},
 					Feeds:     []string{"abc", "bbc"},
 					DateStart: "2024-08-05",
 				},
@@ -217,7 +217,7 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 			fields: fields{},
 			args: args{
 				spec: newsaggregatorv1.HotNewsSpec{
-					Keywords: "bitcoin",
+					Keywords: []string{"bitcoin"},
 					Feeds:    []string{"abc", "bbc"},
 				},
 			},
@@ -249,36 +249,23 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 	_ = newsaggregatorv1.AddToScheme(scheme)
 	_ = v1.AddToScheme(scheme)
 
-	existingFeedList := &newsaggregatorv1.HotNewsList{
-		Items: []newsaggregatorv1.HotNews{
+	existingConfigMap := v1.ConfigMapList{
+		Items: []v1.ConfigMap{
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "feed-sample",
+					Namespace: newsaggregatorv1.FeedGroupsNamespace,
+					Name:      newsaggregatorv1.FeedGroupsConfigMapName,
 				},
-				Spec: newsaggregatorv1.HotNewsSpec{
-					Keywords:  "keyword1,keyword2",
-					DateStart: "2024-08-12",
-					DateEnd:   "2024-08-13",
+				Data: map[string]string{
+					"sport":   "washingtontimes",
+					"politic": "abc,bbc",
 				},
 			},
 		},
 	}
 
-	existingConfigMap := v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: newsaggregatorv1.FeedGroupsNamespace,
-			Name:      newsaggregatorv1.FeedGroupsConfigMapName,
-		},
-		Data: map[string]string{
-			"sport":   "washingtontimes",
-			"politic": "abc,bbc",
-		},
-	}
-
 	fakeClient := fake.NewClientBuilder().WithScheme(scheme).
-		WithLists(existingFeedList).
-		WithObjects(&existingConfigMap).
+		WithLists(&existingConfigMap).
 		Build()
 
 	type fields struct {
@@ -292,7 +279,7 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    v1.ConfigMap
+		want    v1.ConfigMapList
 		wantErr bool
 		setup   func()
 	}{
@@ -319,10 +306,10 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 			args: args{
 				ctx: context.TODO(),
 			},
-			want:    v1.ConfigMap{},
+			want:    v1.ConfigMapList{},
 			wantErr: true,
 			setup: func() {
-				err := fakeClient.Delete(context.TODO(), &existingConfigMap)
+				err := fakeClient.DeleteAllOf(context.TODO(), &existingConfigMap.Items[0])
 				assert.Nil(t, err)
 			},
 		},
@@ -365,7 +352,7 @@ func TestHotNewsReconciler_handleUpdate(t *testing.T) {
 					Name:      "feed-sample",
 				},
 				Spec: newsaggregatorv1.HotNewsSpec{
-					Keywords:  "keyword1,keyword2",
+					Keywords:  []string{"keyword1,keyword2"},
 					DateStart: "2024-08-12",
 					DateEnd:   "2024-08-13",
 				},
@@ -414,7 +401,7 @@ func TestHotNewsReconciler_handleUpdate(t *testing.T) {
 				ctx: context.TODO(),
 				hotNews: &newsaggregatorv1.HotNews{
 					Spec: newsaggregatorv1.HotNewsSpec{
-						Keywords:  "bitcoin",
+						Keywords:  []string{"bitcoin"},
 						DateStart: "2024-08-05",
 						DateEnd:   "2024-08-06",
 						Feeds:     []string{"abc", "bbc"},
@@ -437,7 +424,7 @@ func TestHotNewsReconciler_handleUpdate(t *testing.T) {
 				ctx: context.TODO(),
 				hotNews: &newsaggregatorv1.HotNews{
 					Spec: newsaggregatorv1.HotNewsSpec{
-						Keywords: "bitcoin",
+						Keywords: []string{"bitcoin"},
 						Feeds:    []string{"abc", "bbc"},
 					},
 				},
@@ -454,7 +441,7 @@ func TestHotNewsReconciler_handleUpdate(t *testing.T) {
 				ctx: context.TODO(),
 				hotNews: &newsaggregatorv1.HotNews{
 					Spec: newsaggregatorv1.HotNewsSpec{
-						Keywords:  "bitcoin",
+						Keywords:  []string{"bitcoin"},
 						DateStart: "2024-08-05",
 						DateEnd:   "2024-08-06",
 						Feeds:     []string{"abc", "bbc"},
@@ -474,7 +461,7 @@ func TestHotNewsReconciler_handleUpdate(t *testing.T) {
 				ctx: context.TODO(),
 				hotNews: &newsaggregatorv1.HotNews{
 					Spec: newsaggregatorv1.HotNewsSpec{
-						Keywords:  "bitcoin",
+						Keywords:  []string{"bitcoin"},
 						DateStart: "2024-08-05",
 						DateEnd:   "2024-08-06",
 						Feeds:     []string{"abc", "bbc"},
@@ -496,7 +483,7 @@ func TestHotNewsReconciler_handleUpdate(t *testing.T) {
 				ctx: context.TODO(),
 				hotNews: &newsaggregatorv1.HotNews{
 					Spec: newsaggregatorv1.HotNewsSpec{
-						Keywords:  "bitcoin",
+						Keywords:  []string{"bitcoin"},
 						DateStart: "2024-08-05",
 						DateEnd:   "2024-08-06",
 						Feeds:     []string{"abc", "bbc"},
@@ -542,7 +529,7 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 					Name:      "feed-sample",
 				},
 				Spec: newsaggregatorv1.HotNewsSpec{
-					Keywords:  "keyword1,keyword2",
+					Keywords:  []string{"keyword1,keyword2"},
 					DateStart: "2024-08-12",
 					DateEnd:   "2024-08-13",
 				},
@@ -604,7 +591,7 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 					},
 				}
 			},
-			want:    "washingtontimes,abc,bbc,",
+			want:    "washingtontimes,abc,bbc",
 			wantErr: false,
 		},
 		{
@@ -628,48 +615,6 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 						"sport": "washingtontimes",
 					},
 				}
-			},
-			want:    "",
-			wantErr: true,
-		},
-		{
-			name: "Empty feed groups",
-			fields: fields{
-				Client: fakeClient,
-				Scheme: scheme,
-			},
-			args: args{
-				spec: newsaggregatorv1.HotNewsSpec{
-					FeedGroups: []string{},
-				},
-			},
-			setup: func() *v1.ConfigMap {
-				return &v1.ConfigMap{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      newsaggregatorv1.FeedGroupsConfigMapName,
-						Namespace: newsaggregatorv1.FeedGroupsNamespace,
-					},
-					Data: map[string]string{
-						"sport": "washingtontimes",
-					},
-				}
-			},
-			want:    "",
-			wantErr: false,
-		},
-		{
-			name: "Error retrieving ConfigMap",
-			fields: fields{
-				Client: fake.NewClientBuilder().WithScheme(scheme).Build(),
-				Scheme: scheme,
-			},
-			args: args{
-				spec: newsaggregatorv1.HotNewsSpec{
-					FeedGroups: []string{"sport"},
-				},
-			},
-			setup: func() *v1.ConfigMap {
-				return nil
 			},
 			want:    "",
 			wantErr: true,

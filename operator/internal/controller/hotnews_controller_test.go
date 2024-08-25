@@ -69,7 +69,7 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 		},
 	}
 
-	k8sClient = fake.NewClientBuilder().WithScheme(scheme).
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).
 		WithObjects(&existingHotNewsList, &existingConfigMap).
 		Build()
 

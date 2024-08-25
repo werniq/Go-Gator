@@ -38,9 +38,6 @@ import (
 )
 
 const (
-	// errFeedsAreRequired is thrown when feeds are not provided
-	errFeedsAreRequired = "feeds or feedGroups are required"
-
 	// errFailedToConstructRequestUrl error message which is returned when failed to construct request URL
 	errFailedToConstructRequestUrl = "failed to construct request URL"
 

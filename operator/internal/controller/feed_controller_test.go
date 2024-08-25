@@ -52,7 +52,7 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 		},
 	}
 
-	k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithLists(existingFeedList).Build()
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithLists(existingFeedList).Build()
 
 	type fields struct {
 		Client        client.Client

@@ -41,8 +41,6 @@ type FeedReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-var k8sClient client.Client
-
 const (
 	// feedFinalizerName is a title of finalizer which will be added to feed object
 	// for proper deletion of feed in news aggregator
@@ -150,7 +148,6 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 // SetupWithManager sets up the controller with the Manager.
 func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager, serverAddr string) error {
 	r.serverAddress = serverAddr
-	k8sClient = mgr.GetClient()
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.Feed{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Complete(r)

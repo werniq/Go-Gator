@@ -1,10 +1,12 @@
 package main
 
 import (
+	"crypto/tls"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"log"
+	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
@@ -29,8 +31,17 @@ func init() {
 }
 
 func main() {
+	customTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	customClient := &http.Client{Transport: customTransport}
 	c, err := client.New(ctrl.GetConfigOrDie(), client.Options{
-		Scheme: scheme,
+		HTTPClient:     customClient,
+		Scheme:         scheme,
+		Mapper:         nil,
+		Cache:          nil,
+		WarningHandler: client.WarningHandlerOptions{},
+		DryRun:         nil,
 	})
 	if err != nil {
 		log.Fatalln(err)

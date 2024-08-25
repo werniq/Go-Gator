@@ -6,3 +6,4 @@ metadata:
 data:
   sport: "washingtontimes"
   politic: "abc,bbc"
+  qni: "abc,washingtontimes"

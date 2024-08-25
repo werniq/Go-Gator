@@ -4,8 +4,10 @@ COPY go.mod go.sum ./
 RUN go mod download
 RUN go get k8s.io/client-go/tools/clientcmd@v0.30.1
 
-COPY config_map_webhook/main.go ./main.go
-COPY config_map_webhook/config_map_controller.go ./config_map_controller.go
+COPY ./config_map_webhook/main.go ./main.go
+COPY ./config_map_webhook/config_map_controller.go ./config_map_controller.go
+COPY ./config_map_webhook/templates/certs/ca.crt ./operator/config_map_webhook/tls/tls.crt
+COPY ./config_map_webhook/templates/certs/ca.key ./operator/config_map_webhook/tls/tls.key
 COPY ./api ./api
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /config_map_wh .

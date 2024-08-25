@@ -243,7 +243,12 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsag
 	var requestUrl strings.Builder
 
 	requestUrl.WriteString(r.serverUrl)
-	requestUrl.WriteString("?keywords=" + spec.Keywords)
+	var keywordsStr strings.Builder
+	for _, keyword := range spec.Keywords {
+		keywordsStr.WriteString(keyword)
+		keywordsStr.WriteRune(',')
+	}
+	requestUrl.WriteString("?keywords=" + keywordsStr.String()[:len(keywordsStr.String())-1])
 
 	var feedStr strings.Builder
 	if spec.FeedGroups != nil {

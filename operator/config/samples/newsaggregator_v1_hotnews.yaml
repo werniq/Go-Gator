@@ -7,9 +7,13 @@ metadata:
   name: hotnews-sample-5
 spec:
   keywords: 
+    - a
+    - an
     - Trump
     - Ukraine
     - Olympic
+    - China
+    - Russia
   dateStart: 2024-08-22
   dateEnd: 2024-08-24
   feeds: 

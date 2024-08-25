@@ -24,12 +24,10 @@ import (
 	v1 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes"
 	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -37,14 +35,6 @@ import (
 	"time"
 
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
-)
-
-var (
-	// c is a kubernetes configuration which will be used to create a k8s client
-	c = config.GetConfigOrDie()
-
-	// k8sClient is a k8s client which will be used to get ConfigMap with hotNew groups
-	clientset *kubernetes.Clientset
 )
 
 const (
@@ -132,12 +122,6 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 // to work with feedGroup Config Map.
 // It Watches for any changes in the ConfigMap with the feed groups, and also watches for changes in Feed CRD.
 func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string) error {
-	var err error
-	clientset, err = kubernetes.NewForConfig(c)
-	if err != nil {
-		return err
-	}
-
 	r.serverUrl = serverUrl
 
 	return ctrl.NewControllerManagedBy(mgr).
@@ -334,25 +318,4 @@ func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (v1.ConfigMapList
 	}
 
 	return configMaps, nil
-}
-
-// getAllFeedsInCurrentNamespace returns all feeds in the current namespace
-func (r *HotNewsReconciler) getAllFeedsInCurrentNamespace(ctx context.Context) ([]newsaggregatorv1.Feed, error) {
-	var feeds newsaggregatorv1.FeedList
-	err := r.Client.List(ctx, &feeds)
-	if err != nil {
-		return nil, err
-	}
-
-	return feeds.Items, nil
-}
-
-// feedInNamespace returns true if feed is in the namespace, otherwise - false
-func (r *HotNewsReconciler) feedInNamespace(namespace []string, feed string) bool {
-	for _, source := range namespace {
-		if source == feed {
-			return true
-		}
-	}
-	return false
 }

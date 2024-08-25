@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,20 +45,16 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 		_, _ = w.Write([]byte(`{"totalAmount": 2, "news": [{"title": "News 1"}, {"title": "News 2"}]}`))
 	}))
 
-	existingFeedList := &newsaggregatorv1.HotNewsList{
-		Items: []newsaggregatorv1.HotNews{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-					Name:      "feed-sample",
-				},
-				Spec: newsaggregatorv1.HotNewsSpec{
-					Keywords:  []string{"keyword1,keyword2"},
-					DateStart: "2024-08-12",
-					DateEnd:   "2024-08-13",
-					Feeds:     []string{"abc", "bbc"},
-				},
-			},
+	existingHotNewsList := newsaggregatorv1.HotNews{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      "feed-sample",
+		},
+		Spec: newsaggregatorv1.HotNewsSpec{
+			Keywords:  []string{"keyword1,keyword2"},
+			DateStart: "2024-08-12",
+			DateEnd:   "2024-08-13",
+			Feeds:     []string{"abc", "bbc"},
 		},
 	}
 
@@ -72,9 +69,8 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 		},
 	}
 
-	fakeClient := fake.NewClientBuilder().WithScheme(scheme).
-		WithObjects(&existingConfigMap).
-		WithLists(existingFeedList).
+	k8sClient = fake.NewClientBuilder().WithScheme(scheme).
+		WithObjects(&existingHotNewsList, &existingConfigMap).
 		Build()
 
 	type fields struct {
@@ -96,7 +92,7 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 		{
 			name: "Successful Reconcile call",
 			fields: fields{
-				Client: fakeClient,
+				Client: k8sClient,
 				Scheme: scheme,
 			},
 			args: args{
@@ -114,7 +110,7 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 		{
 			name: "Failed because feed not found (invalid name)",
 			fields: fields{
-				Client: fakeClient,
+				Client: k8sClient,
 				Scheme: scheme,
 			},
 			args: args{
@@ -132,7 +128,7 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 		{
 			name: "Failed because feed not found (invalid namespace)",
 			fields: fields{
-				Client: fakeClient,
+				Client: k8sClient,
 				Scheme: scheme,
 			},
 			args: args{
@@ -152,7 +148,7 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &HotNewsReconciler{
-				Client:    fakeClient,
+				Client:    k8sClient,
 				Scheme:    tt.fields.Scheme,
 				serverUrl: mockServer.URL,
 			}
@@ -170,6 +166,9 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 }
 
 func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = newsaggregatorv1.AddToScheme(scheme)
+	_ = v1.AddToScheme(scheme)
 	serverNewsEndpoint := "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
 	type fields struct {
 		Client client.Client
@@ -207,6 +206,29 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 					Keywords:  []string{"bitcoin"},
 					Feeds:     []string{"abc", "bbc"},
 					DateStart: "2024-08-05",
+				},
+			},
+			want:    serverNewsEndpoint + "?keywords=bitcoin&sources=abc,bbc&dateFrom=2024-08-05",
+			wantErr: false,
+		},
+		{
+			name: "Valid request with keywords, feedGroups, and start date only",
+			fields: fields{
+				Client: fake.NewClientBuilder().WithScheme(scheme).
+					WithObjects(&v1.ConfigMap{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: newsaggregatorv1.FeedGroupsNamespace,
+							Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+						},
+						Data: map[string]string{"sport": "abc,bbc"},
+					}).
+					Build(),
+			},
+			args: args{
+				spec: newsaggregatorv1.HotNewsSpec{
+					Keywords:   []string{"bitcoin"},
+					FeedGroups: []string{"sport"},
+					DateStart:  "2024-08-05",
 				},
 			},
 			want:    serverNewsEndpoint + "?keywords=bitcoin&sources=abc,bbc&dateFrom=2024-08-05",
@@ -268,6 +290,10 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 		WithLists(&existingConfigMap).
 		Build()
 
+	errorClient := &errorReturningClient{
+		Client: fakeClient,
+	}
+
 	type fields struct {
 		Client client.Client
 		Scheme *runtime.Scheme
@@ -298,9 +324,9 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 			},
 		},
 		{
-			name: "ConfigMap not found",
+			name: "Error during listing of ConfigMaps",
 			fields: fields{
-				Client: fakeClient,
+				Client: errorClient,
 				Scheme: scheme,
 			},
 			args: args{
@@ -309,8 +335,6 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 			want:    v1.ConfigMapList{},
 			wantErr: true,
 			setup: func() {
-				err := fakeClient.DeleteAllOf(context.TODO(), &existingConfigMap.Items[0])
-				assert.Nil(t, err)
 			},
 		},
 	}
@@ -338,7 +362,16 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 	}
 }
 
-func TestHotNewsReconciler_handleUpdate(t *testing.T) {
+// Custom client that returns an error during the List operation
+type errorReturningClient struct {
+	client.Client
+}
+
+func (c *errorReturningClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	return fmt.Errorf("simulated error during listing of ConfigMaps")
+}
+
+func TestHotNewsReconciler_processHotNews(t *testing.T) {
 	serverNewsEndpoint := "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
 	scheme := runtime.NewScheme()
 	_ = newsaggregatorv1.AddToScheme(scheme)
@@ -645,6 +678,64 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("processFeedGroups() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestHotNewsReconciler_SetupWithManager(t *testing.T) {
+	schema := runtime.NewScheme()
+	assert.Nil(t, newsaggregatorv1.AddToScheme(schema))
+	assert.Nil(t, v1.AddToScheme(schema))
+
+	mgr, err := controllerruntime.NewManager(controllerruntime.GetConfigOrDie(), controllerruntime.Options{
+		Scheme: schema,
+	})
+	assert.Nil(t, err)
+
+	type fields struct {
+		serverUrl string
+		Client    client.Client
+		Scheme    *runtime.Scheme
+	}
+	type args struct {
+		mgr       controllerruntime.Manager
+		serverUrl string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Successful setup",
+			fields: fields{
+				serverUrl: "",
+				Client:    mgr.GetClient(),
+				Scheme:    mgr.GetScheme(),
+			},
+			args: args{
+				mgr:       mgr,
+				serverUrl: "https://go-gator-svc.go-gator.svc.cluster.local:443/news",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &HotNewsReconciler{
+				serverUrl: tt.fields.serverUrl,
+				Client:    tt.fields.Client,
+				Scheme:    tt.fields.Scheme,
+			}
+			err := r.SetupWithManager(tt.args.mgr, tt.args.serverUrl)
+			if tt.wantErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+
+			assert.Equal(t, tt.args.serverUrl, r.serverUrl)
 		})
 	}
 }

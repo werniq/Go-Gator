@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -69,6 +70,7 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 		mockServer *httptest.Server
 		want       controllerruntime.Result
 		wantErr    bool
+		setup      func()
 	}{
 		{
 			name: "Successful Reconcile run",
@@ -84,6 +86,9 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 						Namespace: "default",
 					},
 				},
+			},
+			setup: func() {
+
 			},
 			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusCreated)
@@ -107,6 +112,9 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 					},
 				},
 			},
+			setup: func() {
+
+			},
 			want:    controllerruntime.Result{},
 			wantErr: true,
 		},
@@ -125,12 +133,79 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 					},
 				},
 			},
+			setup:   func() {},
 			want:    controllerruntime.Result{},
 			wantErr: true,
 		},
+		{
+			name: "Performing DELETE of the object",
+			fields: fields{
+				Client: k8sClient,
+				Scheme: nil,
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: controllerruntime.Request{
+					NamespacedName: client.ObjectKey{
+						Name:      "ExistingFeedName",
+						Namespace: "default",
+					},
+				},
+			},
+			setup: func() {
+				_ = k8sClient.Delete(context.TODO(), &newsaggregatorv1.Feed{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "ExistingFeedName",
+					},
+				})
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(`{"message": "Feed created successfully"}`))
+			})),
+			want:    controllerruntime.Result{},
+			wantErr: false,
+		},
+		{
+			name: "Performing UPDATE of the object",
+			fields: fields{
+				Client: k8sClient,
+				Scheme: nil,
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: controllerruntime.Request{
+					NamespacedName: client.ObjectKey{
+						Name:      "ExistingFeedName",
+						Namespace: "default",
+					},
+				},
+			},
+			setup: func() {
+				_ = k8sClient.Update(context.TODO(), &newsaggregatorv1.Feed{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "ExistingFeedName",
+					},
+					Spec: newsaggregatorv1.FeedSpec{
+						Name: "new-feed-name",
+						Link: "https://example.com/feed",
+					},
+				})
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(`{"error": "Feed was not created successfully"}`))
+			})),
+			want:    controllerruntime.Result{},
+			wantErr: false,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
 			if tt.mockServer != nil {
 				tt.fields.serverAddress = tt.mockServer.URL
 				defer tt.mockServer.Close()
@@ -152,7 +227,11 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 	}
 }
 
-func TestFeedReconciler_handleCreate(t *testing.T) {
+func TestFeedReconciler_processHotNews(t *testing.T) {
+	mockServ := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error": "Feed was not created successfully"}`))
+	}))
 	tests := []struct {
 		name           string
 		feed           *newsaggregatorv1.Feed
@@ -194,6 +273,18 @@ func TestFeedReconciler_handleCreate(t *testing.T) {
 					Link: string([]byte{0x7f}),
 				},
 			},
+			expectedResult: ctrl.Result{},
+			expectedErr:    true,
+		},
+		{
+			name: "HTTP request performing error",
+			feed: &newsaggregatorv1.Feed{
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "Test Feed",
+					Link: mockServ.URL,
+				},
+			},
+			mockServer:     mockServ,
 			expectedResult: ctrl.Result{},
 			expectedErr:    true,
 		},
@@ -388,6 +479,64 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 			} else {
 				assert.Nil(t, err)
 			}
+		})
+	}
+}
+
+func TestFeedReconciler_SetupWithManager(t *testing.T) {
+	schema := runtime.NewScheme()
+	assert.Nil(t, newsaggregatorv1.AddToScheme(schema))
+	assert.Nil(t, v1.AddToScheme(schema))
+
+	mgr, err := controllerruntime.NewManager(controllerruntime.GetConfigOrDie(), controllerruntime.Options{
+		Scheme: schema,
+	})
+	assert.Nil(t, err)
+
+	type fields struct {
+		serverUrl string
+		Client    client.Client
+		Scheme    *runtime.Scheme
+	}
+	type args struct {
+		mgr       controllerruntime.Manager
+		serverUrl string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Successful setup",
+			fields: fields{
+				serverUrl: "",
+				Client:    mgr.GetClient(),
+				Scheme:    mgr.GetScheme(),
+			},
+			args: args{
+				mgr:       mgr,
+				serverUrl: "https://go-gator-svc.go-gator.svc.cluster.local:443/news",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &FeedReconciler{
+				serverAddress: tt.fields.serverUrl,
+				Client:        tt.fields.Client,
+				Scheme:        tt.fields.Scheme,
+			}
+			err := r.SetupWithManager(tt.args.mgr, tt.args.serverUrl)
+			if tt.wantErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+
+			assert.Equal(t, tt.args.serverUrl, r.serverAddress)
 		})
 	}
 }

@@ -31,7 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"slices"
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
@@ -138,18 +137,6 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		feed.SetCreatedCondition("Feed was successfully created")
 	} else {
 		feed.SetUpdatedCondition("Feed was successfully updated")
-	}
-
-	hotNewsList := &newsaggregatorv1.HotNewsList{}
-	err = r.List(ctx, hotNewsList, &client.ListOptions{})
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	for _, hotNews := range hotNewsList.Items {
-		if slices.Contains(hotNews.Spec.Feeds, feed.Name) {
-			err = r.triggerHotNewsReconcile(ctx, hotNews)
-		}
 	}
 
 	err = r.Client.Status().Update(ctx, &feed)
@@ -325,15 +312,4 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 	}
 
 	return ctrl.Result{}, nil
-}
-
-// triggerHotNewsReconcile triggers a reconcile for HotNews object, when is updated feed referenced in HotNews object.
-func (r *FeedReconciler) triggerHotNewsReconcile(ctx context.Context, hotNews newsaggregatorv1.HotNews) error {
-	hotNews.Annotations["triggeredByFeed"] = "true"
-	err := r.Update(ctx, &hotNews)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

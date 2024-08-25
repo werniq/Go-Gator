@@ -22,7 +22,9 @@
 #
 # NOTE: THIS SCRIPT EXISTS FOR DEMO PURPOSES ONLY. DO NOT USE IT FOR YOUR PRODUCTION WORKLOADS.
 
-key_dir="operator/config_map_webhook/tls"
+: ${1?'missing key directory'}
+
+key_dir="$1"
 
 chmod 0700 "$key_dir"
 cd "$key_dir"

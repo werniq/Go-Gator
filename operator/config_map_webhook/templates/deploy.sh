@@ -20,8 +20,7 @@
 
 set -euo pipefail
 
-# path to templates directory with these scripts
-basedir="$(dirname "$0")/deployment"
+basedir="$(dirname "$0")/"
 keydir="$(mktemp -d)"
 
 # Generate keys into a temporary directory.

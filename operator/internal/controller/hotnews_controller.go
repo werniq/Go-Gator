@@ -121,14 +121,11 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string)
 	r.serverUrl = serverUrl
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.HotNews{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
-		Watches(&newsaggregatorv1.Feed{
-			Status: newsaggregatorv1.FeedStatus{
-				Conditions: map[string]newsaggregatorv1.FeedConditions{
-					newsaggregatorv1.TypeFeedUpdated: newsaggregatorv1.FeedConditions{},
-				},
-			},
-		},
-			&handler.EnqueueRequestForObject{}).
+		Watches(
+			&newsaggregatorv1.Feed{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(FeedStatusConditionPredicate{}),
+		).
 		Complete(r)
 }
 

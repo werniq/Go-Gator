@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"slices"
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
@@ -62,7 +63,7 @@ const (
 	errClosingBody = "Error while trying to close response body: "
 )
 
-// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds,hotnews,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds/finalizers,verbs=update
 
@@ -138,6 +139,11 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	err = r.Client.Status().Update(ctx, &feed)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	err = r.updateAllHotNewsInNamespaceByFeed(ctx, &feed)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -309,4 +315,24 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// updateAllHotNewsInNamespaceByFeed updates all HotNews objects in the namespace which contains the feed.
+func (r *FeedReconciler) updateAllHotNewsInNamespaceByFeed(ctx context.Context, feed *newsaggregatorv1.Feed) error {
+	var hotNewsList newsaggregatorv1.HotNewsList
+	err := r.Client.List(ctx, &hotNewsList, client.InNamespace(feed.Namespace))
+	if err != nil {
+		return err
+	}
+
+	for _, hotNews := range hotNewsList.Items {
+		if slices.Contains(hotNews.Spec.Feeds, feed.Spec.Name) {
+			err = r.Client.Update(ctx, &hotNews)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

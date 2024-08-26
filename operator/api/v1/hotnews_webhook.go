@@ -123,8 +123,9 @@ func (r *HotNews) ValidateDelete() (admission.Warnings, error) {
 // In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct, and
 // if feeds or feedGroups exists in our news aggregator.
 func (r *HotNews) validateHotNews() error {
-	if r.Spec.DateStart > r.Spec.DateEnd {
-		return fmt.Errorf(errInvalidDateRange)
+	err := validateHotNews(r.Spec)
+	if err != nil {
+		return err
 	}
 
 	if r.Spec.Feeds == nil && r.Spec.FeedGroups == nil {
@@ -135,7 +136,7 @@ func (r *HotNews) validateHotNews() error {
 	defer cancel()
 
 	var configMaps v1.ConfigMapList
-	err := k8sClient.List(ctx, &configMaps, &client.ListOptions{
+	err = k8sClient.List(ctx, &configMaps, &client.ListOptions{
 		Namespace: r.Namespace,
 	})
 	if err != nil {

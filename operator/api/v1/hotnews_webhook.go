@@ -19,13 +19,14 @@ package v1
 import (
 	"context"
 	"fmt"
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+	"time"
 )
 
 const (
@@ -130,19 +131,16 @@ func (r *HotNews) validateHotNews() error {
 		return fmt.Errorf(errNoFeeds)
 	}
 
-	clientset, err := kubernetes.NewForConfig(ctrl.GetConfigOrDie())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var configMaps v1.ConfigMapList
+	err := k8sClient.List(ctx, &configMaps, &client.ListOptions{
+		Namespace: r.Namespace,
+	})
 	if err != nil {
 		return err
 	}
-	configMaps, err := clientset.CoreV1().ConfigMaps(FeedGroupsNamespace).List(context.TODO(), v12.ListOptions{})
-	if err != nil {
-		return err
-	}
-	//var configMaps v1.ConfigMapList
-	//err := k8sClient.List(context.TODO(), &configMaps, &client.ListOptions{})
-	//if err != nil {
-	//	return err
-	//}
 
 	for _, source := range r.Spec.FeedGroups {
 		for _, configMap := range configMaps.Items {

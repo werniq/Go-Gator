@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"fmt"
 	v1 "k8s.io/api/core/v1"
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -122,14 +121,13 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string)
 	r.serverUrl = serverUrl
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.HotNews{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
-		Watches(&v1.ConfigMap{
-			ObjectMeta: v12.ObjectMeta{
-				Name:      newsaggregatorv1.FeedGroupsConfigMapName,
-				Namespace: newsaggregatorv1.FeedGroupsNamespace,
+		Watches(&newsaggregatorv1.Feed{
+			Status: newsaggregatorv1.FeedStatus{
+				Conditions: map[string]newsaggregatorv1.FeedConditions{
+					newsaggregatorv1.TypeFeedUpdated: newsaggregatorv1.FeedConditions{},
+				},
 			},
 		},
-			&handler.EnqueueRequestForObject{}).
-		Watches(&newsaggregatorv1.Feed{},
 			&handler.EnqueueRequestForObject{}).
 		Complete(r)
 }

@@ -168,7 +168,7 @@ func (r *Feed) isFeedUsed(feedName string) error {
 // feedIsInFeedGroups checks if the feed is in the feed groups
 func (r *Feed) feedIsInFeedGroups(feedGroups map[string]string, feed string) bool {
 	for _, val := range feedGroups {
-		if strings.Contains(val, feed) {
+		if slices.Contains(strings.Split(val, ","), feed) {
 			return true
 		}
 	}

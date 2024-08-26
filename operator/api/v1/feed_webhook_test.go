@@ -275,3 +275,177 @@ func TestFeed_ValidateUpdate(t *testing.T) {
 		})
 	}
 }
+
+func TestIsFeedUsed(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = AddToScheme(scheme)
+	_ = v12.AddToScheme(scheme)
+
+	k8sClient = fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(
+			&v12.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+					Name:      "feed-groups",
+				},
+				Data: map[string]string{"group1": "sport,news"},
+			},
+		).
+		Build()
+
+	feed := &Feed{}
+
+	// Test cases
+	tests := []struct {
+		name       string
+		feedName   string
+		hotNews    []HotNews
+		configMaps []v12.ConfigMap
+		wantErr    bool
+	}{
+		{
+			name:     "Feed used in HotNews",
+			feedName: "sport",
+			hotNews: []HotNews{
+				{
+					Spec: HotNewsSpec{
+						Feeds: []string{"sport"},
+					},
+				},
+			},
+			configMaps: []v12.ConfigMap{
+				{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: "default",
+						Name:      "feed-groups",
+					},
+					Data: map[string]string{"group1": "sport,news"},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name:     "Feed used in ConfigMap",
+			feedName: "sport",
+			hotNews: []HotNews{
+				{
+					Spec: HotNewsSpec{
+						Feeds: []string{"sport"},
+					},
+				},
+			},
+			configMaps: []v12.ConfigMap{
+				{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: "default",
+						Name:      "feed-groups",
+					},
+					Data: map[string]string{"group1": "sport,news"},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name:     "Feed not used",
+			hotNews:  nil,
+			feedName: "music",
+			wantErr:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.configMaps != nil {
+				if tt.hotNews != nil {
+					k8sClient = fake.NewClientBuilder().
+						WithScheme(scheme).
+						WithLists(&v12.ConfigMapList{Items: tt.configMaps},
+							&HotNewsList{Items: tt.hotNews},
+						).
+						Build()
+				} else {
+					k8sClient = fake.NewClientBuilder().
+						WithScheme(scheme).
+						WithLists(&v12.ConfigMapList{Items: tt.configMaps}).
+						Build()
+				}
+			}
+
+			err := feed.isFeedUsed(tt.feedName)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestFeedIsInFeedGroups(t *testing.T) {
+	feed := &Feed{}
+
+	tests := []struct {
+		name       string
+		feedGroups map[string]string
+		feed       string
+		expected   bool
+	}{
+		{
+			name: "Feed is in a single group",
+			feedGroups: map[string]string{
+				"group1": "sport,news,music",
+			},
+			feed:     "sport",
+			expected: true,
+		},
+		{
+			name: "Feed is not in the groups",
+			feedGroups: map[string]string{
+				"group1": "news,music",
+			},
+			feed:     "sport",
+			expected: false,
+		},
+		{
+			name: "Feed is in multiple groups",
+			feedGroups: map[string]string{
+				"group1": "news,music",
+				"group2": "sport,tech",
+			},
+			feed:     "sport",
+			expected: true,
+		},
+		{
+			name: "Feed is a substring but not a full match",
+			feedGroups: map[string]string{
+				"group1": "sports,news,music",
+			},
+			feed:     "sport",
+			expected: false,
+		},
+		{
+			name: "Empty feed groups",
+			feedGroups: map[string]string{
+				"group1": "",
+			},
+			feed:     "sport",
+			expected: false,
+		},
+		{
+			name: "Empty feed name",
+			feedGroups: map[string]string{
+				"group1": "sport,news,music",
+			},
+			feed:     "",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := feed.feedIsInFeedGroups(tt.feedGroups, tt.feed)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}

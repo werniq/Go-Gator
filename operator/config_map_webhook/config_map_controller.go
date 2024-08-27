@@ -61,16 +61,9 @@ const (
 	errConfigMapIsNil = "configMap data is nil, so no feed groups to reconcile"
 )
 
-// patchOperation is an operation of a JSON patch, see https://tools.ietf.org/html/rfc6902 .
-type patchOperation struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
-}
-
 // RunConfigMapController starts the admission controller webhook for validating config maps.
 //
-// It listens on port 8732 and delegates the admission control logic to the validatingConfigMapHandler func.
+// It listens on port 8443 and delegates the admission control logic to the validatingConfigMapHandler func.
 func RunConfigMapController(client client.Client) error {
 	k8sClient = client
 
@@ -88,6 +81,13 @@ func RunConfigMapController(client client.Client) error {
 	return nil
 }
 
+// patchOperation is an operation of a JSON patch, see https://tools.ietf.org/html/rfc6902 .
+type patchOperation struct {
+	Op    string      `json:"op"`
+	Path  string      `json:"path"`
+	Value interface{} `json:"value,omitempty"`
+}
+
 // webhookApiResponse is minimal required response from a webhook to allow or forbid a request
 type webhookApiResponse struct {
 	ApiVersion string   `json:"apiVersion"`
@@ -97,15 +97,25 @@ type webhookApiResponse struct {
 
 // response struct contains Uid and Allowed fields, which describe if webhook has validated succesffully, or not.
 type response struct {
-	Uid     types.UID `json:"uid"`
-	Allowed bool      `json:"allowed"`
-	Status  *status   `json:"status,omitempty"`
+	// Uid is used to match the response to the corresponding request
+	Uid types.UID `json:"uid"`
+
+	// Allowed field is a boolean value, which is true if the request is allowed, and false otherwise.
+	// If webhook returned false, the request will be rejected.
+	Allowed bool `json:"allowed"`
+
+	// Status field contains the HTTP status code and a message, which is returned in case of an error.
+	Status *status `json:"status,omitempty"`
 }
 
 // status struct contains the HTTP status code and a message, which is returned in case of an error.
 // It will make the response more informative and user-friendly.
 type status struct {
-	Code    int    `json:"code"`
+	// Code field contains the HTTP status code, which is either 200 (OK) or 400 (Bad Request)
+	Code int `json:"code"`
+
+	// Message field contains a message, which is used to describe the error in case of a bad request,
+	// or to provide additional information in case of a successful request.
 	Message string `json:"message"`
 }
 
@@ -165,6 +175,14 @@ func validatingConfigMapHandler(c *gin.Context) {
 		return
 	}
 
+	res := webhookApiResponse{
+		ApiVersion: admissionReviewReq.APIVersion,
+		Kind:       admissionReviewReq.Kind,
+		Response: response{
+			Uid: admissionReviewReq.Response.UID,
+		},
+	}
+
 	admissionReviewResponse := admission.AdmissionReview{
 		TypeMeta: admissionReviewReq.TypeMeta,
 		Response: &admission.AdmissionResponse{
@@ -182,34 +200,20 @@ func validatingConfigMapHandler(c *gin.Context) {
 		admissionReviewResponse.Response.Result = &metav1.Status{
 			Message: err.Error(),
 		}
-		res := webhookApiResponse{
-			ApiVersion: admissionReviewResponse.APIVersion,
-			Kind:       admissionReviewResponse.Kind,
-			Response: response{
-				Uid:     admissionReviewResponse.Response.UID,
-				Allowed: false,
-				Status: &status{
-					Code:    http.StatusBadRequest,
-					Message: fmt.Sprintf("could not marshal JSON patch: %v", err),
-				},
-			},
+		res.Response.Allowed = false
+		res.Response.Status = &status{
+			Code:    http.StatusBadRequest,
+			Message: fmt.Sprintf("could not marshal JSON patch: %v", err),
 		}
 		c.JSON(http.StatusBadRequest, res)
 		return
 	} else {
 		patchBytes, err := json.Marshal(patchOps)
 		if err != nil {
-			res := webhookApiResponse{
-				ApiVersion: admissionReviewResponse.APIVersion,
-				Kind:       admissionReviewResponse.Kind,
-				Response: response{
-					Uid:     admissionReviewResponse.Response.UID,
-					Allowed: false,
-					Status: &status{
-						Code:    http.StatusBadRequest,
-						Message: fmt.Sprintf("could not marshal JSON patch: %v", err),
-					},
-				},
+			res.Response.Allowed = false
+			res.Response.Status = &status{
+				Code:    http.StatusBadRequest,
+				Message: fmt.Sprintf("could not marshal JSON patch: %v", err),
 			}
 			c.JSON(http.StatusInternalServerError, res)
 			log.Printf("could not marshal JSON patch: %v\n", err)
@@ -222,13 +226,9 @@ func validatingConfigMapHandler(c *gin.Context) {
 		*admissionReviewResponse.Response.PatchType = admission.PatchTypeJSONPatch
 	}
 
-	res := webhookApiResponse{
-		ApiVersion: admissionReviewResponse.APIVersion,
-		Kind:       admissionReviewResponse.Kind,
-		Response: response{
-			Uid:     admissionReviewResponse.Response.UID,
-			Allowed: admissionReviewResponse.Response.Allowed,
-		},
+	res.Response = response{
+		Uid:     admissionReviewResponse.Response.UID,
+		Allowed: admissionReviewResponse.Response.Allowed,
 	}
 
 	c.JSON(http.StatusOK, res)

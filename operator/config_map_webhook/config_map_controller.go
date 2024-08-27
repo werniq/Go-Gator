@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
@@ -13,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 	"log"
 	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -64,8 +62,15 @@ const (
 // RunConfigMapController starts the admission controller webhook for validating config maps.
 //
 // It listens on port 8443 and delegates the admission control logic to the validatingConfigMapHandler func.
-func RunConfigMapController(client client.Client) error {
-	k8sClient = client
+func RunConfigMapController() error {
+	var err error
+
+	k8sClient, err = client.New(ctrl.GetConfigOrDie(), client.Options{
+		Scheme: scheme,
+	})
+	if err != nil {
+		return err
+	}
 
 	universalDeserializer = serializer.NewCodecFactory(scheme).UniversalDeserializer()
 
@@ -73,7 +78,7 @@ func RunConfigMapController(client client.Client) error {
 
 	setupRoutes(r)
 
-	err := r.RunTLS(":8443", tlsCertFile, tlsKeyFile)
+	err = r.RunTLS(":8443", tlsCertFile, tlsKeyFile)
 	if err != nil {
 		return err
 	}
@@ -133,21 +138,30 @@ func validatingConfigMapHandler(c *gin.Context) {
 
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("could not read request body: %v", err)})
+		res := webhookApiResponse{
+			ApiVersion: "admission.k8s.io/v1",
+			Kind:       "configmaps",
+			Response: response{
+				Allowed: false,
+				Status: &status{
+					Code:    http.StatusBadRequest,
+					Message: fmt.Sprintf("could not read request body: %v", err),
+				},
+			},
+		}
+		c.JSON(http.StatusInternalServerError, res)
 		log.Printf("could not read request body: %v\n", err)
 		return
 	}
 
 	var admissionReviewReq admission.AdmissionReview
 
-	if _, _, err := universalDeserializer.Decode(body,
-		nil,
+	if _, _, err := universalDeserializer.Decode(body, nil,
 		&admissionReviewReq); err != nil {
 		res := webhookApiResponse{
-			ApiVersion: admissionReviewReq.APIVersion,
-			Kind:       admissionReviewReq.Kind,
+			ApiVersion: "admission.k8s.io/v1",
+			Kind:       "configmaps",
 			Response: response{
-				Uid:     admissionReviewReq.Response.UID,
 				Allowed: false,
 				Status: &status{
 					Code:    http.StatusBadRequest,
@@ -159,10 +173,9 @@ func validatingConfigMapHandler(c *gin.Context) {
 		return
 	} else if admissionReviewReq.Request == nil {
 		res := webhookApiResponse{
-			ApiVersion: admissionReviewReq.APIVersion,
-			Kind:       admissionReviewReq.Kind,
+			ApiVersion: "admission.k8s.io/v1",
+			Kind:       "configmaps",
 			Response: response{
-				Uid:     admissionReviewReq.Response.UID,
 				Allowed: false,
 				Status: &status{
 					Code:    http.StatusBadRequest,
@@ -179,56 +192,35 @@ func validatingConfigMapHandler(c *gin.Context) {
 		ApiVersion: admissionReviewReq.APIVersion,
 		Kind:       admissionReviewReq.Kind,
 		Response: response{
-			Uid: admissionReviewReq.Response.UID,
+			Uid: admissionReviewReq.Request.UID,
 		},
 	}
 
-	admissionReviewResponse := admission.AdmissionReview{
-		TypeMeta: admissionReviewReq.TypeMeta,
-		Response: &admission.AdmissionResponse{
-			UID: admissionReviewReq.Request.UID,
-		},
-	}
-
-	var patchOps []patchOperation
 	if !isKubeNamespace(admissionReviewReq.Request.Namespace) {
-		patchOps, err = validateConfigMap(admissionReviewReq.Request)
+		_, err = validateConfigMap(admissionReviewReq.Request)
 	}
 
 	if err != nil {
-		admissionReviewResponse.Response.Allowed = false
-		admissionReviewResponse.Response.Result = &metav1.Status{
-			Message: err.Error(),
-		}
 		res.Response.Allowed = false
 		res.Response.Status = &status{
+			Message: fmt.Sprintf("Error during validation of configMap: %v", err),
 			Code:    http.StatusBadRequest,
-			Message: fmt.Sprintf("could not marshal JSON patch: %v", err),
 		}
+		log.Println("Error during validation of configMap: ", err)
 		c.JSON(http.StatusBadRequest, res)
 		return
-	} else {
-		patchBytes, err := json.Marshal(patchOps)
-		if err != nil {
-			res.Response.Allowed = false
-			res.Response.Status = &status{
-				Code:    http.StatusBadRequest,
-				Message: fmt.Sprintf("could not marshal JSON patch: %v", err),
-			}
-			c.JSON(http.StatusInternalServerError, res)
-			log.Printf("could not marshal JSON patch: %v\n", err)
-			return
-		}
-		admissionReviewResponse.Response.Allowed = true
-		admissionReviewResponse.Response.Patch = patchBytes
-
-		admissionReviewResponse.Response.PatchType = new(admission.PatchType)
-		*admissionReviewResponse.Response.PatchType = admission.PatchTypeJSONPatch
 	}
 
-	res.Response = response{
-		Uid:     admissionReviewResponse.Response.UID,
-		Allowed: admissionReviewResponse.Response.Allowed,
+	res = webhookApiResponse{
+		ApiVersion: admissionReviewReq.APIVersion,
+		Kind:       admissionReviewReq.Kind,
+		Response: response{
+			Uid:     admissionReviewReq.Request.UID,
+			Allowed: true,
+			Status: &status{
+				Code: http.StatusOK,
+			},
+		},
 	}
 
 	c.JSON(http.StatusOK, res)
@@ -246,20 +238,24 @@ func validateConfigMap(req *admission.AdmissionRequest) ([]patchOperation, error
 	if _, _, err := universalDeserializer.Decode(raw,
 		nil,
 		&configMap); err != nil {
+		log.Println("Error here 1" + err.Error())
 		return nil, fmt.Errorf("could not deserialize configMap: %v", err)
 	}
 
 	if configMap.Data == nil {
+		log.Println("config map is nil")
 		return nil, fmt.Errorf(errConfigMapIsNil)
 	}
 
 	feeds, err := getAllHotNewsFromNamespace(configMap.Namespace)
 	if err != nil {
+		log.Println("Error here 2" + err.Error())
 		return nil, err
 	}
 
 	err = triggerHotNewsReconcile(configMap.Data, feeds)
 	if err != nil {
+		log.Println("Error here 3" + err.Error())
 		return nil, err
 	}
 
@@ -268,28 +264,33 @@ func validateConfigMap(req *admission.AdmissionRequest) ([]patchOperation, error
 
 // getAllHotNewsFromNamespace retrieves all hotnews from the provided namespace
 func getAllHotNewsFromNamespace(namespace string) (newsaggregatorv1.HotNewsList, error) {
-	config := ctrl.GetConfigOrDie()
-	clientset, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return newsaggregatorv1.HotNewsList{}, fmt.Errorf("error initializing new config: %v\n", err)
-	}
-
-	hotNews, err := clientset.Resource(feedGvr).Namespace(namespace).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		return newsaggregatorv1.HotNewsList{}, fmt.Errorf("error retrieving feed CRD: %v\n", err)
-	}
-
-	data, err := json.Marshal(hotNews)
-	if err != nil {
-		return newsaggregatorv1.HotNewsList{}, fmt.Errorf("error marshalling data: %v\n", err)
-	}
-
+	//config := ctrl.GetConfigOrDie()
+	//clientset, err := dynamic.NewForConfig(config)
+	//if err != nil {
+	//	return newsaggregatorv1.HotNewsList{}, fmt.Errorf("error initializing new config: %v\n", err)
+	//}
+	//
+	//feeds, err := clientset.Resource(hotNewsGvr).Namespace(namespace).List(context.TODO(), metav1.ListOptions{})
+	//if err != nil {
+	//	return newsaggregatorv1.HotNewsList{}, fmt.Errorf("error retrieving feed CRD: %v\n", err)
+	//}
+	//
+	//data, err := json.Marshal(feeds)
+	//if err != nil {
+	//	return newsaggregatorv1.HotNewsList{}, fmt.Errorf("error marshalling data: %v\n", err)
+	//}
+	//
+	//var hotNewsList newsaggregatorv1.HotNewsList
+	//
+	//err = json.Unmarshal(data, &hotNewsList)
+	//if err != nil {
+	//	return newsaggregatorv1.HotNewsList{},
+	//		fmt.Errorf("error during unmarshalling bytes into hotNewsList: %v\n", err)
+	//}
 	var hotNewsList newsaggregatorv1.HotNewsList
-
-	err = json.Unmarshal(data, &hotNewsList)
+	err := k8sClient.List(context.Background(), &hotNewsList, client.InNamespace(namespace))
 	if err != nil {
-		return newsaggregatorv1.HotNewsList{},
-			fmt.Errorf("error during unmarshalling bytes into hotNewsList: %v\n", err)
+		return newsaggregatorv1.HotNewsList{}, fmt.Errorf("error retrieving hotnews CRD: %v\n", err)
 	}
 
 	return hotNewsList, nil

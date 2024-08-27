@@ -4,8 +4,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"log"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
@@ -27,14 +25,7 @@ func init() {
 }
 
 func main() {
-	c, err := client.New(ctrl.GetConfigOrDie(), client.Options{
-		Scheme: scheme,
-	})
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	err = RunConfigMapController(c)
+	err := RunConfigMapController()
 	if err != nil {
 		log.Fatalln(err)
 	}

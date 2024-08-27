@@ -9,7 +9,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
 	"log"
@@ -36,22 +35,6 @@ var (
 	k8sClient client.Client
 
 	scheme = runtime.NewScheme()
-
-	// feedGvr is the GroupVersionResource for the Feed CRD, which is used to retrieve the feed CRD from the
-	// Kubernetes API server.
-	feedGvr = schema.GroupVersionResource{
-		Group:    "newsaggregator.teamdev.com",
-		Version:  "v1",
-		Resource: "feeds",
-	}
-
-	// hotNewsGvr is the GroupVersionResource for the HotNews CRD, which is used to retrieve the hotnews CRD from the
-	// Kubernetes API server.
-	hotNewsGvr = schema.GroupVersionResource{
-		Group:    "newsaggregator.teamdev.com",
-		Version:  "v1",
-		Resource: "hotnewses",
-	}
 )
 
 const (
@@ -62,7 +45,7 @@ const (
 // RunConfigMapController starts the admission controller webhook for validating config maps.
 //
 // It listens on port 8443 and delegates the admission control logic to the validatingConfigMapHandler func.
-func RunConfigMapController() error {
+func RunConfigMapController(tlsCertFile, tlsKeyFile string) error {
 	var err error
 
 	k8sClient, err = client.New(ctrl.GetConfigOrDie(), client.Options{
@@ -235,27 +218,21 @@ func validateConfigMap(req *admission.AdmissionRequest) ([]patchOperation, error
 
 	raw := req.Object.Raw
 	configMap := v1.ConfigMap{}
-	if _, _, err := universalDeserializer.Decode(raw,
-		nil,
-		&configMap); err != nil {
-		log.Println("Error here 1" + err.Error())
+	if _, _, err := universalDeserializer.Decode(raw, nil, &configMap); err != nil {
 		return nil, fmt.Errorf("could not deserialize configMap: %v", err)
 	}
 
 	if configMap.Data == nil {
-		log.Println("config map is nil")
 		return nil, fmt.Errorf(errConfigMapIsNil)
 	}
 
 	feeds, err := getAllHotNewsFromNamespace(configMap.Namespace)
 	if err != nil {
-		log.Println("Error here 2" + err.Error())
 		return nil, err
 	}
 
 	err = triggerHotNewsReconcile(configMap.Data, feeds)
 	if err != nil {
-		log.Println("Error here 3" + err.Error())
 		return nil, err
 	}
 
@@ -264,29 +241,6 @@ func validateConfigMap(req *admission.AdmissionRequest) ([]patchOperation, error
 
 // getAllHotNewsFromNamespace retrieves all hotnews from the provided namespace
 func getAllHotNewsFromNamespace(namespace string) (newsaggregatorv1.HotNewsList, error) {
-	//config := ctrl.GetConfigOrDie()
-	//clientset, err := dynamic.NewForConfig(config)
-	//if err != nil {
-	//	return newsaggregatorv1.HotNewsList{}, fmt.Errorf("error initializing new config: %v\n", err)
-	//}
-	//
-	//feeds, err := clientset.Resource(hotNewsGvr).Namespace(namespace).List(context.TODO(), metav1.ListOptions{})
-	//if err != nil {
-	//	return newsaggregatorv1.HotNewsList{}, fmt.Errorf("error retrieving feed CRD: %v\n", err)
-	//}
-	//
-	//data, err := json.Marshal(feeds)
-	//if err != nil {
-	//	return newsaggregatorv1.HotNewsList{}, fmt.Errorf("error marshalling data: %v\n", err)
-	//}
-	//
-	//var hotNewsList newsaggregatorv1.HotNewsList
-	//
-	//err = json.Unmarshal(data, &hotNewsList)
-	//if err != nil {
-	//	return newsaggregatorv1.HotNewsList{},
-	//		fmt.Errorf("error during unmarshalling bytes into hotNewsList: %v\n", err)
-	//}
 	var hotNewsList newsaggregatorv1.HotNewsList
 	err := k8sClient.List(context.Background(), &hotNewsList, client.InNamespace(namespace))
 	if err != nil {
@@ -301,10 +255,9 @@ func triggerHotNewsReconcile(feedGroups map[string]string, hotNewsList newsaggre
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	// clientset.Resource(feedGvr).Update(ctx, &newsaggregatorv1.HotNews{}, metav1.UpdateOptions{})
-
-	for _, feedGroup := range feedGroups {
+	for feedGroup, _ := range feedGroups {
 		for _, hotNews := range hotNewsList.Items {
+			fmt.Println(hotNews.Spec.FeedGroups, feedGroup)
 			if slices.Contains(hotNews.Spec.FeedGroups, feedGroup) {
 				hotNews.Finalizers = append(hotNews.Finalizers, "hotnews.teamdev.com/reconcile")
 				err := k8sClient.Update(ctx, &hotNews)

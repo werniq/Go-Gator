@@ -99,7 +99,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	} else {
 		if controllerutil.ContainsFinalizer(&feed, feedFinalizerName) {
 			logger.Info("Handling the delete event")
-			if _, err = r.handleDelete(ctx, &feed); err != nil {
+			if _, err = r.handleDelete(&feed); err != nil {
 				return ctrl.Result{}, err
 			}
 
@@ -122,10 +122,10 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	if isNew {
 		logger.Info("Handling the create event")
-		res, err = r.handleCreate(ctx, &feed)
+		res, err = r.handleCreate(&feed)
 	} else {
 		logger.Info("Handling the update event")
-		res, err = r.handleUpdate(ctx, &feed)
+		res, err = r.handleUpdate(&feed)
 	}
 
 	if err != nil {
@@ -171,7 +171,7 @@ type sourceBody struct {
 // It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a POST request with the JSON payload.
 // The function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 201 Created, it attempts to decode and print the server's error message.
-func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
+func (r *FeedReconciler) handleCreate(feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
 	source := sourceBody{
 		Name:     feed.Spec.Name,
 		Endpoint: feed.Spec.Link,
@@ -220,7 +220,7 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 // It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a PUT request with the JSON payload.
 // This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
-func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
+func (r *FeedReconciler) handleUpdate(feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
 	source := sourceBody{
 		Name:     feed.Spec.Name,
 		Endpoint: feed.Spec.Link,
@@ -269,7 +269,7 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 // It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a DELETE request with the JSON payload.
 // This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
-func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
+func (r *FeedReconciler) handleDelete(feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
 	source := sourceBody{
 		Name:     feed.Spec.Name,
 		Endpoint: feed.Spec.Link,

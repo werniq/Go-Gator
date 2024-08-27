@@ -49,6 +49,9 @@ const (
 	// defaultSourceManagementEndpoint is the default address for the news aggregator service
 	defaultSourceManagementEndpoint = "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
 
+	// defaultNewsFetchEndpoint is a default url address of the news aggregator server
+	defaultNewsFetchEndpoint = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
+
 	// defaultMetricsBindAddress is the default address the metric endpoint should bind to
 	defaultMetricsBindAddress = "0"
 
@@ -63,9 +66,6 @@ const (
 
 	// defaultEnableHttp2 is the default value for enabling HTTP/2
 	defaultEnableHttp2 = false
-
-	// defaultNewsFetchEndpoint is a default url address of the news aggregator server
-	defaultNewsFetchEndpoint = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
 )
 
 func init() {
@@ -79,10 +79,10 @@ func main() {
 	var (
 		metricsAddr              string
 		sourceManagementEndpoint string
-		enableLeaderElection     bool
-		probeAddr                string
-		secureMetrics            bool
 		newsFetchingEndpoint     string
+		probeAddr                string
+		enableLeaderElection     bool
+		secureMetrics            bool
 		enableHTTP2              bool
 		tlsOpts                  []func(*tls.Config)
 	)

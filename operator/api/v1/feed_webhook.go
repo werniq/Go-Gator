@@ -99,7 +99,10 @@ func (r *Feed) checkNameUniqueness() (admission.Warnings, error) {
 
 	listOptions := client.ListOptions{Namespace: r.Namespace}
 
-	err := k8sClient.List(context.Background(), feeds, &listOptions)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	err := k8sClient.List(ctx, feeds, &listOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +122,10 @@ func (r *Feed) checkLinkUniqueness() (admission.Warnings, error) {
 
 	listOptions := client.ListOptions{Namespace: r.Namespace}
 
-	err := k8sClient.List(context.Background(), feeds, &listOptions)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	err := k8sClient.List(ctx, feeds, &listOptions)
 	if err != nil {
 		return nil, err
 	}

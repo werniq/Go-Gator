@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"slices"
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
+	"time"
 )
 
 var (
@@ -239,13 +240,7 @@ func validateConfigMap(req *admission.AdmissionRequest) ([]patchOperation, error
 		return nil, err
 	}
 
-	return []patchOperation{
-		{
-			Op:    "add",
-			Path:  "/metadata/finalizers/-",
-			Value: "random-finalizer",
-		},
-	}, nil
+	return []patchOperation{}, nil
 }
 
 // getAllHotNewsFromNamespace retrieves all hotnews from the provided namespace
@@ -284,14 +279,17 @@ func getAllHotNewsFromNamespace(namespace string) (newsaggregatorv1.HotNewsList,
 }
 
 // triggerHotNewsReconcile triggers a reconcile of all hotnews which have the given feed group in their feed groups.
-func triggerHotNewsReconcile(feedGroups map[string]string, feeds newsaggregatorv1.HotNewsList) error {
+func triggerHotNewsReconcile(feedGroups map[string]string, hotNewsList newsaggregatorv1.HotNewsList) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
 	for _, feedGroup := range feedGroups {
-		for _, feed := range feeds.Items {
-			if slices.Contains(feed.Spec.FeedGroups, feedGroup) {
-				feed.Finalizers = append(feed.Finalizers, "hotnews.teamdev.com/reconcile")
-				err := k8sClient.Update(context.Background(), &feed)
+		for _, hotNews := range hotNewsList.Items {
+			if slices.Contains(hotNews.Spec.FeedGroups, feedGroup) {
+				hotNews.Finalizers = append(hotNews.Finalizers, "hotnews.teamdev.com/reconcile")
+				err := k8sClient.Update(ctx, &hotNews)
 				if err != nil {
-					return fmt.Errorf("could not update feed %s: %v\n", feed.Name, err)
+					return fmt.Errorf("could not update hotNews %s: %v\n", hotNews.Name, err)
 				}
 			}
 		}

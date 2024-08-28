@@ -149,6 +149,9 @@ func (r *HotNews) validateHotNews() error {
 
 // feedExists checks if the given list of feeds exist in the namespace
 func (r *HotNews) feedsExists() error {
+	if r.Spec.Feeds == nil {
+		return nil
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -176,6 +179,9 @@ func (r *HotNews) feedsExists() error {
 
 // feedGroupsExists checks if the given list of feed groups exist in the config map
 func (r *HotNews) feedGroupsExists() error {
+	if r.Spec.FeedGroups == nil {
+		return nil
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 

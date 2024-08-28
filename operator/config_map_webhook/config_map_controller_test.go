@@ -451,6 +451,18 @@ func TestRunConfigMapController(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "Wrong certificates",
+			args: args{
+				tlsCertFile: filepath.Join(cwd, "templates", "certs", "fake.crt"),
+				tlsKeyFile:  filepath.Join(cwd, "templates", "certs", "fake.key"),
+			},
+			setup: func() {
+				_, cancel := context.WithTimeout(context.Background(), time.Second*5)
+				defer cancel()
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -13,7 +13,7 @@ import (
 
 var (
 	// defaultCertsPath is default path to server
-	defaultCertsPath = filepath.Join("cmd", "server", "tls")
+	defaultCertsPath = filepath.Join("cmd", "server", "certs")
 )
 
 const (

@@ -2,7 +2,6 @@ package parsers
 
 import (
 	"encoding/json"
-	"errors"
 	"gogator/cmd/types"
 	"io"
 	"os"

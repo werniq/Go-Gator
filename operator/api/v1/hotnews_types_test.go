@@ -24,11 +24,19 @@ func TestHotNews_InitHotNewsStatus(t *testing.T) {
 		args   args
 	}{
 		{
-			name: "Test InitHotNewsStatus",
+			name: "Test valid execution",
 			args: args{
 				articlesCount:  10,
 				requestUrl:     "http://test.com",
 				articlesTitles: []string{"test1", "test2", "test3", "test4", "test5", "test6", "test7", "test8", "test9", "test10"},
+			},
+			fields: fields{
+				TypeMeta:   v1.TypeMeta{},
+				ObjectMeta: v1.ObjectMeta{},
+				Spec: HotNewsSpec{
+					SummaryConfig: SummaryConfig{TitlesCount: 5},
+				},
+				Status: HotNewsStatus{},
 			},
 		},
 	}

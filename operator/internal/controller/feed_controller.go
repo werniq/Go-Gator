@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"slices"
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
@@ -62,7 +63,7 @@ const (
 	errClosingBody = "Error while trying to close response body: "
 )
 
-// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds,hotnews,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds/finalizers,verbs=update
 
@@ -97,7 +98,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	} else {
 		if controllerutil.ContainsFinalizer(&feed, feedFinalizerName) {
 			logger.Info("Handling the delete event")
-			if _, err = r.handleDelete(ctx, &feed); err != nil {
+			if _, err = r.handleDelete(&feed); err != nil {
 				return ctrl.Result{}, err
 			}
 
@@ -120,10 +121,10 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	if isNew {
 		logger.Info("Handling the create event")
-		res, err = r.handleCreate(ctx, &feed)
+		res, err = r.handleCreate(&feed)
 	} else {
 		logger.Info("Handling the update event")
-		res, err = r.handleUpdate(ctx, &feed)
+		res, err = r.handleUpdate(&feed)
 	}
 
 	if err != nil {
@@ -138,6 +139,11 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	err = r.Client.Status().Update(ctx, &feed)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	err = r.updateAllHotNewsInNamespaceByFeed(ctx, &feed)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -168,7 +174,7 @@ type sourceBody struct {
 // It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a POST request with the JSON payload.
 // The function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 201 Created, it attempts to decode and print the server's error message.
-func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
+func (r *FeedReconciler) handleCreate(feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
 	source := sourceBody{
 		Name:     feed.Spec.Name,
 		Endpoint: feed.Spec.Link,
@@ -196,12 +202,10 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 	}
 	if res.StatusCode != http.StatusCreated {
 		serverError := &serverErr{}
-
-		err = json.NewDecoder(res.Body).Decode(&err)
+		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
 			return ctrl.Result{}, errors.New(errDecodingResponse + err.Error())
 		}
-
 		return ctrl.Result{}, serverError
 	}
 
@@ -217,7 +221,7 @@ func (r *FeedReconciler) handleCreate(ctx context.Context, feed *newsaggregatorv
 // It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a PUT request with the JSON payload.
 // This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
-func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
+func (r *FeedReconciler) handleUpdate(feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
 	source := sourceBody{
 		Name:     feed.Spec.Name,
 		Endpoint: feed.Spec.Link,
@@ -266,7 +270,7 @@ func (r *FeedReconciler) handleUpdate(ctx context.Context, feed *newsaggregatorv
 // It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a DELETE request with the JSON payload.
 // This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
-func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
+func (r *FeedReconciler) handleDelete(feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
 	source := sourceBody{
 		Name:     feed.Spec.Name,
 		Endpoint: feed.Spec.Link,
@@ -309,4 +313,24 @@ func (r *FeedReconciler) handleDelete(ctx context.Context, feed *newsaggregatorv
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// updateAllHotNewsInNamespaceByFeed updates all HotNews objects in the namespace which contains the feed.
+func (r *FeedReconciler) updateAllHotNewsInNamespaceByFeed(ctx context.Context, feed *newsaggregatorv1.Feed) error {
+	var hotNewsList newsaggregatorv1.HotNewsList
+	err := r.Client.List(ctx, &hotNewsList, client.InNamespace(feed.Namespace))
+	if err != nil {
+		return err
+	}
+
+	for _, hotNews := range hotNewsList.Items {
+		if slices.Contains(hotNews.Spec.Feeds, feed.Spec.Name) {
+			err = r.Client.Update(ctx, &hotNews)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

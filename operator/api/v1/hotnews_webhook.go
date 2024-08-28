@@ -18,6 +18,7 @@ package v1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,6 +27,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+	"slices"
+	"time"
 )
 
 const (
@@ -69,6 +72,14 @@ func (r *HotNews) Default() {
 
 	if r.Spec.SummaryConfig.TitlesCount == 0 {
 		r.Spec.SummaryConfig.TitlesCount = 10
+	}
+
+	if r.Spec.Feeds == nil && r.Spec.FeedGroups == nil {
+		var err error
+		r.Spec.Feeds, err = r.getAllFeeds()
+		if err != nil {
+			hotnewslog.Error(err, "error getting feeds", "name", r.Name)
+		}
 	}
 }
 
@@ -117,25 +128,94 @@ func (r *HotNews) ValidateDelete() (admission.Warnings, error) {
 	return nil, nil
 }
 
+// getAllFeeds returns all feeds in the namespace
+func (r *HotNews) getAllFeeds() ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var feedList FeedList
+	err := k8sClient.List(ctx, &feedList, client.InNamespace(r.Namespace))
+	if err != nil {
+		return nil, err
+	}
+
+	var feedNames []string
+	for _, feed := range feedList.Items {
+		feedNames = append(feedNames, feed.Spec.Name)
+	}
+
+	return feedNames, nil
+}
+
 // validateHotNews validates the HotNews resource.
 //
 // In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct, and
 // if feeds or feedGroups exists in our news aggregator.
 func (r *HotNews) validateHotNews() error {
-	if r.Spec.DateStart > r.Spec.DateEnd {
-		return fmt.Errorf(errInvalidDateRange)
+	err := validateHotNews(r.Spec)
+	if err != nil {
+		return err
 	}
 
 	if r.Spec.Feeds == nil && r.Spec.FeedGroups == nil {
 		return fmt.Errorf(errNoFeeds)
 	}
 
-	//configMaps, err := clientset.CoreV1().ConfigMaps(FeedGroupsNamespace).List(context.TODO(), v12.ListOptions{})
-	//if err != nil {
-	//	return err
-	//}
+	err = r.feedsExists()
+	if err != nil {
+		return err
+	}
+
+	err = r.feedGroupsExists()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// feedExists checks if the given list of feeds exist in the namespace
+func (r *HotNews) feedsExists() error {
+	if r.Spec.Feeds == nil {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var feedList FeedList
+	err := k8sClient.List(ctx, &feedList, &client.ListOptions{
+		Namespace: r.Namespace,
+	})
+	if err != nil {
+		return err
+	}
+
+	feedNames := []string{}
+	for _, feed := range feedList.Items {
+		feedNames = append(feedNames, feed.Spec.Name)
+	}
+
+	for _, source := range r.Spec.Feeds {
+		if !slices.Contains(feedNames, source) {
+			return errors.New("feed name is not found in the namespace, please check the feed name")
+		}
+	}
+
+	return err
+}
+
+// feedGroupsExists checks if the given list of feed groups exist in the config map
+func (r *HotNews) feedGroupsExists() error {
+	if r.Spec.FeedGroups == nil {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
 	var configMaps v1.ConfigMapList
-	err := k8sClient.List(context.TODO(), &configMaps, &client.ListOptions{})
+	err := k8sClient.List(ctx, &configMaps, &client.ListOptions{
+		Namespace: r.Namespace,
+	})
 	if err != nil {
 		return err
 	}

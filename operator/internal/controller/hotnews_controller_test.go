@@ -246,6 +246,29 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 			want:    serverNewsEndpoint + "?keywords=bitcoin&sources=abc,bbc",
 			wantErr: false,
 		},
+		{
+			name: "Invalid request because of feed groups",
+			fields: fields{
+				Client: fake.NewClientBuilder().
+					WithScheme(scheme).
+					WithObjects(&v1.ConfigMap{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: newsaggregatorv1.FeedGroupsNamespace,
+							Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+						},
+						Data: map[string]string{"sport": "aaaa"},
+					}).
+					Build(),
+			},
+			args: args{
+				spec: newsaggregatorv1.HotNewsSpec{
+					Keywords:   []string{"bitcoin"},
+					FeedGroups: []string{"non-existent"},
+				},
+			},
+			want:    "",
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -255,13 +278,13 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 				serverUrl: serverNewsEndpoint,
 			}
 			got, err := r.constructRequestUrl(context.Background(), tt.args.spec)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("constructRequestUrl() error = %v, wantErr %v", err, tt.wantErr)
-				return
+
+			if tt.wantErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
-			if got != tt.want {
-				t.Errorf("constructRequestUrl() got = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -457,8 +480,8 @@ func TestHotNewsReconciler_processHotNews(t *testing.T) {
 				ctx: context.TODO(),
 				hotNews: &newsaggregatorv1.HotNews{
 					Spec: newsaggregatorv1.HotNewsSpec{
-						Keywords: []string{"bitcoin"},
-						Feeds:    []string{"abc", "bbc"},
+						Keywords:   []string{"bitcoin"},
+						FeedGroups: []string{"non-existent feed group"},
 					},
 				},
 			},
@@ -626,6 +649,21 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 			},
 			want:    "washingtontimes,abc,bbc",
 			wantErr: false,
+		},
+		{
+			name: "Config map is not registered in schema",
+			fields: fields{
+				Client: fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build(),
+				Scheme: scheme,
+			},
+			args: args{
+				spec: newsaggregatorv1.HotNewsSpec{
+					FeedGroups: []string{"nonexistent"},
+				},
+			},
+			setup:   nil,
+			want:    "",
+			wantErr: true,
 		},
 		{
 			name: "Feed group not found in ConfigMap",

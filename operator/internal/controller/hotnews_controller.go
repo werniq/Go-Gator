@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"fmt"
 	v1 "k8s.io/api/core/v1"
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -77,8 +76,8 @@ type HotNewsReconciler struct {
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=hotnews;feeds,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=hotnews/status;feeds,verbs=get;update;patch
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=hotnews/finalizers;feeds,verbs=update
-// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=configmaps,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state
@@ -122,15 +121,11 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string)
 	r.serverUrl = serverUrl
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.HotNews{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
-		Watches(&v1.ConfigMap{
-			ObjectMeta: v12.ObjectMeta{
-				Name:      newsaggregatorv1.FeedGroupsConfigMapName,
-				Namespace: newsaggregatorv1.FeedGroupsNamespace,
-			},
-		},
-			&handler.EnqueueRequestForObject{}).
-		Watches(&newsaggregatorv1.Feed{},
-			&handler.EnqueueRequestForObject{}).
+		Watches(
+			&newsaggregatorv1.Feed{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(FeedStatusConditionPredicate{}),
+		).
 		Complete(r)
 }
 
@@ -238,10 +233,7 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsag
 		}
 		feedStr.WriteString(feedGroupsStr)
 	} else {
-		feedsStr, err := r.processFeeds(spec)
-		if err != nil {
-			return "", err
-		}
+		feedsStr := r.processFeeds(spec)
 		feedStr.WriteString(feedsStr)
 	}
 
@@ -259,7 +251,7 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsag
 }
 
 // processFeeds returns a string containing comma-separated feed sources
-func (r *HotNewsReconciler) processFeeds(spec newsaggregatorv1.HotNewsSpec) (string, error) {
+func (r *HotNewsReconciler) processFeeds(spec newsaggregatorv1.HotNewsSpec) string {
 	var sourcesBuilder strings.Builder
 
 	for _, feed := range spec.Feeds {
@@ -267,7 +259,7 @@ func (r *HotNewsReconciler) processFeeds(spec newsaggregatorv1.HotNewsSpec) (str
 		sourcesBuilder.WriteRune(',')
 	}
 
-	return sourcesBuilder.String()[:len(sourcesBuilder.String())-1], nil
+	return sourcesBuilder.String()[:len(sourcesBuilder.String())-1]
 }
 
 // processFeedGroups function processes feed groups from the ConfigMap and returns a string containing comma-separated

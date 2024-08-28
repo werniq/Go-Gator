@@ -54,6 +54,11 @@ func TestFeedStatusConditionPredicate_Update(t *testing.T) {
 			}},
 			expected: false,
 		},
+		{
+			name:     "ObjectNew is not of type *newsaggregatorv1.Feed",
+			e:        event.UpdateEvent{ObjectNew: &newsaggregatorv1.HotNews{}},
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {

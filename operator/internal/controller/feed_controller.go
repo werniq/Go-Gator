@@ -202,12 +202,10 @@ func (r *FeedReconciler) handleCreate(feed *newsaggregatorv1.Feed) (ctrl.Result,
 	}
 	if res.StatusCode != http.StatusCreated {
 		serverError := &serverErr{}
-
-		err = json.NewDecoder(res.Body).Decode(&err)
+		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
 			return ctrl.Result{}, errors.New(errDecodingResponse + err.Error())
 		}
-
 		return ctrl.Result{}, serverError
 	}
 

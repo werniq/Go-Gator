@@ -257,7 +257,6 @@ func triggerHotNewsReconcile(feedGroups map[string]string, hotNewsList newsaggre
 
 	for feedGroup, _ := range feedGroups {
 		for _, hotNews := range hotNewsList.Items {
-			fmt.Println(hotNews.Spec.FeedGroups, feedGroup)
 			if slices.Contains(hotNews.Spec.FeedGroups, feedGroup) {
 				hotNews.Finalizers = append(hotNews.Finalizers, "hotnews.teamdev.com/reconcile")
 				err := k8sClient.Update(ctx, &hotNews)

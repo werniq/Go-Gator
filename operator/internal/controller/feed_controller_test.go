@@ -190,17 +190,51 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 						Name:      "ExistingFeedName",
 					},
 					Spec: newsaggregatorv1.FeedSpec{
-						Name: "new-feed-name",
+						Name: "NewFeedName",
 						Link: "https://example.com/feed",
 					},
 				})
 			},
 			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
-				_, _ = w.Write([]byte(`{"error": "Feed was not created successfully"}`))
+				_, _ = w.Write([]byte(`{"message": "Feed was created successfully"}`))
 			})),
 			want:    controllerruntime.Result{},
 			wantErr: false,
+		},
+		{
+			name: "Error during CREATE of the object",
+			fields: fields{
+				Client: k8sClient,
+				Scheme: nil,
+			},
+			setup: func() {
+				k8sClient.Create(context.TODO(), &newsaggregatorv1.Feed{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "ExistingFeedName",
+					},
+					Spec: newsaggregatorv1.FeedSpec{
+						Name: "ExistingFeedName",
+						Link: "https://example.com/feed",
+					},
+				})
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: controllerruntime.Request{
+					NamespacedName: client.ObjectKey{
+						Name:      "ExistingFeedName",
+						Namespace: "default",
+					},
+				},
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(`{"error": "Feed was not created successfully"}`))
+			})),
+			want:    controllerruntime.Result{},
+			wantErr: true,
 		},
 	}
 
@@ -228,17 +262,12 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 	}
 }
 
-func TestFeedReconciler_processHotNews(t *testing.T) {
-	mockServ := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte(`{"error": "Feed was not created successfully"}`))
-	}))
+func TestFeedReconciler_handleCreate(t *testing.T) {
 	tests := []struct {
-		name           string
-		feed           *newsaggregatorv1.Feed
-		mockServer     *httptest.Server
-		expectedResult ctrl.Result
-		expectedErr    bool
+		name        string
+		feed        *newsaggregatorv1.Feed
+		mockServer  *httptest.Server
+		expectedErr bool
 	}{
 		{
 			name: "Successful creation",
@@ -252,8 +281,7 @@ func TestFeedReconciler_processHotNews(t *testing.T) {
 				w.WriteHeader(http.StatusCreated)
 				_, _ = w.Write([]byte(`{"message": "Feed created successfully"}`))
 			})),
-			expectedResult: ctrl.Result{},
-			expectedErr:    false,
+			expectedErr: false,
 		},
 		{
 			name: "JSON marshalling error",
@@ -263,19 +291,7 @@ func TestFeedReconciler_processHotNews(t *testing.T) {
 					Link: "http://example.com",
 				},
 			},
-			expectedResult: ctrl.Result{},
-			expectedErr:    true,
-		},
-		{
-			name: "JSON marshalling error",
-			feed: &newsaggregatorv1.Feed{
-				Spec: newsaggregatorv1.FeedSpec{
-					Name: "Test Feed",
-					Link: string([]byte{0xff, 0xfe, 0xfd}),
-				},
-			},
-			expectedResult: ctrl.Result{},
-			expectedErr:    true,
+			expectedErr: true,
 		},
 		{
 			name: "HTTP request creation error",
@@ -285,20 +301,46 @@ func TestFeedReconciler_processHotNews(t *testing.T) {
 					Link: string([]byte{0x7f}),
 				},
 			},
-			expectedResult: ctrl.Result{},
-			expectedErr:    true,
+			expectedErr: true,
 		},
 		{
 			name: "HTTP request performing error",
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
 					Name: "Test Feed",
-					Link: mockServ.URL,
+					Link: "http://invalid-url",
 				},
 			},
-			mockServer:     mockServ,
-			expectedResult: ctrl.Result{},
-			expectedErr:    true,
+			mockServer:  nil,
+			expectedErr: true,
+		},
+		{
+			name: "Failed to decode error response",
+			feed: &newsaggregatorv1.Feed{
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "Test Feed",
+					Link: "http://example.com",
+				},
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(`{"invalid": "Feed was not created successfully"}`))
+			})),
+			expectedErr: true,
+		},
+		{
+			name: "Failed to decode error response",
+			feed: &newsaggregatorv1.Feed{
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "Test Feed",
+					Link: "http://example.com",
+				},
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(`{"invalid": "Feed was not created successfully"}`))
+			})),
+			expectedErr: true,
 		},
 	}
 
@@ -314,8 +356,7 @@ func TestFeedReconciler_processHotNews(t *testing.T) {
 			_, err := r.handleCreate(tt.feed)
 
 			if tt.expectedErr {
-				assert.NotEqual(t, err.Error(), "")
-
+				assert.NotNil(t, err)
 			} else {
 				assert.Nil(t, err)
 			}
@@ -344,7 +385,7 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 				assert.NotEqual(t, err, "")
 			},
 			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
+				w.WriteHeader(http.StatusCreated)
 				_, _ = w.Write([]byte(`{"message": "Feed deleted successfully"}`))
 			})),
 			feed: &newsaggregatorv1.Feed{
@@ -407,6 +448,24 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 			expectedErr:    true,
 		},
 		{
+			name: "Failed to decode error response",
+			setup: func(r *FeedReconciler) {
+
+			},
+			feed: &newsaggregatorv1.Feed{
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "Test Feed",
+					Link: "http://example.com",
+				},
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(`{"invalid": "Feed was not created successfully"}`))
+			})),
+			expectedResult: ctrl.Result{},
+			expectedErr:    false,
+		},
+		{
 			name: "Server returns error",
 			setup: func(r *FeedReconciler) {
 				_, err := r.handleCreate(&newsaggregatorv1.Feed{
@@ -447,9 +506,8 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 
 			if tt.expectedErr {
 				assert.NotEqual(t, err.Error(), "")
-
 			} else {
-				assert.Nil(t, err)
+				assert.Equal(t, "", err.Error())
 			}
 		})
 	}

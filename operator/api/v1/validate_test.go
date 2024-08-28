@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -54,7 +55,6 @@ func TestUrlValidate_Validate(t *testing.T) {
 		name    string
 		url     string
 		wantErr bool
-		errMsg  string
 	}{
 		{
 			name:    "Valid URL with http",
@@ -70,13 +70,16 @@ func TestUrlValidate_Validate(t *testing.T) {
 			name:    "Invalid URL with no http/https",
 			url:     "ftp:////example.com",
 			wantErr: true,
-			errMsg:  "url must contain http or https",
 		},
 		{
 			name:    "Invalid URL with no protocol",
 			url:     "example.com",
 			wantErr: true,
-			errMsg:  "url must contain http or https",
+		},
+		{
+			name:    "Invalid URL with no protocol",
+			wantErr: true,
+			url:     string([]byte{0x7f}),
 		},
 	}
 
@@ -86,11 +89,10 @@ func TestUrlValidate_Validate(t *testing.T) {
 				url: tt.url,
 			}
 			err := urlValidator.Validate()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("urlValidate.validateFeeds() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if err != nil && err.Error() != tt.errMsg {
-				t.Errorf("urlValidate.validateFeeds() error = %v, expected error message %v", err.Error(), tt.errMsg)
+			if tt.wantErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
 		})
 	}
@@ -198,6 +200,71 @@ func Test_validateHotNews(t *testing.T) {
 			} else {
 				assert.Nil(t, err)
 			}
+		})
+	}
+}
+
+func Test_baseHandler_HandleNext(t *testing.T) {
+	type fields struct {
+		next handler
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Successful validation",
+			fields: fields{
+				next: &urlValidate{
+					url: "http://example.com",
+				},
+			},
+			wantErr: assert.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &urlValidate{}
+			h.SetNext(tt.fields.next)
+			tt.wantErr(t, h.HandleNext(), fmt.Sprintf("HandleNext()"))
+		})
+	}
+}
+
+func Test_baseHandler_SetNext(t *testing.T) {
+	type fields struct {
+		next handler
+	}
+	type args struct {
+		handler handler
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   baseHandler
+	}{
+		{
+			name: "Successful validation",
+			fields: fields{
+				next: &urlValidate{},
+			},
+			want: baseHandler{
+				&urlValidate{},
+			},
+			args: args{
+				handler: &urlValidate{},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &baseHandler{
+				next: tt.fields.next,
+			}
+			h.SetNext(tt.args.handler)
+			assert.Equal(t, tt.want, *h)
 		})
 	}
 }

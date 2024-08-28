@@ -42,6 +42,7 @@ func TestFeed_validateHotNews(t *testing.T) {
 		name        string
 		hotNew      *HotNews
 		expectedErr bool
+		setup       func()
 	}{
 		{
 			name: "Successful validation",
@@ -53,7 +54,20 @@ func TestFeed_validateHotNews(t *testing.T) {
 					Feeds:     []string{"feed1"},
 				},
 			},
+			setup:       func() {},
 			expectedErr: false,
+		},
+		{
+			name: "Validation failure due to empty feeds and feed groups",
+			hotNew: &HotNews{
+				Spec: HotNewsSpec{
+					Keywords:  []string{"test"},
+					DateStart: "2021-01-01",
+					DateEnd:   "2021-01-02",
+				},
+			},
+			setup:       func() {},
+			expectedErr: true,
 		},
 		{
 			name: "Validation failure due to invalid hotNew date range",
@@ -64,6 +78,7 @@ func TestFeed_validateHotNews(t *testing.T) {
 					DateEnd:   "2021-01-02",
 				},
 			},
+			setup:       func() {},
 			expectedErr: true,
 		},
 		{
@@ -75,6 +90,7 @@ func TestFeed_validateHotNews(t *testing.T) {
 					DateEnd:   "BBCA-AA-BB",
 				},
 			},
+			setup:       func() {},
 			expectedErr: true,
 		},
 		{
@@ -86,11 +102,30 @@ func TestFeed_validateHotNews(t *testing.T) {
 					FeedGroups: []string{"sport"},
 				},
 			},
+			setup:       func() {},
+			expectedErr: true,
+		},
+		{
+			name: "K8s client not est",
+			hotNew: &HotNews{
+				ObjectMeta: v12.ObjectMeta{
+					Namespace: "non-eadssxistent",
+				},
+				Spec: HotNewsSpec{
+					Keywords:   []string{"test"},
+					DateStart:  "ABCC-AA-BB",
+					FeedGroups: []string{"sport"},
+				},
+			},
+			setup: func() {
+				k8sClient = fake.NewClientBuilder().WithScheme(nil).Build()
+			},
 			expectedErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
 			err := tt.hotNew.validateHotNews()
 
 			if tt.expectedErr {
@@ -257,6 +292,18 @@ func TestHotNews_ValidateUpdate(t *testing.T) {
 			},
 			want:    nil,
 			wantErr: false,
+		},
+		{
+			name: "Successful validation",
+			fields: fields{
+				Spec: HotNewsSpec{
+					Keywords:  []string{"test"},
+					DateStart: "2021-01-01",
+					DateEnd:   "2021-01-02",
+				},
+			},
+			want:    nil,
+			wantErr: true,
 		},
 	}
 

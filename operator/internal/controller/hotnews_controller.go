@@ -233,10 +233,7 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsag
 		}
 		feedStr.WriteString(feedGroupsStr)
 	} else {
-		feedsStr, err := r.processFeeds(spec)
-		if err != nil {
-			return "", err
-		}
+		feedsStr := r.processFeeds(spec)
 		feedStr.WriteString(feedsStr)
 	}
 
@@ -254,7 +251,7 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsag
 }
 
 // processFeeds returns a string containing comma-separated feed sources
-func (r *HotNewsReconciler) processFeeds(spec newsaggregatorv1.HotNewsSpec) (string, error) {
+func (r *HotNewsReconciler) processFeeds(spec newsaggregatorv1.HotNewsSpec) string {
 	var sourcesBuilder strings.Builder
 
 	for _, feed := range spec.Feeds {
@@ -262,7 +259,7 @@ func (r *HotNewsReconciler) processFeeds(spec newsaggregatorv1.HotNewsSpec) (str
 		sourcesBuilder.WriteRune(',')
 	}
 
-	return sourcesBuilder.String()[:len(sourcesBuilder.String())-1], nil
+	return sourcesBuilder.String()[:len(sourcesBuilder.String())-1]
 }
 
 // processFeedGroups function processes feed groups from the ConfigMap and returns a string containing comma-separated

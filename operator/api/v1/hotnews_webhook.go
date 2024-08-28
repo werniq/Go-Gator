@@ -18,6 +18,7 @@ package v1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,6 +27,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+	"slices"
 	"time"
 )
 
@@ -132,11 +134,53 @@ func (r *HotNews) validateHotNews() error {
 		return fmt.Errorf(errNoFeeds)
 	}
 
+	err = r.feedsExists()
+	if err != nil {
+		return err
+	}
+
+	err = r.feedGroupsExists()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// feedExists checks if the given list of feeds exist in the namespace
+func (r *HotNews) feedsExists() error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var feedList FeedList
+	err := k8sClient.List(ctx, &feedList, &client.ListOptions{
+		Namespace: r.Namespace,
+	})
+	if err != nil {
+		return err
+	}
+
+	feedNames := []string{}
+	for _, feed := range feedList.Items {
+		feedNames = append(feedNames, feed.Spec.Name)
+	}
+
+	for _, source := range r.Spec.Feeds {
+		if !slices.Contains(feedNames, source) {
+			return errors.New("feed name is not found in the namespace, please check the feed name")
+		}
+	}
+
+	return err
+}
+
+// feedGroupsExists checks if the given list of feed groups exist in the config map
+func (r *HotNews) feedGroupsExists() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	var configMaps v1.ConfigMapList
-	err = k8sClient.List(ctx, &configMaps, &client.ListOptions{
+	err := k8sClient.List(ctx, &configMaps, &client.ListOptions{
 		Namespace: r.Namespace,
 	})
 	if err != nil {

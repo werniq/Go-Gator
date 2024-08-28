@@ -153,7 +153,7 @@ func main() {
 	if err = (&controller.HotNewsReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr, sourceManagementEndpoint); err != nil {
+	}).SetupWithManager(mgr, newsFetchingEndpoint); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "HotNews")
 		os.Exit(1)
 	}

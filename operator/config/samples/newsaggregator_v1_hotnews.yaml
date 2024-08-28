@@ -4,7 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/name: operator
     app.kubernetes.io/managed-by: kustomize
-  name: hotnews-sample-81
+  name: hotnews-sample-3
 spec:
   keywords:
     - Trump
@@ -12,9 +12,7 @@ spec:
     - Olympic
     - China
     - Russia
-  dateStart: 2024-08-22
-  dateEnd: 2024-08-24
+  dateStart: 2024-08-25
+  dateEnd: 2024-08-28
   feeds: 
-    - bbc
     - abc
-    - washingtontimes

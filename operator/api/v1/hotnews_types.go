@@ -91,6 +91,7 @@ type HotNewsList struct {
 }
 
 func init() {
+	SchemeBuilder.Register(&Feed{}, &FeedList{})
 	SchemeBuilder.Register(&HotNews{}, &HotNewsList{})
 }
 

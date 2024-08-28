@@ -117,10 +117,6 @@ type FeedList struct {
 	Items           []Feed `json:"items"`
 }
 
-func init() {
-	SchemeBuilder.Register(&Feed{}, &FeedList{})
-}
-
 // SetCreatedCondition sets the created condition of the feed to Created
 func (r *Feed) SetCreatedCondition(reason string) {
 	r.setCondition(TypeFeedCreated, createdReason, reason, FeedCreated)

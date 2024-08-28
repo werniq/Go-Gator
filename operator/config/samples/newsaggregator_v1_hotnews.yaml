@@ -4,11 +4,9 @@ metadata:
   labels:
     app.kubernetes.io/name: operator
     app.kubernetes.io/managed-by: kustomize
-  name: hotnews-sample-5
+  name: hotnews-sample-81
 spec:
-  keywords: 
-    - a
-    - an
+  keywords:
     - Trump
     - Ukraine
     - Olympic

@@ -63,7 +63,7 @@ const (
 	errClosingBody = "Error while trying to close response body: "
 )
 
-// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds,hotnews,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds;hotnews,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds/finalizers,verbs=update
 

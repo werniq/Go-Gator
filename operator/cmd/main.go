@@ -154,7 +154,7 @@ func main() {
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr, sourceManagementEndpoint); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Feed")
+		setupLog.Error(err, "unable to create controller", "controller", "HotNews")
 		os.Exit(1)
 	}
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
@@ -163,7 +163,7 @@ func main() {
 			os.Exit(1)
 		}
 		if err = (&newsaggregatorv1.Feed{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "HotNews")
+			setupLog.Error(err, "unable to create webhook", "webhook", "Feed")
 			os.Exit(1)
 		}
 	}

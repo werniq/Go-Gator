@@ -73,6 +73,14 @@ func (r *HotNews) Default() {
 	if r.Spec.SummaryConfig.TitlesCount == 0 {
 		r.Spec.SummaryConfig.TitlesCount = 10
 	}
+
+	if r.Spec.Feeds == nil && r.Spec.FeedGroups == nil {
+		var err error
+		r.Spec.Feeds, err = r.getAllFeeds()
+		if err != nil {
+			hotnewslog.Error(err, "error getting feeds", "name", r.Name)
+		}
+	}
 }
 
 // +kubebuilder:webhook:path=/validate-newsaggregator-teamdev-com-v1-hotnews,mutating=false,failurePolicy=fail,sideEffects=None,groups=newsaggregator.teamdev.com,resources=hotnews,verbs=create;update;delete,versions=v1,name=vhotnews.kb.io,admissionReviewVersions=v1
@@ -118,6 +126,25 @@ func (r *HotNews) ValidateDelete() (admission.Warnings, error) {
 	hotnewslog.Info("validate delete", "name", r.Name)
 
 	return nil, nil
+}
+
+// getAllFeeds returns all feeds in the namespace
+func (r *HotNews) getAllFeeds() ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var feedList FeedList
+	err := k8sClient.List(ctx, &feedList, client.InNamespace(r.Namespace))
+	if err != nil {
+		return nil, err
+	}
+
+	var feedNames []string
+	for _, feed := range feedList.Items {
+		feedNames = append(feedNames, feed.Spec.Name)
+	}
+
+	return feedNames, nil
 }
 
 // validateHotNews validates the HotNews resource.

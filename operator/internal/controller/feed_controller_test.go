@@ -364,6 +364,9 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 					Link: string([]byte{0xff, 0xfe, 0xfd}),
 				},
 			},
+			setup: func(r *FeedReconciler) {
+
+			},
 			expectedResult: ctrl.Result{},
 			expectedErr:    true,
 		},

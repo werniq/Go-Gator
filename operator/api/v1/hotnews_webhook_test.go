@@ -28,15 +28,53 @@ import (
 )
 
 func TestFeed_validateHotNews(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = AddToScheme(scheme)
+	_ = v1.AddToScheme(scheme)
+
+	existingFeedList := &FeedList{
+		Items: []Feed{
+			{
+				ObjectMeta: v12.ObjectMeta{
+					Namespace: FeedGroupsNamespace,
+					Name:      FeedGroupsConfigMapName,
+				},
+				Spec: FeedSpec{
+					Name: "abc",
+				},
+			},
+		},
+	}
+
+	existingHotNewsList := &HotNewsList{
+		Items: []HotNews{
+			{
+				ObjectMeta: v12.ObjectMeta{
+					Namespace: FeedGroupsNamespace,
+					Name:      FeedGroupsConfigMapName,
+				},
+				Spec: HotNewsSpec{
+					Keywords:  []string{"test"},
+					DateStart: "2021-01-01",
+					DateEnd:   "2021-01-02",
+					Feeds:     []string{"abc"},
+				},
+			},
+		},
+	}
+
 	k8sClient = fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithLists(existingHotNewsList, existingFeedList).
 		WithObjects(&v1.ConfigMap{
 			ObjectMeta: v12.ObjectMeta{
 				Namespace: FeedGroupsNamespace,
 				Name:      FeedGroupsConfigMapName,
 			},
-			Data: map[string]string{"sport": "abc"},
-		}).
-		Build()
+			Data: map[string]string{
+				"sport": "abc",
+			},
+		}).Build()
 
 	var tests = []struct {
 		name        string
@@ -47,6 +85,10 @@ func TestFeed_validateHotNews(t *testing.T) {
 		{
 			name: "Successful validation",
 			hotNew: &HotNews{
+				ObjectMeta: v12.ObjectMeta{
+					Namespace: FeedGroupsNamespace,
+					Name:      FeedGroupsConfigMapName,
+				},
 				Spec: HotNewsSpec{
 					Keywords:  []string{"test"},
 					DateStart: "2021-01-01",
@@ -138,15 +180,46 @@ func TestFeed_validateHotNews(t *testing.T) {
 }
 
 func TestHotNews_ValidateCreate(t *testing.T) {
-	k8sClient = fake.NewClientBuilder().WithObjects(&v1.ConfigMap{
-		ObjectMeta: v12.ObjectMeta{
-			Namespace: FeedGroupsNamespace,
-			Name:      FeedGroupsConfigMapName,
+	scheme := runtime.NewScheme()
+	_ = AddToScheme(scheme)
+	_ = v1.AddToScheme(scheme)
+
+	existingFeedList := &FeedList{
+		Items: []Feed{
+			{
+				Spec: FeedSpec{
+					Name: "abc",
+				},
+			},
 		},
-		Data: map[string]string{
-			"sport": "abc",
+	}
+
+	existingHotNewsList := &HotNewsList{
+		Items: []HotNews{
+			{
+				Spec: HotNewsSpec{
+					Keywords:  []string{"test"},
+					DateStart: "2021-01-01",
+					DateEnd:   "2021-01-02",
+					Feeds:     []string{"abc"},
+				},
+			},
 		},
-	}).Build()
+	}
+
+	k8sClient = fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithLists(existingHotNewsList, existingFeedList).
+		WithObjects(&v1.ConfigMap{
+			ObjectMeta: v12.ObjectMeta{
+				Namespace: FeedGroupsNamespace,
+				Name:      FeedGroupsConfigMapName,
+			},
+			Data: map[string]string{
+				"sport": "abc",
+			},
+		}).Build()
+
 	type fields struct {
 		TypeMeta   v12.TypeMeta
 		ObjectMeta v12.ObjectMeta
@@ -257,12 +330,43 @@ func TestHotNews_ValidateDelete(t *testing.T) {
 }
 
 func TestHotNews_ValidateUpdate(t *testing.T) {
-	k8sClient = fake.NewClientBuilder().WithObjects(&v1.ConfigMap{
-		ObjectMeta: v12.ObjectMeta{
-			Namespace: FeedGroupsNamespace,
-			Name:      FeedGroupsConfigMapName,
+	scheme := runtime.NewScheme()
+	_ = AddToScheme(scheme)
+	_ = v1.AddToScheme(scheme)
+
+	existingFeedList := &FeedList{
+		Items: []Feed{
+			{
+				Spec: FeedSpec{
+					Name: "abc",
+				},
+			},
 		},
-		Data: nil}).Build()
+	}
+
+	existingHotNewsList := &HotNewsList{
+		Items: []HotNews{
+			{
+				Spec: HotNewsSpec{
+					Keywords:  []string{"test"},
+					DateStart: "2021-01-01",
+					DateEnd:   "2021-01-02",
+					Feeds:     []string{"abc"},
+				},
+			},
+		},
+	}
+
+	k8sClient = fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithLists(existingHotNewsList, existingFeedList).
+		WithObjects(&v1.ConfigMap{
+			ObjectMeta: v12.ObjectMeta{
+				Namespace: FeedGroupsNamespace,
+				Name:      FeedGroupsConfigMapName,
+			},
+			Data: map[string]string{},
+		}).Build()
 
 	type fields struct {
 		TypeMeta   v12.TypeMeta

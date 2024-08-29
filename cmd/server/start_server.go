@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	parsers "gogator/cmd/parsers"
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	v1 "k8s.io/api/core/v1"
 	"os"
 	"path/filepath"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"strings"
+	"time"
 )
 
 var (
@@ -120,21 +121,24 @@ func ConfAndRun() error {
 func loadCertsFromSecrets() (string, string, error) {
 	c := config.GetConfigOrDie()
 
-	clientset, err := kubernetes.NewForConfig(c)
+	k8sClient, err := client.New(c, client.Options{})
 	if err != nil {
 		return "", "", err
 	}
 
-	secret, err := clientset.CoreV1().Secrets(defaultCertificatesNamespace).
-		Get(context.Background(),
-			defaultSecretName,
-			v12.GetOptions{})
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var k8sSecret v1.Secret
+	err = k8sClient.Get(ctx, client.ObjectKey{
+		Name: defaultSecretName,
+	}, &k8sSecret)
 	if err != nil {
 		return "", "", err
 	}
 
-	certData := secret.Data[defaultCertName]
-	keyData := secret.Data[defaultPrivateKey]
+	certData := k8sSecret.Data[defaultCertName]
+	keyData := k8sSecret.Data[defaultPrivateKey]
 
 	cwdPath, err := os.Getwd()
 	if err != nil {

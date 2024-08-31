@@ -38,6 +38,11 @@ var (
 	k8sClient client.Client
 )
 
+const (
+	// errFeedUsed is an error message indicating that the feed is used in hot news
+	errFeedUsed = "this feed is used in hot news, it cannot be deleted"
+)
+
 // SetupWebhookWithManager will set up the manager to manage the webhooks
 func (r *Feed) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	k8sClient = mgr.GetClient()
@@ -66,10 +71,10 @@ func (r *Feed) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 	feedlog.Info("validate delete", "name", r.Name)
 
-	err := r.isFeedUsed(r.Spec.Name)
-	if err != nil {
-		return nil, err
-	}
+	//err := r.isFeedUsed(r.Spec.Name)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	return nil, nil
 }
@@ -160,12 +165,13 @@ func (r *Feed) isFeedUsed(feedName string) error {
 
 	for _, hotNews := range hotNewsList.Items {
 		if slices.Contains(hotNews.Spec.Feeds, feedName) {
-			return errors.New("this feed is used in hot news, it can not be deleted")
+			return errors.New(errFeedUsed)
 		}
-		for _, configMap := range configMapList.Items {
-			if r.feedIsInFeedGroups(configMap.Data, feedName) {
-				return errors.New("this feed is used in hot news, it can not be deleted")
-			}
+	}
+
+	for _, configMap := range configMapList.Items {
+		if r.feedIsInFeedGroups(configMap.Data, feedName) {
+			return errors.New(errFeedUsed)
 		}
 	}
 

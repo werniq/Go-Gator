@@ -76,8 +76,9 @@ type dateValidate struct {
 
 func (d *dateValidate) Validate() error {
 	if d.dateStart > d.dateEnd {
-		return errors.New("start date must be before end date")
+		return errors.New(errInvalidDateRange)
 	}
+
 	_, err := time.Parse(time.DateOnly, d.dateStart)
 	if err != nil {
 		return errors.New("invalid start date format: " + err.Error())

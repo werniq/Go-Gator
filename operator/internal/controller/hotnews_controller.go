@@ -22,11 +22,15 @@ import (
 	"encoding/json"
 	"fmt"
 	v1 "k8s.io/api/core/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -94,7 +98,37 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	err := r.Client.Get(ctx, req.NamespacedName, &hotNews)
 	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
 		logger.Error(err, "unable to fetch HotNews")
+		return ctrl.Result{}, nil
+	}
+
+	if !controllerutil.ContainsFinalizer(&hotNews, newsaggregatorv1.HotNewsFinalizer) {
+		controllerutil.AddFinalizer(&hotNews, newsaggregatorv1.HotNewsFinalizer)
+		err := r.Client.Update(ctx, &hotNews)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
+	if !hotNews.DeletionTimestamp.IsZero() {
+		err = r.removeFeedReference(ctx, hotNews)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		controllerutil.RemoveFinalizer(&hotNews, newsaggregatorv1.HotNewsFinalizer)
+		err = r.Client.Update(ctx, &hotNews)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, nil
+	}
+
+	err = r.setFeedReference(ctx, hotNews)
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -248,6 +282,134 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsag
 	}
 
 	return requestUrl.String(), nil
+}
+
+// setFeedReference sets the owner references for each Feed in the HotNewsSpec.Feeds array.
+func (r *HotNewsReconciler) setFeedReference(ctx context.Context, hotNews newsaggregatorv1.HotNews) error {
+	if hotNews.Spec.FeedGroups != nil {
+		feedGroups, err := hotNews.GetFeedGroupNames(ctx)
+		if err != nil {
+			return err
+		}
+
+		err = r.setOwnerReferenceForFeeds(ctx, hotNews, feedGroups)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := r.setOwnerReferenceForFeeds(ctx, hotNews, hotNews.Spec.Feeds)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// setOwnerReferenceForFeeds sets the owner references for each Feed in the HotNewsSpec.Feeds array.
+func (r *HotNewsReconciler) setOwnerReferenceForFeeds(ctx context.Context, hotNews newsaggregatorv1.HotNews, feeds []string) error {
+	var errList field.ErrorList
+
+	ownerRef := metav1.NewControllerRef(&hotNews, newsaggregatorv1.GroupVersion.WithKind("HotNews"))
+
+	for _, feedName := range feeds {
+		feed := &newsaggregatorv1.Feed{}
+		err := r.Client.Get(ctx, client.ObjectKey{
+			Name:      feedName,
+			Namespace: hotNews.Namespace,
+		}, feed)
+		if err != nil {
+			if k8sErrors.IsNotFound(err) {
+				errList = append(errList, field.NotFound(field.NewPath("feeds"), feedName))
+			} else {
+				fmt.Println("error: failed to get Feed", err)
+				return err
+			}
+			continue
+		}
+
+		if !hasOwnerReference(feed, ownerRef) {
+			feed.SetOwnerReferences(append(feed.GetOwnerReferences(), *ownerRef))
+		}
+
+		err = r.Update(ctx, feed)
+		if err != nil {
+			fmt.Println("error: failed to update Feed", err)
+			errList = append(errList, field.InternalError(field.NewPath("feeds").Child(feedName), err))
+		}
+	}
+
+	if len(errList) > 0 {
+		return errList.ToAggregate()
+	}
+
+	return nil
+}
+
+// hasOwnerReference checks if the given Feed already has the provided OwnerReference.
+func hasOwnerReference(feed *newsaggregatorv1.Feed, ownerRef *metav1.OwnerReference) bool {
+	for _, ref := range feed.GetOwnerReferences() {
+		if ref.UID == ownerRef.UID {
+			return true
+		}
+	}
+	return false
+}
+
+// removeFeedReference removes the owner references for each Feed in the HotNewsSpec.Feeds array.
+func (r *HotNewsReconciler) removeFeedReference(ctx context.Context, hotNews newsaggregatorv1.HotNews) error {
+	if hotNews.Spec.FeedGroups != nil {
+		feedGroups, err := hotNews.GetFeedGroupNames(ctx)
+		if err != nil {
+			return err
+		}
+
+		err = r.removeOwnerReferenceFromFeeds(ctx, &hotNews, feedGroups)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := r.removeOwnerReferenceFromFeeds(ctx, &hotNews, hotNews.Spec.Feeds)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// removeOwnerReferenceFromFeeds removes the owner references for each Feed in the given feeds array
+func (r *HotNewsReconciler) removeOwnerReferenceFromFeeds(ctx context.Context, hotNews *newsaggregatorv1.HotNews, feeds []string) error {
+	var errList field.ErrorList
+
+	for _, feedName := range feeds {
+		feed := &newsaggregatorv1.Feed{}
+		err := r.Client.Get(ctx, client.ObjectKey{
+			Namespace: hotNews.Namespace,
+			Name:      feedName,
+		}, feed)
+		if err != nil {
+			if k8sErrors.IsNotFound(err) {
+				errList = append(errList, field.NotFound(field.NewPath("feeds"), feedName))
+			} else {
+				return err
+			}
+			continue
+		}
+
+		feed.SetOwnerReferences([]metav1.OwnerReference{})
+
+		err = r.Client.Update(ctx, feed)
+		if err != nil {
+			errList = append(errList, field.InternalError(field.NewPath("feeds"), err))
+		}
+	}
+
+	if errList != nil {
+		return errList.ToAggregate()
+	}
+
+	return nil
 }
 
 // processFeeds returns a string containing comma-separated feed sources

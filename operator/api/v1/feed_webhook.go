@@ -19,6 +19,7 @@ package v1
 import (
 	"context"
 	"errors"
+	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -71,10 +72,10 @@ func (r *Feed) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 	feedlog.Info("validate delete", "name", r.Name)
 
-	//err := r.isFeedUsed(r.Spec.Name)
-	//if err != nil {
-	//	return nil, err
-	//}
+	if r.OwnerReferences != nil {
+		return nil, errors.New("feed has owner references")
+	}
+	fmt.Println("Feed doesn't have owner references")
 
 	return nil, nil
 }
@@ -114,8 +115,10 @@ func (r *Feed) checkNameUniqueness() (admission.Warnings, error) {
 	}
 
 	for _, feed := range feeds.Items {
-		if feed.Spec.Name == r.Spec.Name && feed.Namespace == r.Namespace {
-			return nil, errors.New("name must be unique in the namespace")
+		if feed.UID != r.UID {
+			if feed.Spec.Name == r.Spec.Name && feed.Namespace == r.Namespace {
+				return nil, errors.New("name must be unique in the namespace")
+			}
 		}
 	}
 
@@ -137,8 +140,10 @@ func (r *Feed) checkLinkUniqueness() (admission.Warnings, error) {
 	}
 
 	for _, feed := range feeds.Items {
-		if feed.Spec.Link == r.Spec.Link && feed.Namespace == r.Namespace {
-			return nil, errors.New("link must be unique in the namespace")
+		if feed.UID != r.UID {
+			if feed.Spec.Link == r.Spec.Link && feed.Namespace == r.Namespace {
+				return nil, errors.New("link must be unique in the namespace")
+			}
 		}
 	}
 

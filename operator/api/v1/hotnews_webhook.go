@@ -21,10 +21,9 @@ import (
 	"errors"
 	"fmt"
 	v1 "k8s.io/api/core/v1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apimachinery/pkg/selection"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -49,6 +48,13 @@ const (
 
 	// FeedGroupsConfigMapName is a name of the default ConfigMap which contains our hotNew groups names and sources
 	FeedGroupsConfigMapName = "feed-group-source"
+
+	// FeedGroupLabel is a label for ConfigMap which contains our hotNew groups names and sources
+	FeedGroupLabel = "feed-group-source"
+
+	// HotNewsFinalizer is a finalizer for HotNews resource which will be added when the resource is created
+	// and removed when the resource is deleted
+	HotNewsFinalizer = "finalizer.hotnews.newsaggregator.teamdev.com"
 )
 
 var (
@@ -104,14 +110,6 @@ func (r *HotNews) ValidateCreate() (admission.Warnings, error) {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	err = r.setOwnerReferenceForFeeds(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	return nil, nil
 }
 
@@ -136,15 +134,34 @@ func (r *HotNews) ValidateUpdate(old runtime.Object) (admission.Warnings, error)
 func (r *HotNews) ValidateDelete() (admission.Warnings, error) {
 	hotnewslog.Info("validate delete", "name", r.Name)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
+	return nil, nil
+}
 
-	err := r.removeFeedReference(ctx)
+// GetFeedGroupNames returns all config maps which
+func (r *HotNews) GetFeedGroupNames(ctx context.Context) ([]string, error) {
+	s, err := labels.NewRequirement(FeedGroupLabel, selection.Exists, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return nil, nil
+	var configMaps v1.ConfigMapList
+	err = k8sClient.List(ctx, &configMaps, &client.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*s),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var feedGroups []string
+	for _, configMap := range configMaps.Items {
+		for _, source := range r.Spec.FeedGroups {
+			if _, exists := configMap.Data[source]; exists {
+				feedGroups = append(feedGroups, source)
+			}
+		}
+	}
+
+	return feedGroups, nil
 }
 
 // getAllFeeds returns all feeds in the namespace
@@ -193,83 +210,6 @@ func (r *HotNews) validateHotNews() error {
 	return nil
 }
 
-// removeFeedReference removes the owner references for each Feed in the HotNewsSpec.Feeds array.
-func (r *HotNews) removeFeedReference(ctx context.Context) error {
-	if r.Spec.Feeds == nil {
-		return nil
-	}
-
-	var errList field.ErrorList
-
-	for _, feedName := range r.Spec.Feeds {
-		feed := &Feed{}
-		err := k8sClient.Get(ctx, client.ObjectKey{
-			Namespace: r.Namespace,
-			Name:      feedName,
-		}, feed)
-		if err != nil {
-			if k8sErrors.IsNotFound(err) {
-				errList = append(errList, field.NotFound(field.NewPath("feeds"), feedName))
-			} else {
-				return err
-			}
-			continue
-		}
-
-		feed.SetOwnerReferences([]metav1.OwnerReference{})
-
-		err = k8sClient.Update(ctx, feed)
-		if err != nil {
-			errList = append(errList, field.InternalError(field.NewPath("feeds"), err))
-		}
-	}
-
-	if errList != nil {
-		return errList.ToAggregate()
-	}
-
-	return nil
-}
-
-// setOwnerReferenceForFeeds sets the owner references for each Feed in the HotNewsSpec.Feeds array.
-func (r *HotNews) setOwnerReferenceForFeeds(ctx context.Context) error {
-	var errList field.ErrorList
-
-	for _, feedName := range r.Spec.Feeds {
-		feed := &Feed{}
-		err := k8sClient.Get(ctx, client.ObjectKey{
-			Namespace: r.Namespace,
-			Name:      feedName,
-		}, feed)
-		if err != nil {
-			if k8sErrors.IsNotFound(err) {
-				errList = append(errList, field.NotFound(field.NewPath("feeds"), feedName))
-			}
-			return err
-		}
-
-		ownerRef := metav1.OwnerReference{
-			APIVersion: r.APIVersion,
-			Kind:       r.Kind,
-			Name:       r.Name,
-			UID:        r.UID,
-		}
-
-		feed.SetOwnerReferences(append(feed.GetOwnerReferences(), ownerRef))
-
-		err = k8sClient.Update(ctx, feed)
-		if err != nil {
-			errList = append(errList, field.NotFound(field.NewPath("feeds"), feedName))
-		}
-	}
-
-	if errList != nil {
-		return errList.ToAggregate()
-	}
-
-	return nil
-}
-
 // feedExists checks if the given list of feeds exist in the namespace
 func (r *HotNews) feedsExists() error {
 	if r.Spec.Feeds == nil {
@@ -308,19 +248,14 @@ func (r *HotNews) feedGroupsExists() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	var configMaps v1.ConfigMapList
-	err := k8sClient.List(ctx, &configMaps, &client.ListOptions{
-		Namespace: r.Namespace,
-	})
+	feedGroups, err := r.GetFeedGroupNames(ctx)
 	if err != nil {
 		return err
 	}
 
 	for _, source := range r.Spec.FeedGroups {
-		for _, configMap := range configMaps.Items {
-			if _, exists := configMap.Data[source]; !exists {
-				return fmt.Errorf(errWrongFeedGroupName)
-			}
+		if !slices.Contains(feedGroups, source) {
+			return errors.New(errWrongFeedGroupName)
 		}
 	}
 

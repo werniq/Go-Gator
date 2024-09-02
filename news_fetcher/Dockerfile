@@ -11,7 +11,7 @@ COPY ./cmd/types ./cmd/types
 COPY ./cron_job/news_fetcher/ ./cron_job/news_fetcher
 COPY ./cron_job/main.go main.go
 
-RUN go build -o ./cron_job/job .
+RUN go build -o ./news_fetcher/job .
 
 FROM alpine:3.20
 

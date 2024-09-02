@@ -108,3 +108,33 @@ tasks:
     desc: Enable metrics addon in minikube
     cmds:
       - minikube addons enable metrics-server
+
+  aws-login:
+    desc: Login to AWS CLI
+    cmds:
+      - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 406477933661.dkr.ecr.us-east-2.amazonaws.com
+
+  img-ecr-build:
+    desc: Build image for ECR
+    cmds:
+      - docker build -t qniw984/go-gator .
+      - docker tag qniw984/go-gator 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
+
+  img-ecr-push:
+    desc: Push image to ECR
+    deps:
+      - img-ecr-build
+    cmds:
+      - docker push 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
+
+  chart-ecr-build:
+    desc: Build Helm chart for ECR
+    cmds:
+      - helm package go-gator
+
+  chart-ecr-push:
+    desc: Push image to ECR
+    deps:
+      - ecr-build
+    cmds:
+      - helm push go-gator-0.1.0.tgz oci://406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/

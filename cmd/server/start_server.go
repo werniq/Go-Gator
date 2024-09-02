@@ -14,9 +14,12 @@ import (
 var (
 	// defaultCertsPath is default path to server
 	defaultCertsPath = filepath.Join("cmd", "server", "certs")
+<<<<<<< HEAD
 
 	// defaultDataDirPath is a default path to the directory where all data will be stored
 	defaultDataDirPath = filepath.Join("cmd", "parsers", "data")
+=======
+>>>>>>> 67fdd655bdfff839f0ce36dfa2bd46ea4a29f0aa
 )
 
 const (
@@ -30,7 +33,7 @@ const (
 	defaultPrivateKey = "key.pem"
 
 	// errNotSpecified helps us to check if error was related to initializing sources file
-	errNotSpecified = "no such file or directory"
+	errNotSpecified = "The system cannot find the file specified."
 
 	// errInitializingSources is thrown when func responsible for initialization of sources fails
 	errInitializingSources = "Error initializing sources file: "
@@ -38,7 +41,8 @@ const (
 
 // ConfAndRun initializes and runs an HTTPS server using the Gin framework.
 // This function sets up server routes and handlers, and starts the server
-// on a user-specified port or defaults to port 443.
+// on a user-specified port or defaults to port 443. It also launches a concurrent job
+// which is fetching news feeds at a specified frequency.
 //
 // Optional parameters (specified via flags):
 // / -p (serverPort): Specifies the port on which the server will run. Defaults to 443 if not specified.
@@ -73,7 +77,7 @@ func ConfAndRun() error {
 		"Absolute path to the certificate for the HTTPs server")
 	flag.StringVar(&keyFile, "k", filepath.Join(cwdPath, defaultCertsPath, defaultPrivateKey),
 		"Absolute path to the private key for the HTTPs server")
-	flag.StringVar(&storagePath, "fs", defaultDataDirPath,
+	flag.StringVar(&storagePath, "fs", filepath.Join(parsers.CmdDir, parsers.ParsersDir, parsers.DataDir),
 		"Path to directory where all data will be stored")
 	flag.Parse()
 
@@ -96,6 +100,7 @@ func ConfAndRun() error {
 	err = server.RunTLS(fmt.Sprintf(":%d", serverPort),
 		certFile,
 		keyFile)
+
 	if err != nil {
 		return err
 	}

@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
-	"gogator/cron_job/news_fetcher"
 	"log"
 )
 
 const (
+	// defaultStoragePath contains the default path to the directory where all data will be stored
 	defaultStoragePath = "/tmp/"
 )
 
@@ -17,7 +17,7 @@ func main() {
 		"Path to directory where all data will be stored")
 	flag.Parse()
 
-	err := news_fetcher.RunJob(storagePath)
+	err := RunJob(storagePath)
 
 	if err != nil {
 		log.Fatalln(err)

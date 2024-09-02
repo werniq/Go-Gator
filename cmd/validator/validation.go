@@ -32,7 +32,7 @@ type UnsupportedFlagError struct {
 }
 
 func (u *UnsupportedFlagError) Error() string {
-	return fmt.Sprintf(u.Err.Error())
+	return u.Err.Error()
 }
 
 // Validate checks if all user-given arguments are correct

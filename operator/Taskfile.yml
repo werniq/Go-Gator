@@ -1,0 +1,252 @@
+version: '3'
+
+env:
+  DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "qniw984/hotnews-controller:1.2.6" }}'
+  ENVTEST_K8S_VERSION: '{{ .ENVTEST_K8S_VERSION | default "1.30.0" }}'
+  CONTAINER_TOOL: '{{ .CONTAINER_TOOL | default "docker" }}'
+  LOCALBIN: /workspaces/Go-Gator/operator/bin
+  PLATFORMS: 'linux/arm64,linux/amd64,linux/s390x,linux/ppc64le'
+  IGNORE_NOT_FOUND: true
+
+  KUBECTL: 'kubectl'
+  GOBIN: 'go env GOBIN || go env GOPATH/bin'
+  KUSTOMIZE: '{{.LOCALBIN}}/kustomize'
+  CONTROLLER_GEN: '{{.LOCALBIN}}/controller-gen'
+  ENVTEST: '{{.LOCALBIN}}/setup-envtest'
+  GOLANGCI_LINT: '{{.LOCALBIN}}/golangci-lint'
+
+  KUSTOMIZE_VERSION: '{{ .KUSTOMIZE_VERSION | default "v5.4.2" }}'
+  CONTROLLER_TOOLS_VERSION: '{{ .CONTROLLER_TOOLS_VERSION | default "v0.15.0" }}'
+  ENVTEST_VERSION: '{{ .ENVTEST_VERSION | default "release-0.18" }}'
+  GOLANGCI_LINT_VERSION: '{{ .GOLANGCI_LINT_VERSION | default "v1.59.1" }}'
+
+tasks:
+  all:
+    desc: Build the project
+    deps:
+      - build
+    cmds: []
+
+  manifests:
+    desc: Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects
+    cmds:
+      - |
+        {{ .CONTROLLER_GEN }} rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+
+  generate:
+    desc: Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+    cmds:
+      - |
+        {{ .CONTROLLER_GEN }} object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+  fmt:
+    desc: Run go fmt against code.
+    cmds:
+      - go fmt ./...
+
+  vet:
+    desc: Run go vet against code.
+    cmds:
+      - go vet ./...
+
+  test:
+    desc: Run tests.
+    deps:
+      - manifests
+      - generate
+      - fmt
+      - vet
+      - envtest
+    cmds:
+      - KUBEBUILDER_ASSETS="$(ENVTEST) use {{.ENVTEST_K8S_VERSION}} --bin-dir {{.LOCALBIN}} -p path" go test $(go list ./... | grep -v /e2e) -coverprofile cover.out
+
+  lint:
+    desc: Run golangci-lint linter.
+    deps:
+      - golangci-lint
+    cmds:
+      - |
+        {{ .GOLANGCI_LINT }} run
+
+  lint-fix:
+    desc: Run golangci-lint linter and perform fixes.
+    deps:
+      - golangci-lint
+    cmds:
+      - |
+        {{ .GOLANGCI_LINT }} run --fix
+
+  build:
+    desc: Build manager binary.
+    deps:
+      - manifests
+      - generate
+      - fmt
+      - vet
+    cmds:
+      - go build -o bin/manager cmd/main.go
+
+  run:
+    desc: Run a controller from your host.
+    deps:
+      - manifests
+      - generate
+      - fmt
+      - vet
+    cmds:
+      - 'go run ./cmd/main.go'
+
+  docker-build:
+    desc: Build docker image with the manager.
+    cmds:
+      - |
+        {{.CONTAINER_TOOL}} build -t {{.DOCKER_IMAGE_NAME}} .
+
+  docker-push:
+    desc: Push docker image with the manager.
+    cmds:
+      - |
+        {{.CONTAINER_TOOL}} push {{.DOCKER_IMAGE_NAME}}
+
+  docker-buildx:
+    desc: Build and push docker image for the manager for cross-platform support.
+    cmds:
+      - |
+        # copy existing Dockerfile and insert --platform=${BUILDPLATFORM} into Dockerfile.cross, and preserve the original Dockerfile
+        sed -e '1 s/\(^FROM\)/FROM --platform=${BUILDPLATFORM}/; t' -e '1,// s//FROM --platform=${BUILDPLATFORM}/' Dockerfile > Dockerfile.cross
+        {{.CONTAINER_TOOL}} buildx create --name operator-builder
+        {{.CONTAINER_TOOL}} buildx use operator-builder
+        {{.CONTAINER_TOOL}} buildx build --push --platform={{.PLATFORMS}} --tag {{.DOCKER_IMAGE_NAME}} -f Dockerfile.cross .
+        {{.CONTAINER_TOOL}} buildx rm operator-builder
+        rm Dockerfile.cross
+
+  build-installer:
+    desc: Generate a consolidated YAML with CRDs and deployment.
+    deps:
+      - manifests
+      - generate
+      - kustomize
+    cmds:
+      - 'mkdir -p dist'
+      - 'cd config/manager && {{.KUSTOMIZE}} edit set image controller={{.DOCKER_IMAGE_NAME}}'
+      - '{{ .KUSTOMIZE }} build config/default > dist/install.yaml'
+
+  install:
+    desc: Generate a consolidated YAML with CRDs and deployment.
+    deps:
+      - manifests
+      - kustomize
+    cmds:
+      - |
+        {{ .KUSTOMIZE }} build config/crd | {{ .KUBECTL }} apply -f -
+
+  uninstall:
+    desc: Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
+    deps:
+      - manifests
+      - kustomize
+    cmds:
+      - |
+        {{ .KUSTOMIZE }} build config/crd | {{ .KUBECTL }} delete --ignore-not-found={{ .IGNORE_NOT_FOUND }} -f -
+
+  deploy:
+    desc: Deploy controller to the K8s cluster specified in ~/.kube/config.
+    deps:
+      - manifests
+      - kustomize
+    cmds:
+      - |
+        cd config/manager && {{ .KUSTOMIZE }} edit set image controller={{.DOCKER_IMAGE_NAME}} && cd ../.. &&
+        {{.KUSTOMIZE}} build config/default | {{.KUBECTL}} apply -f -
+
+  undeploy:
+    vars:
+      IGNORE_NOT_FOUND: true
+    desc: Undeploy controller from the K8s cluster specified in ~/.kube/config.
+    deps:
+      - kustomize
+    cmds:
+      - |
+        {{.KUSTOMIZE}} build config/default | {{.KUBECTL}} delete --ignore-not-found={{ .IGNORE_NOT_FOUND }} -f -
+
+  kustomize:
+    desc: Download kustomize locally if necessary.
+    deps:
+      - install-kustomize
+
+  controller-gen:
+    desc: Download controller-gen locally if necessary.
+    deps:
+      - install-controller-gen
+
+  envtest:
+    desc: Download setup-envtest locally if necessary.
+    deps:
+      - install-envtest
+
+  golangci-lint:
+    desc: Download golangci-lint locally if necessary.
+    deps:
+      - install-golanci-lint
+
+  install-kustomize:
+    vars:
+      KUSTOMIZE: '{{ .LOCALBIN }}/kustomize'
+      KUSTOMIZE_VERSION: '{{ .KUSTOMIZE_VERSION | default "v5.4.2" }}'
+      KUSTOMIZE_PKG: sigs.k8s.io/kustomize/kustomize/v5
+    desc: Install a Go tool locally if necessary.
+    cmds:
+      - |
+        if [ ! -f "{{ .KUSTOMIZE_PKG }}-{{ .KUSTOMIZE_VERSION }}" ]; then
+          echo "Downloading {{ .KUSTOMIZE_PKG }}@{{ .KUSTOMIZE_VERSION }}"
+          GO111MODULE=on GOBIN={{ .LOCALBIN }} go install {{ .KUSTOMIZE_PKG }}@{{ .KUSTOMIZE_VERSION }}
+        fi
+
+  install-controller-gen:
+    vars:
+      PACKAGE: '{{ .LOCALBIN }}/controller-gen'
+      PACKAGE_VERSION: '{{ .CONTROLLER_TOOLS_VERSION | default "v0.15.0" }}'
+      PKG_NAME: sigs.k8s.io/controller-tools/cmd/controller-gen
+    desc: Install a Go tool locally if necessary.
+    cmds:
+      - |
+        if [ ! -f "{{ .PACKAGE }}-{{ .PACKAGE_VERSION }}" ]; then
+          echo "Downloading {{ .PKG_NAME }}@{{ .PACKAGE_VERSION }}"
+          GO111MODULE=on GOBIN={{ .LOCALBIN }} go install {{ .PKG_NAME }}@{{ .PACKAGE_VERSION }}
+          mkdir -p {{ .PACKAGE }}-{{ .PACKAGE_VERSION }}
+          mv {{ .PACKAGE }} "{{ .PACKAGE_VERSION }}-{{ .PACKAGE_VERSION }}"
+
+        fi
+        ln -sf "{{ .PACKAGE_VERSION }}-{{ .VERSION }}" {{ .PKG_NAME }}
+
+  install-envtest:
+    vars:
+      PACKAGE: '{{ .LOCALBIN }}/setup-envtest'
+      PACKAGE_VERSION: '{{ .ENVTEST_VERSION | default "release-0.18" }}'
+      PKG_NAME: sigs.k8s.io/controller-runtime/tools/setup-envtest
+    desc: Install a Go tool locally if necessary.
+    cmds:
+      - |
+        if [ ! -f "{{ .PACKAGE }}-{{ .PACKAGE_VERSION }}" ]; then
+          echo "Downloading {{ .KUSTOMIZE_PKG }}@{{ .PACKAGE_VERSION }}"
+          GO111MODULE=on GOBIN={{ .LOCALBIN }} go install {{ .PKG_NAME }}@{{ .PACKAGE_VERSION }}
+          mkdir -p {{ .PACKAGE }}-{{ .PACKAGE_VERSION }}
+          mv {{ .PACKAGE }} "{{ .PKG_NAME }}-{{ .PACKAGE_VERSION }}"
+        fi
+        ln -sf "{{ .PKG_NAME }}-{{ .PACKAGE_VERSION }}" {{ .PACKAGE }}
+
+  install-golanci-lint:
+    vars:
+      PACKAGE: '{{ .LOCALBIN }}/golangci-lint'
+      PACKAGE_VERSION: '{{ .GOLANGCI_LINT_VERSION | default "v1.59.1" }}'
+      PKG_NAME: github.com/golangci/golangci-lint/cmd/golangci-lint
+    desc: Install a Go tool locally if necessary.
+    cmds:
+      - |
+        if [ ! -f "{{ .PACKAGE }}-{{ .PACKAGE_VERSION }}" ]; then
+          echo "Downloading {{ .KUSTOMIZE_PKG }}@{{ .PACKAGE_VERSION }}"
+          GO111MODULE=on GOBIN={{ .LOCALBIN }} go install {{ .PKG_NAME }}@{{ .PACKAGE_VERSION }}
+          mkdir -p {{ .PACKAGE }}-{{ .PACKAGE_VERSION }}
+          mv {{ .PACKAGE }} "{{ .PKG_NAME }}-{{ .PACKAGE_VERSION }}"
+        fi
+        ln -sf "{{ .PKG_NAME }}-{{ .PACKAGE_VERSION }}" {{ .PACKAGE }}

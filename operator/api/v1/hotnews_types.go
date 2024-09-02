@@ -27,8 +27,8 @@ import (
 // And then we will make requests to our news aggregator server with this parameters, and get the news
 type HotNewsSpec struct {
 	// Keywords is a comma-separated list of keywords which will be used to search news
-	// +optional
-	Keywords string `json:"keywords"`
+	// +kubebuilder:validation:Required
+	Keywords []string `json:"keywords"`
 
 	// DateStart is a news starting date in format "YYYY-MM-DD", can be empty
 	// +optional
@@ -91,6 +91,7 @@ type HotNewsList struct {
 }
 
 func init() {
+	SchemeBuilder.Register(&Feed{}, &FeedList{})
 	SchemeBuilder.Register(&HotNews{}, &HotNewsList{})
 }
 
@@ -101,7 +102,7 @@ func (r *HotNews) InitHotNewsStatus(articlesCount int, requestUrl string, articl
 
 	var articles []string
 
-	for i := 0; i <= len(articlesTitles)-1 && i < r.Spec.SummaryConfig.TitlesCount-1; i++ {
+	for i := 0; i <= len(articlesTitles)-1 && i < r.Spec.SummaryConfig.TitlesCount; i++ {
 		articles = append(articles, articlesTitles[i])
 	}
 	r.Status.ArticlesTitles = articles

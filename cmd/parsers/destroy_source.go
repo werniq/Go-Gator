@@ -22,9 +22,6 @@ func DestroySource(source string, dateRange []string) error {
 		}
 
 		news = removeNewsBySource(news, source)
-		if err != nil {
-			return err
-		}
 
 		cwdPath, err := os.Getwd()
 		if err != nil {

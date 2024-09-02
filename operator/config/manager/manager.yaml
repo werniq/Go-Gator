@@ -63,8 +63,9 @@ spec:
         args:
           - --leader-elect
           - --health-probe-bind-address=:8081
-        image: qniw984/news-aggregator-controller:1.3.0
+        image: qniw984/hotnews-controller:1.3.8
         name: manager
+        imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

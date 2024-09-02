@@ -46,6 +46,12 @@ var (
 )
 
 const (
+	// defaultSourceManagementEndpoint is the default address for the news aggregator service
+	defaultSourceManagementEndpoint = "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
+
+	// defaultNewsFetchEndpoint is a default url address of the news aggregator server
+	defaultNewsFetchEndpoint = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
+
 	// defaultMetricsBindAddress is the default address the metric endpoint should bind to
 	defaultMetricsBindAddress = "0"
 
@@ -60,9 +66,6 @@ const (
 
 	// defaultEnableHttp2 is the default value for enabling HTTP/2
 	defaultEnableHttp2 = false
-
-	// defaultServerUrl is a default url address of the news aggregator server
-	defaultServerUrl = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
 )
 
 func init() {
@@ -74,17 +77,19 @@ func init() {
 
 func main() {
 	var (
-		metricsAddr          string
-		enableLeaderElection bool
-		probeAddr            string
-		secureMetrics        bool
-		serverUrl            string
-		enableHTTP2          bool
-		tlsOpts              []func(*tls.Config)
+		metricsAddr              string
+		sourceManagementEndpoint string
+		newsFetchingEndpoint     string
+		probeAddr                string
+		enableLeaderElection     bool
+		secureMetrics            bool
+		enableHTTP2              bool
+		tlsOpts                  []func(*tls.Config)
 	)
+	flag.StringVar(&sourceManagementEndpoint, "server-addr", defaultSourceManagementEndpoint, "The address of the news aggregator service, to perform CRUD operations on feeds.")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", defaultMetricsBindAddress, "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
-	flag.StringVar(&serverUrl, "server-url", defaultServerUrl, "Url address of the news aggregator server")
+	flag.StringVar(&newsFetchingEndpoint, "server-url", defaultNewsFetchEndpoint, "Url address of the news aggregator server")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", defaultHealthProbeBindAddress, "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", defaultEnableLeaderElection,
 		"Enable leader election for controller manager. "+
@@ -138,16 +143,27 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = (&controller.FeedReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr, sourceManagementEndpoint); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Feed")
+		os.Exit(1)
+	}
 	if err = (&controller.HotNewsReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr, serverUrl); err != nil {
+	}).SetupWithManager(mgr, newsFetchingEndpoint); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "HotNews")
 		os.Exit(1)
 	}
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err = (&newsaggregatorv1.HotNews{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "HotNews")
+			os.Exit(1)
+		}
+		if err = (&newsaggregatorv1.Feed{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "Feed")
 			os.Exit(1)
 		}
 	}

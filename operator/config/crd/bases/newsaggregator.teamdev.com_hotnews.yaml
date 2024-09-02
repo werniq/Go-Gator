@@ -68,7 +68,9 @@ spec:
               keywords:
                 description: Keywords is a comma-separated list of keywords which
                   will be used to search news
-                type: string
+                items:
+                  type: string
+                type: array
               summaryConfig:
                 description: SummaryConfig summary of observed hot news
                 properties:
@@ -79,6 +81,8 @@ spec:
                 required:
                 - titlesCount
                 type: object
+            required:
+            - keywords
             type: object
           status:
             description: HotNewsStatus defines the observed state of HotNews

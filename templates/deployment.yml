@@ -15,8 +15,12 @@ spec:
       labels:
         app: go-gator
     spec:
-      serviceAccountName: user-developer
+      serviceAccountName: go-gator-service
       automountServiceAccountToken: false
+      volumes:
+        - name: go-gator-pv
+          persistentVolumeClaim:
+            claimName: go-gator-pvc
       containers:
         - name: go-gator
           image: qniw984/go-gator:1.1.0
@@ -27,15 +31,3 @@ spec:
           volumeMounts:
             - mountPath: /tmp/
               name: go-gator-pv
-          args: ["-fs=/tmp/"]
-          resources:
-            requests:
-              cpu: 100m
-              memory: 100Mi
-            limits:
-              cpu: 200m
-              memory: 200Mi
-      volumes:
-        - name: go-gator-pv
-          persistentVolumeClaim:
-            claimName: go-gator-pvc

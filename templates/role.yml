@@ -1,9 +1,9 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: user-developer
+  name: go-gator-service
   namespace: go-gator
 rules:
   - apiGroups: ["v1"]
-    resources: ["pods", "services", "persistentvolumes", "persistentvolumeclaims"]
-    verbs: ["create", "get", "list", "update", "delete"]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]

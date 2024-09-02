@@ -17,7 +17,7 @@ Package controller contains the controller logic for the operator.
 	- Reconcile: this method will be called when a new resource is created, updated or deleted.
 	- SetupWithManager: configure the controller with the manager
 	- handleCreate: create a new source on the Go-Gator server
-	- handleUpdate: update a source on the Go-Gator server
+	- processHotNews: update a source on the Go-Gator server
 	- handleDelete: delete a source on the Go-Gator server
 	- initFeedStatus: initializes custom status fields for the Feed resource
 	- updateFeedStatus: updates the status of the Feed resource
@@ -33,7 +33,7 @@ Package controller contains the controller logic for the operator.
 	- Reconcile: this method will be called when a new resource is created, updated or deleted.
 	- SetupWithManager: configure the controller with the manager
 	- handleCreate: create a new hot news group on the Go-Gator server
-	- handleUpdate: update a hot news group on the Go-Gator server
+	- processHotNews: update a hot news group on the Go-Gator server
 	- handleDelete: delete a hot news group on the Go-Gator server
 	- initHotNewsStatus: initializes custom status fields for the HotNews resource
 	- constructRequestUrl: constructs a request URL to get the news with the specified arguments

@@ -1,8 +1,6 @@
 version: '3'
 
 env:
-  # this variables can be specified when running task like this
-  # task publish DOCKER_IMAGE_NAME=new-image-title DOCKER_IMAGE_TAG=1.0.1
   DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "go-gator" }}'
   DOCKER_USERNAME:   '{{ .DOCKER_USERNAME | default "qniw984" }}'
   DOCKER_IMAGE_TAG:  '{{ .DOCKER_IMAGE_TAG | default "latest" }}'
@@ -82,10 +80,47 @@ tasks:
       - kubectl apply -f templates/
 
   undeploy:
-    desc: Remove go-gator from kubernetes Cluster
+    desc: Remove news aggregator from kubernetes Cluster
     cmds:
       - kubectl delete -f templates/
 
+  createChart:
+    desc: Created a new Helm chart with all needed resources for news aggregator
+    cmds:
+      - helm create go-gator
+
+  installChart:
+    desc: Install the Helm chart on the Kubernetes cluster
+    cmds:
+      - helm install go-gator go-gator
+
+  uninstallChart:
+    desc: Uninstall the Helm chart from the Kubernetes cluster
+    cmds:
+      - helm uninstall go-gator
+
+  installCertManager:
+    desc: Install cert-manager on the Kubernetes cluster using helm
+    cmds:
+      - helm repo add jetstack https://charts.jetstack.io --force-update
+      - helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.15.2 --set crds.enabled=true
+
+  start:
+    cmds:
+      - minikube start
+      - kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml
+      - echo "Waiting for cert manager to working..."
+      - sleep 10
+      - cd operator
+      - make generate
+      - make manifests
+      - make install
+      - make deploy
+      - kubectl apply -f ../templates/
+
+  installTask:
+    cmds:
+      - go install github.com/go-task/task/v3/cmd/task@latest
   installVpa:
     desc: Install Vertical Pod Autoscaler
     cmds:

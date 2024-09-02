@@ -18,11 +18,14 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"net/http"
+	"net/http/httptest"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,22 +53,25 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 		},
 	}
 
-	k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithLists(existingFeedList).Build()
+	k8sClient := fake.NewClientBuilder().WithScheme(scheme).WithLists(existingFeedList).Build()
 
 	type fields struct {
-		Client client.Client
-		Scheme *runtime.Scheme
+		Client        client.Client
+		Scheme        *runtime.Scheme
+		serverAddress string
 	}
 	type args struct {
 		ctx context.Context
 		req controllerruntime.Request
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    controllerruntime.Result
-		wantErr bool
+		name       string
+		fields     fields
+		args       args
+		mockServer *httptest.Server
+		want       controllerruntime.Result
+		wantErr    bool
+		setup      func()
 	}{
 		{
 			name: "Successful Reconcile run",
@@ -82,6 +88,13 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 					},
 				},
 			},
+			setup: func() {
+
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusCreated)
+				_, _ = w.Write([]byte(`{"message": "Feed created successfully"}`))
+			})),
 			want:    controllerruntime.Result{},
 			wantErr: false,
 		},
@@ -99,6 +112,9 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 						Namespace: "non-existent-namespace",
 					},
 				},
+			},
+			setup: func() {
+
 			},
 			want:    controllerruntime.Result{},
 			wantErr: true,
@@ -118,18 +134,228 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 					},
 				},
 			},
+			setup:   func() {},
+			want:    controllerruntime.Result{},
+			wantErr: true,
+		},
+		{
+			name: "Performing DELETE of the object",
+			fields: fields{
+				Client: k8sClient,
+				Scheme: nil,
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: controllerruntime.Request{
+					NamespacedName: client.ObjectKey{
+						Name:      "ExistingFeedName",
+						Namespace: "default",
+					},
+				},
+			},
+			setup: func() {
+				_ = k8sClient.Delete(context.TODO(), &newsaggregatorv1.Feed{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "ExistingFeedName",
+					},
+				})
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(`{"message": "Feed created successfully"}`))
+			})),
+			want:    controllerruntime.Result{},
+			wantErr: false,
+		},
+		{
+			name: "Performing UPDATE of the object",
+			fields: fields{
+				Client: k8sClient,
+				Scheme: nil,
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: controllerruntime.Request{
+					NamespacedName: client.ObjectKey{
+						Name:      "ExistingFeedName",
+						Namespace: "default",
+					},
+				},
+			},
+			setup: func() {
+				_ = k8sClient.Update(context.TODO(), &newsaggregatorv1.Feed{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "ExistingFeedName",
+					},
+					Spec: newsaggregatorv1.FeedSpec{
+						Name: "NewFeedName",
+						Link: "https://example.com/feed",
+					},
+				})
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(`{"message": "Feed was created successfully"}`))
+			})),
+			want:    controllerruntime.Result{},
+			wantErr: false,
+		},
+		{
+			name: "Error during CREATE of the object",
+			fields: fields{
+				Client: k8sClient,
+				Scheme: nil,
+			},
+			setup: func() {
+				k8sClient.Create(context.TODO(), &newsaggregatorv1.Feed{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "ExistingFeedName",
+					},
+					Spec: newsaggregatorv1.FeedSpec{
+						Name: "ExistingFeedName",
+						Link: "https://example.com/feed",
+					},
+				})
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: controllerruntime.Request{
+					NamespacedName: client.ObjectKey{
+						Name:      "ExistingFeedName",
+						Namespace: "default",
+					},
+				},
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(`{"error": "Feed was not created successfully"}`))
+			})),
 			want:    controllerruntime.Result{},
 			wantErr: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &FeedReconciler{
-				Client: tt.fields.Client,
-				Scheme: tt.fields.Scheme,
+			tt.setup()
+			if tt.mockServer != nil {
+				tt.fields.serverAddress = tt.mockServer.URL
+				defer tt.mockServer.Close()
 			}
+
+			r := &FeedReconciler{
+				Client:        k8sClient,
+				Scheme:        tt.fields.Scheme,
+				serverAddress: tt.fields.serverAddress,
+			}
+
 			_, err := r.Reconcile(tt.args.ctx, tt.args.req)
 			if tt.wantErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, client.IgnoreNotFound(err))
+			}
+		})
+	}
+}
+
+func TestFeedReconciler_handleCreate(t *testing.T) {
+	tests := []struct {
+		name        string
+		feed        *newsaggregatorv1.Feed
+		mockServer  *httptest.Server
+		expectedErr bool
+	}{
+		{
+			name: "Successful creation",
+			feed: &newsaggregatorv1.Feed{
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "Test Feed",
+					Link: "http://example.com",
+				},
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusCreated)
+				_, _ = w.Write([]byte(`{"message": "Feed created successfully"}`))
+			})),
+			expectedErr: false,
+		},
+		{
+			name: "JSON marshalling error",
+			feed: &newsaggregatorv1.Feed{
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: string([]byte{0xff, 0xfe, 0xfd}),
+					Link: "http://example.com",
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "HTTP request creation error",
+			feed: &newsaggregatorv1.Feed{
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "Test Feed",
+					Link: string([]byte{0x7f}),
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "HTTP request performing error",
+			feed: &newsaggregatorv1.Feed{
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "Test Feed",
+					Link: "http://invalid-url",
+				},
+			},
+			mockServer:  nil,
+			expectedErr: true,
+		},
+		{
+			name: "Failed to decode error response",
+			feed: &newsaggregatorv1.Feed{
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "Test Feed",
+					Link: "http://example.com",
+				},
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(`{"invalid": "Feed was not created successfully"}`))
+			})),
+			expectedErr: true,
+		},
+		{
+			name: "Failed to decode error response",
+			feed: &newsaggregatorv1.Feed{
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "Test Feed",
+					Link: "http://example.com",
+				},
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(`{"invalid": "Feed was not created successfully"}`))
+			})),
+			expectedErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &FeedReconciler{}
+
+			if tt.mockServer != nil {
+				r.serverAddress = tt.mockServer.URL
+				defer tt.mockServer.Close()
+			}
+
+			_, err := r.handleCreate(tt.feed)
+
+			if tt.expectedErr {
 				assert.NotNil(t, err)
 			} else {
 				assert.Nil(t, err)
@@ -138,16 +364,30 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 	}
 }
 
-func TestFeedReconciler_handleCreate(t *testing.T) {
+func TestFeedReconciler_handleDelete(t *testing.T) {
 	tests := []struct {
 		name           string
 		feed           *newsaggregatorv1.Feed
-		mockClient     func() *http.Client
+		setup          func(r *FeedReconciler)
+		mockServer     *httptest.Server
 		expectedResult ctrl.Result
 		expectedErr    bool
 	}{
 		{
-			name: "Successful creation",
+			name: "Successful delete",
+			setup: func(r *FeedReconciler) {
+				_, err := r.handleCreate(&newsaggregatorv1.Feed{
+					Spec: newsaggregatorv1.FeedSpec{
+						Name: "Test Feed",
+						Link: "http://example.com",
+					},
+				})
+				assert.NotEqual(t, err, "")
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusCreated)
+				_, _ = w.Write([]byte(`{"message": "Feed deleted successfully"}`))
+			})),
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
 					Name: "Test Feed",
@@ -161,73 +401,19 @@ func TestFeedReconciler_handleCreate(t *testing.T) {
 			name: "JSON marshalling error",
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
-					Name: string([]byte{0xff, 0xfe, 0xfd}),
-					Link: "http://example.com",
+					Name: "Test Feed",
+					Link: string([]byte{0xff, 0xfe, 0xfd}),
 				},
+			},
+			setup: func(r *FeedReconciler) {
+
 			},
 			expectedResult: ctrl.Result{},
 			expectedErr:    true,
-		},
-		{
-			name: "HTTP request creation error",
-			feed: &newsaggregatorv1.Feed{
-				Spec: newsaggregatorv1.FeedSpec{
-					Name: "Test Feed",
-					Link: string([]byte{0x7f}),
-				},
-			},
-			expectedResult: ctrl.Result{},
-			expectedErr:    true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := &FeedReconciler{}
-			_, err := r.handleCreate(context.TODO(), tt.feed)
-
-			if tt.expectedErr {
-				assert.NotNil(t, err)
-				t.Errorf("Got: %v; Expected: %v", err, tt.expectedErr)
-			} else {
-				assert.Nil(t, err)
-			}
-		})
-	}
-}
-
-func TestFeedReconciler_handleDelete(t *testing.T) {
-	tests := []struct {
-		name           string
-		feed           *newsaggregatorv1.Feed
-		setup          func()
-		expectedResult ctrl.Result
-		expectedErr    bool
-	}{
-		{
-			name: "Successful delete",
-			setup: func() {
-				r := &FeedReconciler{}
-				_, err := r.handleCreate(context.TODO(), &newsaggregatorv1.Feed{
-					Spec: newsaggregatorv1.FeedSpec{
-						Name: "Test Feed",
-						Link: "http://example.com",
-					},
-				})
-				assert.Nil(t, err)
-			},
-			feed: &newsaggregatorv1.Feed{
-				Spec: newsaggregatorv1.FeedSpec{
-					Name: "Test Feed",
-					Link: "http://example.com",
-				},
-			},
-			expectedResult: ctrl.Result{},
-			expectedErr:    false,
 		},
 		{
 			name:  "Invalid feed name",
-			setup: func() {},
+			setup: func(r *FeedReconciler) {},
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
 					Name: "",
@@ -239,10 +425,10 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 		},
 		{
 			name:  "Invalid feed endpoint",
-			setup: func() {},
+			setup: func(r *FeedReconciler) {},
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
-					Name: "",
+					Name: "Test Feed",
 					Link: "example.com",
 				},
 			},
@@ -251,10 +437,52 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 		},
 		{
 			name:  "JSON marshalling error",
-			setup: func() {},
+			setup: func(r *FeedReconciler) {},
 			feed: &newsaggregatorv1.Feed{
 				Spec: newsaggregatorv1.FeedSpec{
 					Name: string([]byte{0xff, 0xfe, 0xfd}),
+					Link: "http://example.com",
+				},
+			},
+			expectedResult: ctrl.Result{},
+			expectedErr:    true,
+		},
+		{
+			name: "Failed to decode error response",
+			setup: func(r *FeedReconciler) {
+
+			},
+			feed: &newsaggregatorv1.Feed{
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "Test Feed",
+					Link: "http://example.com",
+				},
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(`{"invalid": "Feed was not created successfully"}`))
+			})),
+			expectedResult: ctrl.Result{},
+			expectedErr:    false,
+		},
+		{
+			name: "Server returns error",
+			setup: func(r *FeedReconciler) {
+				_, err := r.handleCreate(&newsaggregatorv1.Feed{
+					Spec: newsaggregatorv1.FeedSpec{
+						Name: "Test Feed",
+						Link: "http://example.com",
+					},
+				})
+				assert.NotEqual(t, err, "")
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(`{"error": "Feed was not deleted successfully"}`))
+			})),
+			feed: &newsaggregatorv1.Feed{
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "Test Feed",
 					Link: "http://example.com",
 				},
 			},
@@ -265,15 +493,21 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
 			r := &FeedReconciler{}
 
-			_, err := r.handleDelete(context.TODO(), tt.feed)
+			if tt.mockServer != nil {
+				r.serverAddress = tt.mockServer.URL
+				defer tt.mockServer.Close()
+			}
+
+			tt.setup(r)
+
+			_, err := r.handleDelete(tt.feed)
 
 			if tt.expectedErr {
-				assert.NotNil(t, err)
+				assert.NotEqual(t, err.Error(), "")
 			} else {
-				assert.Nil(t, err)
+				assert.Equal(t, "", err.Error())
 			}
 		})
 	}
@@ -283,6 +517,7 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 	tests := []struct {
 		name           string
 		feed           *newsaggregatorv1.Feed
+		mockServer     *httptest.Server
 		expectedResult ctrl.Result
 		expectedErr    bool
 	}{
@@ -294,6 +529,10 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 					Link: "http://example.com",
 				},
 			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(`{"message": "Feed updated successfully"}`))
+			})),
 			expectedResult: ctrl.Result{},
 			expectedErr:    false,
 		},
@@ -330,19 +569,199 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 			expectedResult: ctrl.Result{},
 			expectedErr:    true,
 		},
+		{
+			name: "Server returns error",
+			feed: &newsaggregatorv1.Feed{
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "test Feed",
+					Link: "http://example.com",
+				},
+			},
+			mockServer: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(`{"error": "Feed was not updated successfully"}`))
+			})),
+			expectedResult: ctrl.Result{},
+			expectedErr:    true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &FeedReconciler{}
 
-			_, err := r.handleUpdate(context.TODO(), tt.feed)
+			if tt.mockServer != nil {
+				r.serverAddress = tt.mockServer.URL
+				defer tt.mockServer.Close()
+			}
+
+			_, err := r.handleUpdate(tt.feed)
 
 			if tt.expectedErr {
+				assert.NotEqual(t, err.Error(), "")
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestFeedReconciler_SetupWithManager(t *testing.T) {
+	schema := runtime.NewScheme()
+	assert.Nil(t, newsaggregatorv1.AddToScheme(schema))
+	assert.Nil(t, v1.AddToScheme(schema))
+
+	mgr, err := controllerruntime.NewManager(controllerruntime.GetConfigOrDie(), controllerruntime.Options{
+		Scheme: schema,
+	})
+	assert.Nil(t, err)
+
+	type fields struct {
+		serverUrl string
+		Client    client.Client
+		Scheme    *runtime.Scheme
+	}
+	type args struct {
+		mgr       controllerruntime.Manager
+		serverUrl string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Successful setup",
+			fields: fields{
+				serverUrl: "",
+				Client:    mgr.GetClient(),
+				Scheme:    mgr.GetScheme(),
+			},
+			args: args{
+				mgr:       mgr,
+				serverUrl: "https://go-gator-svc.go-gator.svc.cluster.local:443/news",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &FeedReconciler{
+				serverAddress: tt.fields.serverUrl,
+				Client:        tt.fields.Client,
+				Scheme:        tt.fields.Scheme,
+			}
+			err := r.SetupWithManager(tt.args.mgr, tt.args.serverUrl)
+			if tt.wantErr {
 				assert.NotNil(t, err)
 			} else {
 				assert.Nil(t, err)
 			}
+
+			assert.Equal(t, tt.args.serverUrl, r.serverAddress)
+		})
+	}
+}
+
+func TestFeedReconciler_updateAllHotNewsInNamespaceByFeed(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = newsaggregatorv1.AddToScheme(scheme)
+	_ = v1.AddToScheme(scheme)
+
+	hotNewsList := &newsaggregatorv1.HotNewsList{
+		Items: []newsaggregatorv1.HotNews{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-feed",
+					Namespace: "default",
+				},
+				Spec: newsaggregatorv1.HotNewsSpec{
+					Feeds: []string{"test-feed"},
+				},
+			},
+		},
+	}
+
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithLists(hotNewsList).
+		WithObjects(&newsaggregatorv1.Feed{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-feed",
+				Namespace: "default",
+			},
+		}).
+		WithRuntimeObjects().Build()
+
+	type fields struct {
+		Client client.Client
+	}
+	type args struct {
+		ctx  context.Context
+		feed *newsaggregatorv1.Feed
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		server  *httptest.Server
+		args    args
+		setup   func()
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Successful update of hot news",
+			fields: fields{
+				Client: fakeClient,
+			},
+			args: args{
+				ctx: context.TODO(),
+				feed: &newsaggregatorv1.Feed{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-feed",
+						Namespace: "default",
+					},
+					Spec: newsaggregatorv1.FeedSpec{Name: "test-feed"},
+				},
+			},
+			setup: func() {
+
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "CRD is not found in schema",
+			fields: fields{
+				Client: fake.NewClientBuilder().
+					WithScheme(nil).
+					Build(),
+			},
+			args: args{
+				ctx: context.TODO(),
+				feed: &newsaggregatorv1.Feed{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "non-existent-feed",
+						Namespace: "default",
+					},
+				},
+			},
+			setup: func() {
+			},
+			wantErr: assert.Error,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			r := &FeedReconciler{
+				Client: tt.fields.Client,
+				Scheme: scheme,
+			}
+			tt.wantErr(t, r.updateAllHotNewsInNamespaceByFeed(tt.args.ctx, tt.args.feed), fmt.Sprintf("updateAllHotNewsInNamespaceByFeed(%v, %v)", tt.args.ctx, tt.args.feed))
 		})
 	}
 }

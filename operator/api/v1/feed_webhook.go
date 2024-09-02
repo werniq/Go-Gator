@@ -19,13 +19,17 @@ package v1
 import (
 	"context"
 	"errors"
+	"fmt"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+	"slices"
+	"strings"
+	"time"
 )
 
 var (
@@ -35,14 +39,14 @@ var (
 	k8sClient client.Client
 )
 
+const (
+	// errFeedUsed is an error message indicating that the feed is used in hot news
+	errFeedUsed = "this feed is used in hot news, it cannot be deleted"
+)
+
 // SetupWebhookWithManager will set up the manager to manage the webhooks
 func (r *Feed) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	var err error
-	clientset, err = kubernetes.NewForConfig(c)
-	if err != nil {
-		return err
-	}
-
+	k8sClient = mgr.GetClient()
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -67,12 +71,18 @@ func (r *Feed) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 	feedlog.Info("validate delete", "name", r.Name)
+
+	if r.OwnerReferences != nil {
+		return nil, errors.New("feed has owner references")
+	}
+	fmt.Println("Feed doesn't have owner references")
+
 	return nil, nil
 }
 
 // validateFeed calls to our validation package to validate the feed configuration
 func (r *Feed) validateFeed() (admission.Warnings, error) {
-	err := Validate(r.Spec)
+	err := validateFeeds(r.Spec)
 	if err != nil {
 		return nil, err
 	}
@@ -96,14 +106,19 @@ func (r *Feed) checkNameUniqueness() (admission.Warnings, error) {
 
 	listOptions := client.ListOptions{Namespace: r.Namespace}
 
-	err := k8sClient.List(context.Background(), feeds, &listOptions)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	err := k8sClient.List(ctx, feeds, &listOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, feed := range feeds.Items {
-		if feed.Spec.Name == r.Spec.Name && feed.Namespace == r.Namespace {
-			return nil, errors.New("name must be unique in the namespace")
+		if feed.UID != r.UID {
+			if feed.Spec.Name == r.Spec.Name && feed.Namespace == r.Namespace {
+				return nil, errors.New("name must be unique in the namespace")
+			}
 		}
 	}
 
@@ -116,16 +131,64 @@ func (r *Feed) checkLinkUniqueness() (admission.Warnings, error) {
 
 	listOptions := client.ListOptions{Namespace: r.Namespace}
 
-	err := k8sClient.List(context.Background(), feeds, &listOptions)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	err := k8sClient.List(ctx, feeds, &listOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, feed := range feeds.Items {
-		if feed.Spec.Link == r.Spec.Link && feed.Namespace == r.Namespace {
-			return nil, errors.New("link must be unique in the namespace")
+		if feed.UID != r.UID {
+			if feed.Spec.Link == r.Spec.Link && feed.Namespace == r.Namespace {
+				return nil, errors.New("link must be unique in the namespace")
+			}
 		}
 	}
 
 	return nil, nil
+}
+
+// isFeedUsed checks if the feed is used in any hot news, and if it does - returns an error, indicating that
+// the feed can not be deleted
+func (r *Feed) isFeedUsed(feedName string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var hotNewsList HotNewsList
+	err := k8sClient.List(ctx, &hotNewsList, &client.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	var configMapList v1.ConfigMapList
+	err = k8sClient.List(ctx, &configMapList, &client.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, hotNews := range hotNewsList.Items {
+		if slices.Contains(hotNews.Spec.Feeds, feedName) {
+			return errors.New(errFeedUsed)
+		}
+	}
+
+	for _, configMap := range configMapList.Items {
+		if r.feedIsInFeedGroups(configMap.Data, feedName) {
+			return errors.New(errFeedUsed)
+		}
+	}
+
+	return nil
+}
+
+// feedIsInFeedGroups checks if the feed is in the feed groups
+func (r *Feed) feedIsInFeedGroups(feedGroups map[string]string, feed string) bool {
+	for _, val := range feedGroups {
+		if slices.Contains(strings.Split(val, ","), feed) {
+			return true
+		}
+	}
+	return false
 }

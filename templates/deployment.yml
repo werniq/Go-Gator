@@ -17,7 +17,7 @@ spec:
     spec:
       serviceAccountName: go-gator-service
       imagePullSecrets:
-        - name: aws-credentials
+        - name: ecr-registry-helper-secrets
       automountServiceAccountToken: false
       volumes:
         - name: go-gator-pv

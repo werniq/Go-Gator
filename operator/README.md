@@ -1,10 +1,21 @@
 ### Operator Overview
+The `FeedReconciler` handles the creation, updating, and deletion of feeds on a news-aggregator server.
+When a news feed is registered, a request is sent to the server to create a feed
+with the specified name and endpoint.
+Similarly, when a news feed is updated or deleted, requests are made to update
+or remove the feed from the server accordingly.
 
 The `HotNewsReconciler` is a Kubernetes controller responsible for managing the `HotNews` custom resource. 
 It ensures that the status of the `HotNews` resource is always up-to-date by interacting with a news aggregator server
 to fetch the latest news based on specified parameters.
 
 ### Description
+
+The `FeedReconciler` performs the management of feeds on a news-aggregator server by creating,
+updating, or deleting feeds.
+When the status of a Feed CRD changes (whether it is created, updated, or deleted),
+the operator sends a request to the news-aggregator server to perform the corresponding action
+with the specified name and endpoint.
 
 The `HotNewsReconciler` performs the following key tasks:
 - Monitors the status of `HotNews` custom resources and triggers updates whenever the resource is created, updated, or deleted.

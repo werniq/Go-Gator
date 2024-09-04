@@ -19,16 +19,12 @@ package v1
 import (
 	"context"
 	"errors"
-	"fmt"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-	"slices"
-	"strings"
 	"time"
 )
 
@@ -75,7 +71,6 @@ func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 	if r.OwnerReferences != nil {
 		return nil, errors.New("feed has owner references")
 	}
-	fmt.Println("Feed doesn't have owner references")
 
 	return nil, nil
 }
@@ -148,47 +143,4 @@ func (r *Feed) checkLinkUniqueness() (admission.Warnings, error) {
 	}
 
 	return nil, nil
-}
-
-// isFeedUsed checks if the feed is used in any hot news, and if it does - returns an error, indicating that
-// the feed can not be deleted
-func (r *Feed) isFeedUsed(feedName string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	var hotNewsList HotNewsList
-	err := k8sClient.List(ctx, &hotNewsList, &client.ListOptions{})
-	if err != nil {
-		return err
-	}
-
-	var configMapList v1.ConfigMapList
-	err = k8sClient.List(ctx, &configMapList, &client.ListOptions{})
-	if err != nil {
-		return err
-	}
-
-	for _, hotNews := range hotNewsList.Items {
-		if slices.Contains(hotNews.Spec.Feeds, feedName) {
-			return errors.New(errFeedUsed)
-		}
-	}
-
-	for _, configMap := range configMapList.Items {
-		if r.feedIsInFeedGroups(configMap.Data, feedName) {
-			return errors.New(errFeedUsed)
-		}
-	}
-
-	return nil
-}
-
-// feedIsInFeedGroups checks if the feed is in the feed groups
-func (r *Feed) feedIsInFeedGroups(feedGroups map[string]string, feed string) bool {
-	for _, val := range feedGroups {
-		if slices.Contains(strings.Split(val, ","), feed) {
-			return true
-		}
-	}
-	return false
 }

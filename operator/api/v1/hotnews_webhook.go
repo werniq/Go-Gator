@@ -137,7 +137,7 @@ func (r *HotNews) ValidateDelete() (admission.Warnings, error) {
 	return nil, nil
 }
 
-// GetFeedGroupNames returns all config maps which
+// GetFeedGroupNames returns all config maps which contain hotNew groups names
 func (r *HotNews) GetFeedGroupNames(ctx context.Context) ([]string, error) {
 	s, err := labels.NewRequirement(FeedGroupLabel, selection.Exists, nil)
 	if err != nil {
@@ -165,6 +165,7 @@ func (r *HotNews) GetFeedGroupNames(ctx context.Context) ([]string, error) {
 }
 
 // getAllFeeds returns all feeds in the namespace
+// It is used to set the default value for the feeds field in the HotNews resource
 func (r *HotNews) getAllFeeds() ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -183,7 +184,7 @@ func (r *HotNews) getAllFeeds() ([]string, error) {
 	return feedNames, nil
 }
 
-// validateHotNews validates the HotNews resource.
+// validateHotNews verifies if the fields in HotNews resource are correct
 //
 // In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct, and
 // if feeds or feedGroups exists in our news aggregator.

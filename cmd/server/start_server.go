@@ -14,12 +14,6 @@ import (
 var (
 	// defaultCertsPath is default path to server
 	defaultCertsPath = filepath.Join("cmd", "server", "certs")
-<<<<<<< HEAD
-
-	// defaultDataDirPath is a default path to the directory where all data will be stored
-	defaultDataDirPath = filepath.Join("cmd", "parsers", "data")
-=======
->>>>>>> 67fdd655bdfff839f0ce36dfa2bd46ea4a29f0aa
 )
 
 const (

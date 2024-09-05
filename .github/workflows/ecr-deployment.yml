@@ -29,14 +29,6 @@ jobs:
         run: |
           aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
-  build-and-push:
-    name: Build and Push to ECR
-    runs-on: ubuntu-latest
-    needs: aws-setup
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Build Docker image
         run: |
           docker build -t qniw984/go-gator .
@@ -45,14 +37,6 @@ jobs:
       - name: Push Docker image to ECR
         run: |
           docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/qniw984/go-gator
-
-  helm-push:
-    name: Build and Push Helm Chart
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
 
       - name: Build Helm chart
         run: |

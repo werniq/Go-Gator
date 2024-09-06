@@ -113,9 +113,6 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	// question: on the review Vitalii said that I should check if key exists in the map
-	// but, the logic behind this was that if the key doesn't exist, it means that the feed is new
-	// and I should create it. Otherwise, I should update it
 	isNew := feed.Status.Conditions[newsaggregatorv1.TypeFeedCreated] == newsaggregatorv1.FeedConditions{} &&
 		feed.Status.Conditions[newsaggregatorv1.TypeFeedCreated].Status == false
 

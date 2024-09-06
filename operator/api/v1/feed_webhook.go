@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -77,26 +78,32 @@ func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 
 // validateFeed calls to our validation package to validate the feed configuration
 func (r *Feed) validateFeed() (admission.Warnings, error) {
+	var errList field.ErrorList
+
 	err := validateFeeds(r.Spec)
 	if err != nil {
-		return nil, err
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
 
-	warn, err := r.checkNameUniqueness()
+	err = r.checkNameUniqueness()
 	if err != nil {
-		return warn, err
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
 
-	warn, err = r.checkLinkUniqueness()
+	err = r.checkLinkUniqueness()
 	if err != nil {
-		return warn, err
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
+
+	if len(errList) > 0 {
+		return nil, errList.ToAggregate()
 	}
 
 	return nil, nil
 }
 
 // checkNameUniqueness checks if the Spec.name of the feed is unique in the namespace
-func (r *Feed) checkNameUniqueness() (admission.Warnings, error) {
+func (r *Feed) checkNameUniqueness() error {
 	feeds := &FeedList{}
 
 	listOptions := client.ListOptions{Namespace: r.Namespace}
@@ -106,22 +113,22 @@ func (r *Feed) checkNameUniqueness() (admission.Warnings, error) {
 
 	err := k8sClient.List(ctx, feeds, &listOptions)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for _, feed := range feeds.Items {
 		if feed.UID != r.UID {
 			if feed.Spec.Name == r.Spec.Name && feed.Namespace == r.Namespace {
-				return nil, errors.New("name must be unique in the namespace")
+				return errors.New("name must be unique in the namespace")
 			}
 		}
 	}
 
-	return nil, nil
+	return nil
 }
 
 // checkLinkUniqueness checks if the Spec.link of the feed is unique in the namespace
-func (r *Feed) checkLinkUniqueness() (admission.Warnings, error) {
+func (r *Feed) checkLinkUniqueness() error {
 	feeds := &FeedList{}
 
 	listOptions := client.ListOptions{Namespace: r.Namespace}
@@ -131,16 +138,16 @@ func (r *Feed) checkLinkUniqueness() (admission.Warnings, error) {
 
 	err := k8sClient.List(ctx, feeds, &listOptions)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for _, feed := range feeds.Items {
 		if feed.UID != r.UID {
 			if feed.Spec.Link == r.Spec.Link && feed.Namespace == r.Namespace {
-				return nil, errors.New("link must be unique in the namespace")
+				return errors.New("link must be unique in the namespace")
 			}
 		}
 	}
 
-	return nil, nil
+	return nil
 }

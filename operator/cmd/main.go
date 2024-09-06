@@ -150,18 +150,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Feed")
 		os.Exit(1)
 	}
-	if err = (&controller.HotNewsReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr, newsFetchingEndpoint); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "HotNews")
-		os.Exit(1)
-	}
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = (&newsaggregatorv1.HotNews{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "HotNews")
-			os.Exit(1)
-		}
 		if err = (&newsaggregatorv1.Feed{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Feed")
 			os.Exit(1)

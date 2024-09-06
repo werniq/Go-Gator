@@ -31,7 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"slices"
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
@@ -113,9 +112,6 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	// question: on the review Vitalii said that I should check if key exists in the map
-	// but, the logic behind this was that if the key doesn't exist, it means that the feed is new
-	// and I should create it. Otherwise, I should update it
 	isNew := feed.Status.Conditions[newsaggregatorv1.TypeFeedCreated] == newsaggregatorv1.FeedConditions{} &&
 		feed.Status.Conditions[newsaggregatorv1.TypeFeedCreated].Status == false
 
@@ -139,11 +135,6 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	err = r.Client.Status().Update(ctx, &feed)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	err = r.updateAllHotNewsInNamespaceByFeed(ctx, &feed)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -313,24 +304,4 @@ func (r *FeedReconciler) handleDelete(feed *newsaggregatorv1.Feed) (ctrl.Result,
 	}
 
 	return ctrl.Result{}, nil
-}
-
-// updateAllHotNewsInNamespaceByFeed updates all HotNews objects in the namespace which contains the feed.
-func (r *FeedReconciler) updateAllHotNewsInNamespaceByFeed(ctx context.Context, feed *newsaggregatorv1.Feed) error {
-	var hotNewsList newsaggregatorv1.HotNewsList
-	err := r.Client.List(ctx, &hotNewsList, client.InNamespace(feed.Namespace))
-	if err != nil {
-		return err
-	}
-
-	for _, hotNews := range hotNewsList.Items {
-		if slices.Contains(hotNews.Spec.Feeds, feed.Spec.Name) {
-			err = r.Client.Update(ctx, &hotNews)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }

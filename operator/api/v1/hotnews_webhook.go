@@ -20,10 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -138,33 +135,6 @@ func (r *HotNews) ValidateDelete() (admission.Warnings, error) {
 	return nil, nil
 }
 
-// GetFeedGroupNames returns all config maps which contain hotNew groups names
-func (r *HotNews) GetFeedGroupNames(ctx context.Context) ([]string, error) {
-	s, err := labels.NewRequirement(FeedGroupLabel, selection.Exists, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var configMaps v1.ConfigMapList
-	err = k8sClient.List(ctx, &configMaps, &client.ListOptions{
-		LabelSelector: labels.NewSelector().Add(*s),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	var feedGroups []string
-	for _, configMap := range configMaps.Items {
-		for _, source := range r.Spec.FeedGroups {
-			if _, exists := configMap.Data[source]; exists {
-				feedGroups = append(feedGroups, source)
-			}
-		}
-	}
-
-	return feedGroups, nil
-}
-
 // getAllFeeds returns all feeds in the namespace
 // It is used to set the default value for the feeds field in the HotNews resource
 func (r *HotNews) getAllFeeds() ([]string, error) {
@@ -218,7 +188,7 @@ func (r *HotNews) validateHotNews() error {
 	return nil
 }
 
-// feedExists checks if the given list of feeds exist in the namespace
+// feedsExists checks if the given list of feeds exist in the namespace
 func (r *HotNews) feedsExists() error {
 	if r.Spec.Feeds == nil {
 		return nil

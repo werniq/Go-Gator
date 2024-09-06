@@ -1,0 +1,264 @@
+/*
+Copyright 2024.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package v1
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+	"slices"
+	"time"
+)
+
+const (
+	// errNoFeeds is an error message indicating that user hasn't specified any feeds
+	errNoFeeds = "either feeds or feedGroups should be specified"
+
+	// errInvalidDateRange is an error message indicating input of wrong date range
+	errInvalidDateRange = "DateStart should be before than DateEnd"
+
+	// errWrongFeedGroupName is an error message for wrong hotNew group name
+	errWrongFeedGroupName = "hotNew group name is not found in the ConfigMap, please check the hotNew group name"
+
+	// FeedGroupsNamespace is a namespace where hotNew groups are stored
+	FeedGroupsNamespace = "operator-system"
+
+	// FeedGroupsConfigMapName is a name of the default ConfigMap which contains our hotNew groups names and sources
+	FeedGroupsConfigMapName = "feed-group-source"
+
+	// FeedGroupLabel is a label for ConfigMap which contains our hotNew groups names and sources
+	FeedGroupLabel = "feed-group-source"
+
+	// HotNewsFinalizer is a finalizer for HotNews resource which will be added when the resource is created
+	// and removed when the resource is deleted
+	HotNewsFinalizer = "finalizer.hotnews.newsaggregator.teamdev.com"
+)
+
+var (
+	hotnewslog = logf.Log.WithName("hotnews-resource")
+)
+
+// SetupWebhookWithManager will setup the manager to manage the webhooks
+func (r *HotNews) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewWebhookManagedBy(mgr).
+		For(r).
+		Complete()
+}
+
+// +kubebuilder:webhook:path=/mutate-newsaggregator-teamdev-com-v1-hotnews,mutating=true,failurePolicy=fail,sideEffects=None,groups=newsaggregator.teamdev.com,resources=hotnews,verbs=create;update;delete,versions=v1,name=mhotnews.kb.io,admissionReviewVersions=v1
+
+var _ webhook.Defaulter = &HotNews{}
+
+// Default implements webhook.Defaulter so a webhook will be registered for the type
+//
+// This webhook will set the default values for the HotNews resource
+// In particular, if the user hasn't specified the number of titles to show in the summary, we will set it to 10
+func (r *HotNews) Default() {
+	hotnewslog.Info("default", "name", r.Name)
+
+	if r.Spec.SummaryConfig.TitlesCount == 0 {
+		r.Spec.SummaryConfig.TitlesCount = 10
+	}
+
+	if r.Spec.Feeds == nil && r.Spec.FeedGroups == nil {
+		var err error
+		r.Spec.Feeds, err = r.getAllFeeds()
+		if err != nil {
+			hotnewslog.Error(err, "error getting feeds", "name", r.Name)
+		}
+	}
+}
+
+// +kubebuilder:webhook:path=/validate-newsaggregator-teamdev-com-v1-hotnews,mutating=false,failurePolicy=fail,sideEffects=None,groups=newsaggregator.teamdev.com,resources=hotnews,verbs=create;update;delete,versions=v1,name=vhotnews.kb.io,admissionReviewVersions=v1
+
+var _ webhook.Validator = &HotNews{}
+
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+//
+// It is called when the HotNews resource is created
+// Validating webhook will check if the HotNews resource is correct
+// In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct
+// Also, it checks if user-specified feeds or feedGroups are correct by these criteria:
+// FeedGroups should be present in the feed-group-source ConfigMap
+func (r *HotNews) ValidateCreate() (admission.Warnings, error) {
+	hotnewslog.Info("validate create", "name", r.Name)
+	err := r.validateHotNews()
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+//
+// ValidateUpdate is called when the HotNews resource is Updated
+// Validating webhook will check if the HotNews resource is correct
+// In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct
+// Also, it checks if user-specified feeds or feedGroups are correct by these criteria:
+// FeedGroups should be present in the feed-group-source ConfigMap
+func (r *HotNews) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+	hotnewslog.Info("validate update", "name", r.Name)
+	err := r.validateHotNews()
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+func (r *HotNews) ValidateDelete() (admission.Warnings, error) {
+	hotnewslog.Info("validate delete", "name", r.Name)
+
+	return nil, nil
+}
+
+// GetFeedGroupNames returns all config maps which contain hotNew groups names
+func (r *HotNews) GetFeedGroupNames(ctx context.Context) ([]string, error) {
+	s, err := labels.NewRequirement(FeedGroupLabel, selection.Exists, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var configMaps v1.ConfigMapList
+	err = k8sClient.List(ctx, &configMaps, &client.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*s),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var feedGroups []string
+	for _, configMap := range configMaps.Items {
+		for _, source := range r.Spec.FeedGroups {
+			if _, exists := configMap.Data[source]; exists {
+				feedGroups = append(feedGroups, source)
+			}
+		}
+	}
+
+	return feedGroups, nil
+}
+
+// getAllFeeds returns all feeds in the namespace
+// It is used to set the default value for the feeds field in the HotNews resource
+func (r *HotNews) getAllFeeds() ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var feedList FeedList
+	err := k8sClient.List(ctx, &feedList, client.InNamespace(r.Namespace))
+	if err != nil {
+		return nil, err
+	}
+
+	var feedNames []string
+	for _, feed := range feedList.Items {
+		feedNames = append(feedNames, feed.Spec.Name)
+	}
+
+	return feedNames, nil
+}
+
+// validateHotNews verifies if the fields in HotNews resource are correct
+//
+// In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct, and
+// if feeds or feedGroups exists in our news aggregator.
+func (r *HotNews) validateHotNews() error {
+	err := validateHotNews(r.Spec)
+	if err != nil {
+		return err
+	}
+
+	if r.Spec.Feeds == nil && r.Spec.FeedGroups == nil {
+		return fmt.Errorf(errNoFeeds)
+	}
+
+	err = r.feedsExists()
+	if err != nil {
+		return err
+	}
+
+	err = r.feedGroupsExists()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// feedExists checks if the given list of feeds exist in the namespace
+func (r *HotNews) feedsExists() error {
+	if r.Spec.Feeds == nil {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var feedList FeedList
+	err := k8sClient.List(ctx, &feedList, &client.ListOptions{
+		Namespace: r.Namespace,
+	})
+	if err != nil {
+		return err
+	}
+
+	feedNames := []string{}
+	for _, feed := range feedList.Items {
+		feedNames = append(feedNames, feed.Spec.Name)
+	}
+
+	for _, source := range r.Spec.Feeds {
+		if !slices.Contains(feedNames, source) {
+			return errors.New("feed name is not found in the namespace, please check the feed name")
+		}
+	}
+
+	return err
+}
+
+// feedGroupsExists checks if the given list of feed groups exist in the config map
+func (r *HotNews) feedGroupsExists() error {
+	if r.Spec.FeedGroups == nil {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	feedGroups, err := r.GetFeedGroupNames(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, source := range r.Spec.FeedGroups {
+		if !slices.Contains(feedGroups, source) {
+			return errors.New(errWrongFeedGroupName)
+		}
+	}
+
+	return nil
+}

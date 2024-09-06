@@ -1,9 +1,7 @@
 name: Go-Gator
 
 on:
-  push:
-    branches:
-      - main
+  push
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

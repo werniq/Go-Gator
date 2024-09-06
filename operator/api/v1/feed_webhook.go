@@ -25,6 +25,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+	"time"
 )
 
 var (
@@ -32,6 +33,11 @@ var (
 
 	// k8sClient is a kubernetes client that is used to interact with the k8s API
 	k8sClient client.Client
+)
+
+const (
+	// errFeedUsed is an error message indicating that the feed is used in hot news
+	errFeedUsed = "this feed is used in hot news, it cannot be deleted"
 )
 
 // SetupWebhookWithManager will set up the manager to manage the webhooks
@@ -61,12 +67,17 @@ func (r *Feed) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 	feedlog.Info("validate delete", "name", r.Name)
+
+	if r.OwnerReferences != nil {
+		return nil, errors.New("feed has owner references")
+	}
+
 	return nil, nil
 }
 
 // validateFeed calls to our validation package to validate the feed configuration
 func (r *Feed) validateFeed() (admission.Warnings, error) {
-	err := Validate(r.Spec)
+	err := validateFeeds(r.Spec)
 	if err != nil {
 		return nil, err
 	}
@@ -90,14 +101,19 @@ func (r *Feed) checkNameUniqueness() (admission.Warnings, error) {
 
 	listOptions := client.ListOptions{Namespace: r.Namespace}
 
-	err := k8sClient.List(context.Background(), feeds, &listOptions)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	err := k8sClient.List(ctx, feeds, &listOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, feed := range feeds.Items {
-		if feed.Spec.Name == r.Spec.Name && feed.Namespace == r.Namespace {
-			return nil, errors.New("name must be unique in the namespace")
+		if feed.UID != r.UID {
+			if feed.Spec.Name == r.Spec.Name && feed.Namespace == r.Namespace {
+				return nil, errors.New("name must be unique in the namespace")
+			}
 		}
 	}
 
@@ -110,14 +126,19 @@ func (r *Feed) checkLinkUniqueness() (admission.Warnings, error) {
 
 	listOptions := client.ListOptions{Namespace: r.Namespace}
 
-	err := k8sClient.List(context.Background(), feeds, &listOptions)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	err := k8sClient.List(ctx, feeds, &listOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, feed := range feeds.Items {
-		if feed.Spec.Link == r.Spec.Link && feed.Namespace == r.Namespace {
-			return nil, errors.New("link must be unique in the namespace")
+		if feed.UID != r.UID {
+			if feed.Spec.Link == r.Spec.Link && feed.Namespace == r.Namespace {
+				return nil, errors.New("link must be unique in the namespace")
+			}
 		}
 	}
 

@@ -31,7 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	newsaggregatorv1 "teamdev.com/go-gator-operator/api/v1"
+	"slices"
+	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
 // FeedReconciler reconciles a Feed object
@@ -40,8 +41,6 @@ type FeedReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
-
-var k8sClient client.Client
 
 const (
 	// feedFinalizerName is a title of finalizer which will be added to feed object
@@ -64,7 +63,7 @@ const (
 	errClosingBody = "Error while trying to close response body: "
 )
 
-// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds;hotnews,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds/finalizers,verbs=update
 
@@ -144,13 +143,17 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
+	err = r.updateAllHotNewsInNamespaceByFeed(ctx, &feed)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	return res, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager, serverAddr string) error {
 	r.serverAddress = serverAddr
-	k8sClient = mgr.GetClient()
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.Feed{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Complete(r)
@@ -199,12 +202,10 @@ func (r *FeedReconciler) handleCreate(feed *newsaggregatorv1.Feed) (ctrl.Result,
 	}
 	if res.StatusCode != http.StatusCreated {
 		serverError := &serverErr{}
-
 		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
 			return ctrl.Result{}, errors.New(errDecodingResponse + err.Error())
 		}
-
 		return ctrl.Result{}, serverError
 	}
 
@@ -312,4 +313,24 @@ func (r *FeedReconciler) handleDelete(feed *newsaggregatorv1.Feed) (ctrl.Result,
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// updateAllHotNewsInNamespaceByFeed updates all HotNews objects in the namespace which contains the feed.
+func (r *FeedReconciler) updateAllHotNewsInNamespaceByFeed(ctx context.Context, feed *newsaggregatorv1.Feed) error {
+	var hotNewsList newsaggregatorv1.HotNewsList
+	err := r.Client.List(ctx, &hotNewsList, client.InNamespace(feed.Namespace))
+	if err != nil {
+		return err
+	}
+
+	for _, hotNews := range hotNewsList.Items {
+		if slices.Contains(hotNews.Spec.Feeds, feed.Spec.Name) {
+			err = r.Client.Update(ctx, &hotNews)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

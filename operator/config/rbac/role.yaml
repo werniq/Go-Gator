@@ -5,9 +5,26 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - newsaggregator.teamdev.com
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - newsaggregator.teamdev.com
   resources:
   - feeds
+  - hotnews
   verbs:
   - create
   - delete
@@ -16,6 +33,22 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - newsaggregator.teamdev.com
+  resources:
+  - feeds
+  - hotnews/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - newsaggregator.teamdev.com
+  resources:
+  - feeds
+  - hotnews/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - newsaggregator.teamdev.com
   resources:

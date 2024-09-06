@@ -2,7 +2,9 @@ resources:
 - manager.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+  # newName: qniw984/news-aggregator-controller
+  # newTag: 1.3.0
 images:
 - name: controller
-  newName: qniw984/news-aggregator-controller
-  newTag: 1.3.0
+  newName: qniw984/hotnews-controller
+  newTag: 1.3.8

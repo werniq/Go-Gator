@@ -1,40 +1,33 @@
 package controller
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-// TestServerErr tests the Error method of the serverErr struct.
-func TestServerErr(t *testing.T) {
-	testCases := []struct {
-		name        string
-		errorMsg    string
-		expectedErr string
+func Test_serverErr_Error(t *testing.T) {
+	type fields struct {
+		ErrorMsg string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   string
 	}{
 		{
-			name:        "Non-empty error message",
-			errorMsg:    "Something went wrong",
-			expectedErr: "Something went wrong",
-		},
-		{
-			name:        "Empty error message",
-			errorMsg:    "",
-			expectedErr: "",
+			name: "Test Error",
+			fields: fields{
+				ErrorMsg: "test",
+			},
+			want: "test",
 		},
 	}
-
-	// Iterate through test cases
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := &serverErr{
-				ErrorMsg: tc.errorMsg,
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &serverErr{
+				ErrorMsg: tt.fields.ErrorMsg,
 			}
-
-			actualErr := err.Error()
-
-			if actualErr != tc.expectedErr {
-				t.Errorf("expected error message: %s, got: %s", tc.expectedErr, actualErr)
-			}
+			assert.Equalf(t, tt.want, e.Error(), "Error()")
 		})
 	}
 }

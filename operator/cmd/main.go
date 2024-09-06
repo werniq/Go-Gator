@@ -20,7 +20,6 @@ import (
 	"crypto/tls"
 	"flag"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -34,8 +33,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-	newsaggregatorv1 "teamdev.com/go-gator-operator/api/v1"
-	"teamdev.com/go-gator-operator/internal/controller"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
+	"teamdev.com/go-gator/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -45,8 +46,11 @@ var (
 )
 
 const (
-	// defaultServerAddress is the default address for the news aggregator service
-	defaultServerAddress = "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
+	// defaultSourceManagementEndpoint is the default address for the news aggregator service
+	defaultSourceManagementEndpoint = "https://go-gator-svc.go-gator.svc.cluster.local:443/admin/sources"
+
+	// defaultNewsFetchEndpoint is a default url address of the news aggregator server
+	defaultNewsFetchEndpoint = "https://go-gator-svc.go-gator.svc.cluster.local:443/news"
 
 	// defaultMetricsBindAddress is the default address the metric endpoint should bind to
 	defaultMetricsBindAddress = "0"
@@ -73,17 +77,19 @@ func init() {
 
 func main() {
 	var (
-		metricsAddr          string
-		serverAddr           string
-		enableLeaderElection bool
-		probeAddr            string
-		secureMetrics        bool
-		enableHTTP2          bool
-		tlsOpts              []func(*tls.Config)
+		metricsAddr              string
+		sourceManagementEndpoint string
+		newsFetchingEndpoint     string
+		probeAddr                string
+		enableLeaderElection     bool
+		secureMetrics            bool
+		enableHTTP2              bool
+		tlsOpts                  []func(*tls.Config)
 	)
-	flag.StringVar(&serverAddr, "server-addr", defaultServerAddress, "The address of the news aggregator service, to perform CRUD operations on feeds.")
+	flag.StringVar(&sourceManagementEndpoint, "server-addr", defaultSourceManagementEndpoint, "The address of the news aggregator service, to perform CRUD operations on feeds.")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", defaultMetricsBindAddress, "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
+	flag.StringVar(&newsFetchingEndpoint, "server-url", defaultNewsFetchEndpoint, "Url address of the news aggregator server")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", defaultHealthProbeBindAddress, "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", defaultEnableLeaderElection,
 		"Enable leader election for controller manager. "+
@@ -92,12 +98,15 @@ func main() {
 		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", defaultEnableHttp2,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
+
 	opts := zap.Options{
 		Development: true,
 	}
+
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 	disableHTTP2 := func(c *tls.Config) {
 		setupLog.Info("disabling http/2")
 		c.NextProtos = []string{"http/1.1"}
@@ -137,11 +146,22 @@ func main() {
 	if err = (&controller.FeedReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr, serverAddr); err != nil {
+	}).SetupWithManager(mgr, sourceManagementEndpoint); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Feed")
 		os.Exit(1)
 	}
+	if err = (&controller.HotNewsReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr, newsFetchingEndpoint); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "HotNews")
+		os.Exit(1)
+	}
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err = (&newsaggregatorv1.HotNews{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "HotNews")
+			os.Exit(1)
+		}
 		if err = (&newsaggregatorv1.Feed{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Feed")
 			os.Exit(1)

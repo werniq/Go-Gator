@@ -79,10 +79,11 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	err = r.Client.Get(ctx, req.NamespacedName, &feed)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			return ctrl.Result{}, err
+			logger.Error(err, "Object was not found")
+			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, err
 	}
 
 	if feed.ObjectMeta.DeletionTimestamp.IsZero() {

@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -189,9 +190,11 @@ func (r *HotNews) getAllFeeds() ([]string, error) {
 // In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct, and
 // if feeds or feedGroups exists in our news aggregator.
 func (r *HotNews) validateHotNews() error {
+	var errList field.ErrorList
+
 	err := validateHotNews(r.Spec)
 	if err != nil {
-		return err
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
 
 	if r.Spec.Feeds == nil && r.Spec.FeedGroups == nil {
@@ -200,12 +203,16 @@ func (r *HotNews) validateHotNews() error {
 
 	err = r.feedsExists()
 	if err != nil {
-		return err
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
 
 	err = r.feedGroupsExists()
 	if err != nil {
-		return err
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
+
+	if len(errList) > 0 {
+		return errList.ToAggregate()
 	}
 
 	return nil

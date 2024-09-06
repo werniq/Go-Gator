@@ -19,7 +19,6 @@ package v1
 import (
 	"context"
 	"errors"
-	"fmt"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -168,7 +167,7 @@ func (r *HotNews) validateHotNews() error {
 	}
 
 	if r.Spec.Feeds == nil && r.Spec.FeedGroups == nil {
-		return fmt.Errorf(errNoFeeds)
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, errNoFeeds))
 	}
 
 	err = r.feedsExists()

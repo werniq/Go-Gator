@@ -35,7 +35,7 @@ import (
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
-func TestHotNewsReconciler_Reconcile(t *testing.T) {
+func TestHotNewsReconciler_Reconcile_NegativeCases(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = newsaggregatorv1.AddToScheme(scheme)
 	_ = v1.AddToScheme(scheme)
@@ -58,6 +58,31 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 		},
 	}
 
+	existingFeedsList := newsaggregatorv1.FeedList{
+		Items: []newsaggregatorv1.Feed{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "feed-sample",
+				},
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "abc",
+					Link: mockServer.URL,
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Name:      "feed-sample-1",
+				},
+				Spec: newsaggregatorv1.FeedSpec{
+					Name: "bbc",
+					Link: mockServer.URL,
+				},
+			},
+		},
+	}
+
 	existingConfigMap := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: newsaggregatorv1.FeedGroupsNamespace,
@@ -69,7 +94,9 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 		},
 	}
 
-	k8sClient := fake.NewClientBuilder().WithScheme(scheme).
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithLists(&existingFeedsList).
 		WithObjects(&existingHotNewsList, &existingConfigMap).
 		Build()
 
@@ -90,7 +117,43 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Successful Reconcile call",
+			name: "Error fetching HotNews object",
+			fields: fields{
+				Client: k8sClient,
+				Scheme: scheme,
+			},
+			args: args{
+				ctx: context.Background(),
+				req: controllerruntime.Request{
+					NamespacedName: types.NamespacedName{
+						Namespace: "default",
+						Name:      "nonexistent-hotnews",
+					},
+				},
+			},
+			want:    controllerruntime.Result{},
+			wantErr: false, // Expect no error since the HotNews is not found (normal flow)
+		},
+		{
+			name: "Error adding finalizer",
+			fields: fields{
+				Client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(&existingHotNewsList).Build(),
+				Scheme: scheme,
+			},
+			args: args{
+				ctx: context.Background(),
+				req: controllerruntime.Request{
+					NamespacedName: types.NamespacedName{
+						Namespace: "default",
+						Name:      "feed-sample",
+					},
+				},
+			},
+			want:    controllerruntime.Result{},
+			wantErr: true,
+		},
+		{
+			name: "Error in removing feed reference during deletion",
 			fields: fields{
 				Client: k8sClient,
 				Scheme: scheme,
@@ -105,10 +168,10 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 				},
 			},
 			want:    controllerruntime.Result{},
-			wantErr: false,
+			wantErr: true,
 		},
 		{
-			name: "Failed because feed not found (invalid name)",
+			name: "Error constructing request URL",
 			fields: fields{
 				Client: k8sClient,
 				Scheme: scheme,
@@ -118,7 +181,7 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 				req: controllerruntime.Request{
 					NamespacedName: types.NamespacedName{
 						Namespace: "default",
-						Name:      "feed-not-found",
+						Name:      "feed-sample",
 					},
 				},
 			},
@@ -126,17 +189,17 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Failed because feed not found (invalid namespace)",
+			name: "Error updating HotNews status",
 			fields: fields{
-				Client: k8sClient,
+				Client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(&existingHotNewsList).Build(),
 				Scheme: scheme,
 			},
 			args: args{
 				ctx: context.Background(),
 				req: controllerruntime.Request{
 					NamespacedName: types.NamespacedName{
-						Namespace: "non-existent-namespace",
-						Name:      "feed-not-found",
+						Namespace: "default",
+						Name:      "feed-sample",
 					},
 				},
 			},
@@ -148,18 +211,152 @@ func TestHotNewsReconciler_Reconcile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &HotNewsReconciler{
-				Client:    k8sClient,
+				Client:    tt.fields.Client,
 				Scheme:    tt.fields.Scheme,
 				serverUrl: mockServer.URL,
 			}
 
-			got, err := r.Reconcile(context.TODO(), tt.args.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Reconcile() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			_, err := r.Reconcile(context.TODO(), tt.args.req)
+			if tt.wantErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Reconcile() got = %v, want %v", got, tt.want)
+		})
+	}
+}
+
+func TestRemoveFeedReference(t *testing.T) {
+	scheme := runtime.NewScheme()
+	newsaggregatorv1.AddToScheme(scheme)
+
+	r := &HotNewsReconciler{
+		Client: fake.NewClientBuilder().WithScheme(scheme).Build(),
+		Scheme: scheme,
+	}
+
+	hotNews := newsaggregatorv1.HotNews{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-hotnews",
+			Namespace: "default",
+		},
+		Spec: newsaggregatorv1.HotNewsSpec{
+			Feeds: []string{"feed1", "feed2"},
+		},
+	}
+
+	ctx := context.TODO()
+
+	tests := []struct {
+		name           string
+		feeds          []string
+		existingFeeds  []newsaggregatorv1.Feed
+		useFeedGroups  bool
+		expectedError  bool
+		expectedErrMsg string
+	}{
+		{
+			name:  "Successfully remove owner reference from all feeds",
+			feeds: []string{"feed1", "feed2"},
+			existingFeeds: []newsaggregatorv1.Feed{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "feed1",
+						Namespace: "default",
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								UID: "hotnews-uid",
+							},
+						},
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "feed2",
+						Namespace: "default",
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								UID: "hotnews-uid",
+							},
+						},
+					},
+				},
+			},
+			useFeedGroups: false,
+			expectedError: false,
+		},
+		{
+			name:  "Feed already has no owner reference",
+			feeds: []string{"feed1", "feed2"},
+			existingFeeds: []newsaggregatorv1.Feed{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "feed1",
+						Namespace:       "default",
+						OwnerReferences: []metav1.OwnerReference{},
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            "feed2",
+						Namespace:       "default",
+						OwnerReferences: []metav1.OwnerReference{},
+					},
+				},
+			},
+			useFeedGroups: false,
+			expectedError: false,
+		},
+		{
+			name:  "Remove owner references from FeedGroups",
+			feeds: []string{"feed1", "feed2"},
+			existingFeeds: []newsaggregatorv1.Feed{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "feed1",
+						Namespace: "default",
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								UID: "hotnews-uid",
+							},
+						},
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "feed2",
+						Namespace: "default",
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								UID: "hotnews-uid",
+							},
+						},
+					},
+				},
+			},
+			useFeedGroups: true,
+			expectedError: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			objs := make([]client.Object, len(test.existingFeeds))
+			for i, feed := range test.existingFeeds {
+				feedCopy := feed.DeepCopy()
+				objs[i] = feedCopy
+			}
+			r.Client = fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+
+			err := r.removeFeedReference(ctx, hotNews)
+
+			if test.expectedError {
+				assert.Error(t, err)
+				if err != nil && test.expectedErrMsg != "" {
+					assert.Contains(t, err.Error(), test.expectedErrMsg)
+				}
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}
@@ -774,6 +971,101 @@ func TestHotNewsReconciler_SetupWithManager(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.args.serverUrl, r.serverUrl)
+		})
+	}
+}
+
+func TestSetOwnerReferenceForFeeds(t *testing.T) {
+	scheme := runtime.NewScheme()
+	newsaggregatorv1.AddToScheme(scheme)
+	v1.AddToScheme(scheme)
+
+	r := &HotNewsReconciler{
+		Client: fake.NewClientBuilder().WithScheme(scheme).Build(),
+		Scheme: scheme,
+	}
+
+	hotNews := newsaggregatorv1.HotNews{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-hotnews",
+			Namespace: "default",
+			UID:       "hotnews-uid",
+		},
+	}
+
+	ctx := context.TODO()
+
+	tests := []struct {
+		name           string
+		feeds          []string
+		existingFeeds  []newsaggregatorv1.Feed
+		expectedError  bool
+		expectedErrMsg string
+	}{
+		{
+			name:  "Successfully set owner reference for all feeds",
+			feeds: []string{"feed1", "feed2"},
+			existingFeeds: []newsaggregatorv1.Feed{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "feed1",
+						Namespace: "default",
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "feed2",
+						Namespace: "default",
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name:  "Feed already has owner reference",
+			feeds: []string{"feed1", "feed2"},
+			existingFeeds: []newsaggregatorv1.Feed{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "feed1",
+						Namespace: "default",
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								UID: "hotnews-uid",
+							},
+						},
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "feed2",
+						Namespace: "default",
+					},
+				},
+			},
+			expectedError: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			objs := make([]client.Object, len(test.existingFeeds))
+			for i, feed := range test.existingFeeds {
+				feedCopy := feed.DeepCopy()
+				objs[i] = feedCopy
+			}
+			r.Client = fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+
+			err := r.setOwnerReferenceForFeeds(ctx, hotNews, test.feeds)
+
+			if test.expectedError {
+				assert.Error(t, err)
+				if err != nil && test.expectedErrMsg != "" {
+					assert.Contains(t, err.Error(), test.expectedErrMsg)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

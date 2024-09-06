@@ -22,7 +22,7 @@ func TestRunJob(t *testing.T) {
 	}{
 		{
 			name: "Successful job execution",
-			args: storagePath,
+			args: "",
 			job: &NewsFetchingJob{
 				params: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
 			},
@@ -64,7 +64,6 @@ func TestRunJob(t *testing.T) {
 }
 
 func TestFetchingJob_Execute(t *testing.T) {
-	storagePath := parsers.StoragePath
 	tempDir, err := os.MkdirTemp("", "test_execute")
 	if err != nil {
 		t.Fatalf("failed to create temp directory: %v", err)
@@ -94,7 +93,7 @@ func TestFetchingJob_Execute(t *testing.T) {
 			job: &NewsFetchingJob{
 				params: types.NewFilteringParams("", time.Now().Format(time.DateOnly), "", ""),
 			},
-			args:      storagePath,
+			args:      "",
 			expectErr: false,
 			setup:     func() {},
 			finish: func() {

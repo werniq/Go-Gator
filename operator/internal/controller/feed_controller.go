@@ -89,7 +89,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	if feed.ObjectMeta.DeletionTimestamp.IsZero() {
 		if !controllerutil.ContainsFinalizer(&feed, feedFinalizerName) {
 			controllerutil.AddFinalizer(&feed, feedFinalizerName)
-			logger.Info("Add Finalizer", feed.Name, feedFinalizerName)
+			logger.Info("Finalizer is added", feed.Name, feedFinalizerName)
 
 			err = r.Client.Update(ctx, &feed)
 			if err != nil {

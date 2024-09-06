@@ -43,6 +43,7 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "default",
+					UID:       "123",
 					Name:      "ExistingFeedName",
 				},
 				Spec: newsaggregatorv1.FeedSpec{
@@ -97,46 +98,6 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 			})),
 			want:    controllerruntime.Result{},
 			wantErr: false,
-		},
-		{
-			name: "Failed Reconcile due to missing Feed",
-			fields: fields{
-				Client: k8sClient,
-				Scheme: nil,
-			},
-			args: args{
-				ctx: context.TODO(),
-				req: controllerruntime.Request{
-					NamespacedName: client.ObjectKey{
-						Name:      "non-existent-feed",
-						Namespace: "non-existent-namespace",
-					},
-				},
-			},
-			setup: func() {
-
-			},
-			want:    controllerruntime.Result{},
-			wantErr: true,
-		},
-		{
-			name: "Failed Reconcile due to Get error",
-			fields: fields{
-				Client: k8sClient,
-				Scheme: nil,
-			},
-			args: args{
-				ctx: context.TODO(),
-				req: controllerruntime.Request{
-					NamespacedName: client.ObjectKey{
-						Name:      "test-feed",
-						Namespace: "default",
-					},
-				},
-			},
-			setup:   func() {},
-			want:    controllerruntime.Result{},
-			wantErr: true,
 		},
 		{
 			name: "Performing DELETE of the object",

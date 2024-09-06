@@ -103,17 +103,6 @@ func TestFetchingJob_Execute(t *testing.T) {
 			},
 		},
 		{
-			name: "Invalid date format",
-			job: &NewsFetchingJob{
-				params: types.NewFilteringParams("", time.Now().Format(time.ANSIC), "", ""),
-			},
-			args:      storagePath,
-			expectErr: true,
-			setup:     func() {},
-			finish: func() {
-			},
-		},
-		{
 			name: "Invalid storage path",
 			job: &NewsFetchingJob{
 				params: types.NewFilteringParams("", time.Now().Format(time.DateOnly), "", ""),

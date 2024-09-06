@@ -8,13 +8,16 @@ RUN go mod download
 COPY ./cmd/parsers ./cmd/parsers
 COPY ./cmd/filters ./cmd/filters
 COPY ./cmd/types ./cmd/types
-COPY ./cron_job/news_fetcher/ ./cron_job/news_fetcher
-COPY ./cron_job/main.go main.go
+COPY ./news_fetcher/ ./news_fetcher
+COPY ./news_fetcher/main.go main.go
+COPY ./news_fetcher/fetch_news_job.go fetch_news_job.go
 
-RUN go build -o ./news_fetcher/job .
+RUN go build -o ./news_fetcher_job .
 
 FROM alpine:3.20
 
-COPY --from=build ./app/cron_job/job ./news-fetching-job
+ENV FILE_STORAGE=/tmp/
 
-ENTRYPOINT ["./news-fetching-job"]
+COPY --from=build ./app/news_fetcher_job ./news-fetching-job
+
+ENTRYPOINT ./news-fetching-job -fs=${FILE_STORAGE}

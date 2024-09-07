@@ -197,6 +197,55 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 			want:    controllerruntime.Result{},
 			wantErr: true,
 		},
+		{
+			name: "Object not found (returning no error)",
+			fields: fields{
+				Client: k8sClient,
+				Scheme: nil,
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: controllerruntime.Request{
+					NamespacedName: client.ObjectKey{
+						Name:      "NonExistentFeed",
+						Namespace: "default",
+					},
+				},
+			},
+			mockServer: nil,
+			setup:      func() {},
+			want:       controllerruntime.Result{},
+			wantErr:    false,
+		},
+		{
+			name: "Error updating finalizer",
+			fields: fields{
+				Client: k8sClient,
+				Scheme: nil,
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: controllerruntime.Request{
+					NamespacedName: client.ObjectKey{
+						Name:      "ExistingFeedName",
+						Namespace: "default",
+					},
+				},
+			},
+			setup: func() {
+				feed := &newsaggregatorv1.Feed{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "ExistingFeedName",
+					},
+				}
+				k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithObjects(feed).Build()
+				_ = k8sClient.Update(context.TODO(), feed)
+			},
+			mockServer: nil,
+			want:       controllerruntime.Result{},
+			wantErr:    true,
+		},
 	}
 
 	for _, tt := range tests {

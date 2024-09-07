@@ -78,8 +78,8 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	err = r.Client.Get(ctx, req.NamespacedName, &feed)
 	if err != nil {
+		logger.Error(err, "unable to fetch feeds")
 		if k8serrors.IsNotFound(err) {
-			logger.Error(err, "Object was not found")
 			return ctrl.Result{}, nil
 		}
 
@@ -321,12 +321,7 @@ func (r *FeedReconciler) updateAllHotNewsInNamespaceByFeed(ctx context.Context, 
 	}
 
 	for _, hotNews := range hotNewsList.Items {
-		feedGroups, err := hotNews.GetFeedGroupNames(ctx)
-		if err != nil {
-			return err
-		}
-
-		if slices.Contains(hotNews.Spec.Feeds, feed.Spec.Name) || slices.Contains(feedGroups, feed.Spec.Name) {
+		if slices.Contains(hotNews.Spec.Feeds, feed.Spec.Name) {
 			err = r.Client.Update(ctx, &hotNews)
 			if err != nil {
 				return err

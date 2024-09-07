@@ -93,7 +93,6 @@ type FeedConditions struct {
 	LastUpdateTime string `json:"lastUpdateTime"`
 }
 
-// +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
 // Feed is the Schema for the feeds API

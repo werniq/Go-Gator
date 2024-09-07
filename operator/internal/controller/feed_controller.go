@@ -114,8 +114,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	isNew := feed.Status.Conditions[newsaggregatorv1.TypeFeedCreated] == newsaggregatorv1.FeedConditions{} &&
-		feed.Status.Conditions[newsaggregatorv1.TypeFeedCreated].Status == false
+	isNew := feed.Status.Conditions[newsaggregatorv1.TypeFeedCreated] == newsaggregatorv1.FeedConditions{}
 
 	if isNew {
 		logger.Info("Handling the create event")
@@ -126,7 +125,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	if err != nil {
-		feed.SetFailedCondition(err.Error(), err.Error())
+		feed.SetFailedCondition(newsaggregatorv1.TypeFeedFailedToCreate, err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -322,7 +321,12 @@ func (r *FeedReconciler) updateAllHotNewsInNamespaceByFeed(ctx context.Context, 
 	}
 
 	for _, hotNews := range hotNewsList.Items {
-		if slices.Contains(hotNews.Spec.Feeds, feed.Spec.Name) {
+		feedGroups, err := hotNews.GetFeedGroupNames(ctx)
+		if err != nil {
+			return err
+		}
+
+		if slices.Contains(hotNews.Spec.Feeds, feed.Spec.Name) || slices.Contains(feedGroups, feed.Spec.Name) {
 			err = r.Client.Update(ctx, &hotNews)
 			if err != nil {
 				return err

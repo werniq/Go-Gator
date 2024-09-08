@@ -5,7 +5,6 @@ import (
 	"gogator/cmd/parsers"
 	"gogator/cmd/types"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 )
@@ -69,17 +68,6 @@ func TestFetchingJob_Execute(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp directory: %v", err)
 	}
-	defer func(path string) {
-		time.Sleep(time.Second * 5)
-		err := os.Remove(filepath.Join(path, time.Now().Format(time.DateOnly)+".json"))
-		if err != nil {
-			t.Fatalf("failed to remove data file: %v", err)
-		}
-		err = os.RemoveAll(path)
-		if err != nil {
-			t.Fatalf("failed to remove temp directory: %v", err)
-		}
-	}(tempDir)
 
 	testCases := []struct {
 		name      string

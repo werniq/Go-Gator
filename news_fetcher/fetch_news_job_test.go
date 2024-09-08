@@ -22,7 +22,7 @@ func TestRunJob(t *testing.T) {
 	}{
 		{
 			name: "Successful job execution",
-			args: "",
+			args: storagePath,
 			job: &NewsFetchingJob{
 				params: types.NewFilteringParams("", time.Now().Format("2006-01-02"), "", ""),
 			},
@@ -64,6 +64,7 @@ func TestRunJob(t *testing.T) {
 }
 
 func TestFetchingJob_Execute(t *testing.T) {
+	storagePath := parsers.StoragePath
 	tempDir, err := os.MkdirTemp("", "test_execute")
 	if err != nil {
 		t.Fatalf("failed to create temp directory: %v", err)
@@ -93,7 +94,7 @@ func TestFetchingJob_Execute(t *testing.T) {
 			job: &NewsFetchingJob{
 				params: types.NewFilteringParams("", time.Now().Format(time.DateOnly), "", ""),
 			},
-			args:      "",
+			args:      storagePath,
 			expectErr: false,
 			setup:     func() {},
 			finish: func() {
@@ -120,6 +121,22 @@ func TestFetchingJob_Execute(t *testing.T) {
 			expectErr: true,
 			setup:     func() {},
 			finish:    func() {},
+		},
+		{
+			name: "Parse by source error",
+			job: &NewsFetchingJob{
+				params: types.NewFilteringParams("", time.Now().Format(time.DateOnly), "", ""),
+			},
+			args:      tempDir,
+			expectErr: true,
+			setup: func() {
+				err := parsers.AddNewSource("xml", "nonexistent", "nonexistent")
+				assert.Nil(t, err)
+			},
+			finish: func() {
+				err := parsers.DeleteSource("nonexistent")
+				assert.Nil(t, err)
+			},
 		},
 	}
 

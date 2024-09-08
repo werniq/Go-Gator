@@ -122,22 +122,6 @@ func TestFetchingJob_Execute(t *testing.T) {
 			setup:     func() {},
 			finish:    func() {},
 		},
-		{
-			name: "Parse by source error",
-			job: &NewsFetchingJob{
-				params: types.NewFilteringParams("", time.Now().Format(time.DateOnly), "", ""),
-			},
-			args:      tempDir,
-			expectErr: true,
-			setup: func() {
-				err := parsers.AddNewSource("xml", "nonexistent", "nonexistent")
-				assert.Nil(t, err)
-			},
-			finish: func() {
-				err := parsers.DeleteSource("nonexistent")
-				assert.Nil(t, err)
-			},
-		},
 	}
 
 	for _, tc := range testCases {

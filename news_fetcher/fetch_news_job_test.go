@@ -86,8 +86,6 @@ func TestFetchingJob_Execute(t *testing.T) {
 			expectErr: false,
 			setup:     func() {},
 			finish: func() {
-				err := os.Remove(time.Now().Format(time.DateOnly) + ".json")
-				assert.Nil(t, err)
 			},
 		},
 		{

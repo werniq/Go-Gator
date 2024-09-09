@@ -69,8 +69,6 @@ type FeedSpec struct {
 // FeedStatus defines the observed state of Feed
 type FeedStatus struct {
 	// Conditions field is a map of conditions that the feed can have
-	// question: i tried to use enum with int iota as mappings keys but i had an error
-	// saying that map keys should be strings, not int
 	Conditions map[string]FeedConditions `json:"conditions,omitempty"`
 }
 
@@ -95,7 +93,6 @@ type FeedConditions struct {
 	LastUpdateTime string `json:"lastUpdateTime"`
 }
 
-// +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
 // Feed is the Schema for the feeds API

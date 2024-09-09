@@ -330,12 +330,12 @@ func (r *HotNewsReconciler) setOwnerReferenceForFeeds(ctx context.Context, hotNe
 
 		if !hasOwnerReference(feed, ownerRef) {
 			feed.SetOwnerReferences(append(feed.GetOwnerReferences(), *ownerRef))
-		}
 
-		err = r.Update(ctx, feed)
-		if err != nil {
-			fmt.Println("error: failed to update Feed", err)
-			errList = append(errList, field.InternalError(field.NewPath("feeds").Child(feedName), err))
+			err = r.Update(ctx, feed)
+			if err != nil {
+				fmt.Println("error: failed to update Feed", err)
+				errList = append(errList, field.InternalError(field.NewPath("feeds").Child(feedName), err))
+			}
 		}
 	}
 

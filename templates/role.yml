@@ -13,7 +13,3 @@ kind: Role
 metadata:
   name: cron-job-role
   namespace: go-gator
-rules:
-  - apiGroups: ["v1"]
-    resources: ["pods", "persistentvolumeclaims", "persistentvolumes"]
-    verbs: ["create", "get", "list", "watch", "update", "delete"]

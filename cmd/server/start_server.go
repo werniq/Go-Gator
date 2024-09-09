@@ -114,6 +114,9 @@ func ConfAndRun() error {
 	setupRoutes(server)
 
 	certPath, keyPath, err := loadCertsFromSecrets()
+	if err != nil {
+		return err
+	}
 
 	err = server.RunTLS(fmt.Sprintf(":%d", serverPort),
 		certPath,
@@ -132,7 +135,8 @@ func loadCertsFromSecrets() (string, string, error) {
 
 	var k8sSecret v1.Secret
 	err := k8sClient.Get(ctx, client.ObjectKey{
-		Name: defaultSecretName,
+		Name:      defaultSecretName,
+		Namespace: defaultCertificatesNamespace,
 	}, &k8sSecret)
 	if err != nil {
 		return "", "", err

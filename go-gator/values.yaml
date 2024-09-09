@@ -1,0 +1,49 @@
+# Default values for go-gator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+namespace: default
+
+image:
+  repository: qniw984/go-gator
+  pullPolicy: IfNotPresent
+  tag: "1.3.0"
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: go-gator-service
+
+service:
+  type: ClusterIP
+  selector:
+    app: go-gator
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 443
+
+resources:
+   limits:
+     cpu: 100m
+     memory: 128Mi
+   requests:
+     cpu: 100m
+     memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+volumes:
+  - name: go-gator-pv
+    persistentVolumeClaim:
+      claimName: go-gator-pvc
+
+volumeMounts:
+  - mountPath: /tmp/
+    name: go-gator-pv

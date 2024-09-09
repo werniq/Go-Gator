@@ -19,16 +19,13 @@ package v1
 import (
 	"context"
 	"errors"
-	"fmt"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-	"slices"
-	"strings"
 	"time"
 )
 
@@ -75,33 +72,38 @@ func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 	if r.OwnerReferences != nil {
 		return nil, errors.New("feed has owner references")
 	}
-	fmt.Println("Feed doesn't have owner references")
 
 	return nil, nil
 }
 
 // validateFeed calls to our validation package to validate the feed configuration
 func (r *Feed) validateFeed() (admission.Warnings, error) {
+	var errList field.ErrorList
+
 	err := validateFeeds(r.Spec)
 	if err != nil {
-		return nil, err
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
 
-	warn, err := r.checkNameUniqueness()
+	err = r.checkNameUniqueness()
 	if err != nil {
-		return warn, err
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
 
-	warn, err = r.checkLinkUniqueness()
+	err = r.checkLinkUniqueness()
 	if err != nil {
-		return warn, err
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
+
+	if len(errList) > 0 {
+		return nil, errList.ToAggregate()
 	}
 
 	return nil, nil
 }
 
 // checkNameUniqueness checks if the Spec.name of the feed is unique in the namespace
-func (r *Feed) checkNameUniqueness() (admission.Warnings, error) {
+func (r *Feed) checkNameUniqueness() error {
 	feeds := &FeedList{}
 
 	listOptions := client.ListOptions{Namespace: r.Namespace}
@@ -111,84 +113,41 @@ func (r *Feed) checkNameUniqueness() (admission.Warnings, error) {
 
 	err := k8sClient.List(ctx, feeds, &listOptions)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for _, feed := range feeds.Items {
 		if feed.UID != r.UID {
 			if feed.Spec.Name == r.Spec.Name && feed.Namespace == r.Namespace {
-				return nil, errors.New("name must be unique in the namespace")
+				return errors.New("name must be unique in the namespace")
 			}
-		}
-	}
-
-	return nil, nil
-}
-
-// checkLinkUniqueness checks if the Spec.link of the feed is unique in the namespace
-func (r *Feed) checkLinkUniqueness() (admission.Warnings, error) {
-	feeds := &FeedList{}
-
-	listOptions := client.ListOptions{Namespace: r.Namespace}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	err := k8sClient.List(ctx, feeds, &listOptions)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, feed := range feeds.Items {
-		if feed.UID != r.UID {
-			if feed.Spec.Link == r.Spec.Link && feed.Namespace == r.Namespace {
-				return nil, errors.New("link must be unique in the namespace")
-			}
-		}
-	}
-
-	return nil, nil
-}
-
-// isFeedUsed checks if the feed is used in any hot news, and if it does - returns an error, indicating that
-// the feed can not be deleted
-func (r *Feed) isFeedUsed(feedName string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	var hotNewsList HotNewsList
-	err := k8sClient.List(ctx, &hotNewsList, &client.ListOptions{})
-	if err != nil {
-		return err
-	}
-
-	var configMapList v1.ConfigMapList
-	err = k8sClient.List(ctx, &configMapList, &client.ListOptions{})
-	if err != nil {
-		return err
-	}
-
-	for _, hotNews := range hotNewsList.Items {
-		if slices.Contains(hotNews.Spec.Feeds, feedName) {
-			return errors.New(errFeedUsed)
-		}
-	}
-
-	for _, configMap := range configMapList.Items {
-		if r.feedIsInFeedGroups(configMap.Data, feedName) {
-			return errors.New(errFeedUsed)
 		}
 	}
 
 	return nil
 }
 
-// feedIsInFeedGroups checks if the feed is in the feed groups
-func (r *Feed) feedIsInFeedGroups(feedGroups map[string]string, feed string) bool {
-	for _, val := range feedGroups {
-		if slices.Contains(strings.Split(val, ","), feed) {
-			return true
+// checkLinkUniqueness checks if the Spec.link of the feed is unique in the namespace
+func (r *Feed) checkLinkUniqueness() error {
+	feeds := &FeedList{}
+
+	listOptions := client.ListOptions{Namespace: r.Namespace}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	err := k8sClient.List(ctx, feeds, &listOptions)
+	if err != nil {
+		return err
+	}
+
+	for _, feed := range feeds.Items {
+		if feed.UID != r.UID {
+			if feed.Spec.Link == r.Spec.Link && feed.Namespace == r.Namespace {
+				return errors.New("link must be unique in the namespace")
+			}
 		}
 	}
-	return false
+
+	return nil
 }

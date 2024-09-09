@@ -53,7 +53,6 @@ tasks:
   test:
     label: Run all tests in application
     desc: This task runs all available test files from all child folders
-    # Compiling and running tests separately to handle relative paths correctly
     cmd: |
       go test ./... -v
 
@@ -83,6 +82,27 @@ tasks:
     desc: Remove news aggregator from kubernetes Cluster
     cmds:
       - kubectl delete -f templates/
+
+  createChart:
+    desc: Created a new Helm chart with all needed resources for news aggregator
+    cmds:
+      - helm create go-gator
+
+  installChart:
+    desc: Install the Helm chart on the Kubernetes cluster
+    cmds:
+      - helm install go-gator go-gator
+
+  uninstallChart:
+    desc: Uninstall the Helm chart from the Kubernetes cluster
+    cmds:
+      - helm uninstall go-gator
+
+  installCertManager:
+    desc: Install cert-manager on the Kubernetes cluster using helm
+    cmds:
+      - helm repo add jetstack https://charts.jetstack.io --force-update
+      - helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.15.2 --set crds.enabled=true
 
   start:
     cmds:

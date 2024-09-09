@@ -43,6 +43,7 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "default",
+					UID:       "123",
 					Name:      "ExistingFeedName",
 				},
 				Spec: newsaggregatorv1.FeedSpec{
@@ -97,46 +98,6 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 			})),
 			want:    controllerruntime.Result{},
 			wantErr: false,
-		},
-		{
-			name: "Failed Reconcile due to missing Feed",
-			fields: fields{
-				Client: k8sClient,
-				Scheme: nil,
-			},
-			args: args{
-				ctx: context.TODO(),
-				req: controllerruntime.Request{
-					NamespacedName: client.ObjectKey{
-						Name:      "non-existent-feed",
-						Namespace: "non-existent-namespace",
-					},
-				},
-			},
-			setup: func() {
-
-			},
-			want:    controllerruntime.Result{},
-			wantErr: true,
-		},
-		{
-			name: "Failed Reconcile due to Get error",
-			fields: fields{
-				Client: k8sClient,
-				Scheme: nil,
-			},
-			args: args{
-				ctx: context.TODO(),
-				req: controllerruntime.Request{
-					NamespacedName: client.ObjectKey{
-						Name:      "test-feed",
-						Namespace: "default",
-					},
-				},
-			},
-			setup:   func() {},
-			want:    controllerruntime.Result{},
-			wantErr: true,
 		},
 		{
 			name: "Performing DELETE of the object",
@@ -235,6 +196,55 @@ func TestFeedReconciler_Reconcile(t *testing.T) {
 			})),
 			want:    controllerruntime.Result{},
 			wantErr: true,
+		},
+		{
+			name: "Object not found (returning no error)",
+			fields: fields{
+				Client: k8sClient,
+				Scheme: nil,
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: controllerruntime.Request{
+					NamespacedName: client.ObjectKey{
+						Name:      "NonExistentFeed",
+						Namespace: "default",
+					},
+				},
+			},
+			mockServer: nil,
+			setup:      func() {},
+			want:       controllerruntime.Result{},
+			wantErr:    false,
+		},
+		{
+			name: "Error updating finalizer",
+			fields: fields{
+				Client: k8sClient,
+				Scheme: nil,
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: controllerruntime.Request{
+					NamespacedName: client.ObjectKey{
+						Name:      "ExistingFeedName",
+						Namespace: "default",
+					},
+				},
+			},
+			setup: func() {
+				feed := &newsaggregatorv1.Feed{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "default",
+						Name:      "ExistingFeedName",
+					},
+				}
+				k8sClient = fake.NewClientBuilder().WithScheme(scheme).WithObjects(feed).Build()
+				_ = k8sClient.Update(context.TODO(), feed)
+			},
+			mockServer: nil,
+			want:       controllerruntime.Result{},
+			wantErr:    true,
 		},
 	}
 

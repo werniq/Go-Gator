@@ -36,11 +36,14 @@ func TestFeed_validateHotNews(t *testing.T) {
 		Items: []Feed{
 			{
 				ObjectMeta: v12.ObjectMeta{
+					Labels: map[string]string{
+						FeedGroupLabel: "true",
+					},
 					Namespace: FeedGroupsNamespace,
 					Name:      FeedGroupsConfigMapName,
 				},
 				Spec: FeedSpec{
-					Name: "abc",
+					Name: "feed1",
 				},
 			},
 		},
@@ -63,18 +66,21 @@ func TestFeed_validateHotNews(t *testing.T) {
 		},
 	}
 
+	existingConfigMap := &v1.ConfigMap{
+		ObjectMeta: v12.ObjectMeta{
+			Labels: map[string]string{
+				FeedGroupLabel: "true",
+			},
+		},
+		Data: map[string]string{
+			"sport": "abc",
+		},
+	}
+
 	k8sClient = fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithLists(existingHotNewsList, existingFeedList).
-		WithObjects(&v1.ConfigMap{
-			ObjectMeta: v12.ObjectMeta{
-				Namespace: FeedGroupsNamespace,
-				Name:      FeedGroupsConfigMapName,
-			},
-			Data: map[string]string{
-				"sport": "abc",
-			},
-		}).Build()
+		WithObjects(existingConfigMap).Build()
 
 	var tests = []struct {
 		name        string
@@ -207,18 +213,21 @@ func TestHotNews_ValidateCreate(t *testing.T) {
 		},
 	}
 
+	existingConfigMap := &v1.ConfigMap{
+		ObjectMeta: v12.ObjectMeta{
+			Labels: map[string]string{
+				FeedGroupLabel: "true",
+			},
+		},
+		Data: map[string]string{
+			"sport": "abc",
+		},
+	}
+
 	k8sClient = fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithLists(existingHotNewsList, existingFeedList).
-		WithObjects(&v1.ConfigMap{
-			ObjectMeta: v12.ObjectMeta{
-				Namespace: FeedGroupsNamespace,
-				Name:      FeedGroupsConfigMapName,
-			},
-			Data: map[string]string{
-				"sport": "abc",
-			},
-		}).Build()
+		WithObjects(existingConfigMap).Build()
 
 	type fields struct {
 		TypeMeta   v12.TypeMeta

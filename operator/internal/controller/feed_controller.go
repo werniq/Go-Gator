@@ -78,17 +78,18 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	err = r.Client.Get(ctx, req.NamespacedName, &feed)
 	if err != nil {
+		logger.Error(err, "unable to fetch feeds")
 		if k8serrors.IsNotFound(err) {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, nil
 		}
 
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, err
 	}
 
 	if feed.ObjectMeta.DeletionTimestamp.IsZero() {
 		if !controllerutil.ContainsFinalizer(&feed, feedFinalizerName) {
 			controllerutil.AddFinalizer(&feed, feedFinalizerName)
-			logger.Info("Add Finalizer", feed.Name, feedFinalizerName)
+			logger.Info("Finalizer is added", feed.Name, feedFinalizerName)
 
 			err = r.Client.Update(ctx, &feed)
 			if err != nil {
@@ -113,11 +114,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	// question: on the review Vitalii said that I should check if key exists in the map
-	// but, the logic behind this was that if the key doesn't exist, it means that the feed is new
-	// and I should create it. Otherwise, I should update it
-	isNew := feed.Status.Conditions[newsaggregatorv1.TypeFeedCreated] == newsaggregatorv1.FeedConditions{} &&
-		feed.Status.Conditions[newsaggregatorv1.TypeFeedCreated].Status == false
+	isNew := feed.Status.Conditions[newsaggregatorv1.TypeFeedCreated] == newsaggregatorv1.FeedConditions{}
 
 	if isNew {
 		logger.Info("Handling the create event")
@@ -128,7 +125,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	if err != nil {
-		feed.SetFailedCondition(err.Error(), err.Error())
+		feed.SetFailedCondition(newsaggregatorv1.TypeFeedFailedToCreate, err.Error())
 		return ctrl.Result{}, err
 	}
 

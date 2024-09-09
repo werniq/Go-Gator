@@ -19,11 +19,8 @@ package v1
 import (
 	"context"
 	"errors"
-	"fmt"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -137,34 +134,8 @@ func (r *HotNews) ValidateDelete() (admission.Warnings, error) {
 	return nil, nil
 }
 
-// GetFeedGroupNames returns all config maps which
-func (r *HotNews) GetFeedGroupNames(ctx context.Context) ([]string, error) {
-	s, err := labels.NewRequirement(FeedGroupLabel, selection.Exists, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var configMaps v1.ConfigMapList
-	err = k8sClient.List(ctx, &configMaps, &client.ListOptions{
-		LabelSelector: labels.NewSelector().Add(*s),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	var feedGroups []string
-	for _, configMap := range configMaps.Items {
-		for _, source := range r.Spec.FeedGroups {
-			if _, exists := configMap.Data[source]; exists {
-				feedGroups = append(feedGroups, source)
-			}
-		}
-	}
-
-	return feedGroups, nil
-}
-
 // getAllFeeds returns all feeds in the namespace
+// It is used to set the default value for the feeds field in the HotNews resource
 func (r *HotNews) getAllFeeds() ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -183,34 +154,40 @@ func (r *HotNews) getAllFeeds() ([]string, error) {
 	return feedNames, nil
 }
 
-// validateHotNews validates the HotNews resource.
+// validateHotNews verifies if the fields in HotNews resource are correct
 //
 // In particular, it checks if the DateStart is before DateEnd and if all hotNew group names are correct, and
 // if feeds or feedGroups exists in our news aggregator.
 func (r *HotNews) validateHotNews() error {
+	var errList field.ErrorList
+
 	err := validateHotNews(r.Spec)
 	if err != nil {
-		return err
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
 
 	if r.Spec.Feeds == nil && r.Spec.FeedGroups == nil {
-		return fmt.Errorf(errNoFeeds)
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, errNoFeeds))
 	}
 
 	err = r.feedsExists()
 	if err != nil {
-		return err
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
 
 	err = r.feedGroupsExists()
 	if err != nil {
-		return err
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
+
+	if len(errList) > 0 {
+		return errList.ToAggregate()
 	}
 
 	return nil
 }
 
-// feedExists checks if the given list of feeds exist in the namespace
+// feedsExists checks if the given list of feeds exist in the namespace
 func (r *HotNews) feedsExists() error {
 	if r.Spec.Feeds == nil {
 		return nil

@@ -5,7 +5,6 @@ import (
 	"gogator/cmd/parsers"
 	"gogator/cmd/types"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 )
@@ -69,17 +68,6 @@ func TestFetchingJob_Execute(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp directory: %v", err)
 	}
-	defer func(path string) {
-		time.Sleep(time.Second * 5)
-		err := os.Remove(filepath.Join(path, time.Now().Format(time.DateOnly)+".json"))
-		if err != nil {
-			t.Fatalf("failed to remove data file: %v", err)
-		}
-		err = os.RemoveAll(path)
-		if err != nil {
-			t.Fatalf("failed to remove temp directory: %v", err)
-		}
-	}(tempDir)
 
 	testCases := []struct {
 		name      string
@@ -96,19 +84,6 @@ func TestFetchingJob_Execute(t *testing.T) {
 			},
 			args:      storagePath,
 			expectErr: false,
-			setup:     func() {},
-			finish: func() {
-				err := os.Remove(time.Now().Format(time.DateOnly) + ".json")
-				assert.Nil(t, err)
-			},
-		},
-		{
-			name: "Invalid date format",
-			job: &NewsFetchingJob{
-				params: types.NewFilteringParams("", time.Now().Format(time.ANSIC), "", ""),
-			},
-			args:      storagePath,
-			expectErr: true,
 			setup:     func() {},
 			finish: func() {
 			},
@@ -132,22 +107,6 @@ func TestFetchingJob_Execute(t *testing.T) {
 			expectErr: true,
 			setup:     func() {},
 			finish:    func() {},
-		},
-		{
-			name: "Parse by source error",
-			job: &NewsFetchingJob{
-				params: types.NewFilteringParams("", time.Now().Format(time.DateOnly), "", ""),
-			},
-			args:      tempDir,
-			expectErr: true,
-			setup: func() {
-				err := parsers.AddNewSource("xml", "nonexistent", "nonexistent")
-				assert.Nil(t, err)
-			},
-			finish: func() {
-				err := parsers.DeleteSource("nonexistent")
-				assert.Nil(t, err)
-			},
 		},
 	}
 

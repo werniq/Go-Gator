@@ -4,5 +4,3 @@ bin/*
 .idea
 coverage
 cover
-kubebuilder
-autoscaler

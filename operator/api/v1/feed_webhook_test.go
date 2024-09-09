@@ -30,10 +30,15 @@ import (
 func TestFeed_validateFeed(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = AddToScheme(scheme)
+	_ = v12.AddToScheme(scheme)
 
 	existingFeedList := &FeedList{
 		Items: []Feed{
 			{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "ExistingFeedName",
+					Namespace: "default",
+				},
 				Spec: FeedSpec{
 					Name: "ExistingFeedName",
 					Link: "https://example.com/feed",
@@ -75,6 +80,11 @@ func TestFeed_validateFeed(t *testing.T) {
 		{
 			name: "Validation failure due to duplicate link",
 			feed: &Feed{
+				ObjectMeta: v1.ObjectMeta{
+					UID:       "123",
+					Name:      "ExistingFeedName",
+					Namespace: "default",
+				},
 				Spec: FeedSpec{
 					Name: "Not-duplicate",
 					Link: "https://example.com/feed",
@@ -86,23 +96,37 @@ func TestFeed_validateFeed(t *testing.T) {
 		{
 			name: "Validation failure due to duplicate name",
 			feed: &Feed{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "FeedName",
+					UID:       "123",
+					Namespace: "default",
+				},
 				Spec: FeedSpec{
 					Name: "ExistingFeedName",
 					Link: "https://example.com/feed",
 				},
 			},
-			setup:       func() {},
+			setup: func() {
+				k8sClient = k8sClient
+			},
 			expectedErr: true,
 		},
 		{
-			name: "Validation failure due to invalid feed link v2",
+			name: "Validation failure due to invalid feed link",
 			feed: &Feed{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "FeedName",
+					UID:       "123",
+					Namespace: "default",
+				},
 				Spec: FeedSpec{
 					Name: "",
 					Link: "ftp:/example.com",
 				},
 			},
-			setup:       func() {},
+			setup: func() {
+				k8sClient = k8sClient
+			},
 			expectedErr: true,
 		},
 		{
@@ -140,10 +164,15 @@ func TestFeed_ValidateCreate(t *testing.T) {
 
 	k8sClient = fake.NewClientBuilder().
 		WithScheme(scheme).
-		WithObjects(&v12.ConfigMap{
-			TypeMeta:   v1.TypeMeta{},
-			ObjectMeta: v1.ObjectMeta{},
-			Data:       nil,
+		WithObjects(&Feed{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "FeedName",
+				Namespace: "default",
+			},
+			Spec: FeedSpec{
+				Name: "UniqueFeedName",
+				Link: "https://example.com",
+			},
 		}).
 		Build()
 
@@ -161,12 +190,12 @@ func TestFeed_ValidateCreate(t *testing.T) {
 		setup   func()
 	}{
 		{
-			name: "Validate delete",
+			name: "Validate create",
 			fields: fields{
 				TypeMeta:   v1.TypeMeta{},
 				ObjectMeta: v1.ObjectMeta{},
 				Spec: FeedSpec{
-					Name: "UniqueFeedName",
+					Name: "non existing name",
 					Link: "https://example.com",
 				},
 				Status: FeedStatus{},
@@ -178,10 +207,31 @@ func TestFeed_ValidateCreate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Duplicate feed name",
+			name: "Validation failed due to invalid feed link",
 			fields: fields{
 				TypeMeta:   v1.TypeMeta{},
 				ObjectMeta: v1.ObjectMeta{},
+				Spec: FeedSpec{
+					Name: "non existing name",
+					Link: "ftp:/example.com",
+				},
+				Status: FeedStatus{},
+			},
+			setup: func() {
+
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Duplicate feed name and link",
+			fields: fields{
+				TypeMeta: v1.TypeMeta{},
+				ObjectMeta: v1.ObjectMeta{
+					UID:       "123",
+					Name:      "FeedName",
+					Namespace: "default",
+				},
 				Spec: FeedSpec{
 					Name: "UniqueFeedName",
 					Link: "https://example.com",
@@ -194,6 +244,10 @@ func TestFeed_ValidateCreate(t *testing.T) {
 					WithLists(&FeedList{
 						Items: []Feed{
 							{
+								ObjectMeta: v1.ObjectMeta{
+									Name:      "FeedName",
+									Namespace: "default",
+								},
 								Spec: FeedSpec{
 									Name: "UniqueFeedName",
 									Link: "https://example.com",
@@ -251,7 +305,11 @@ func TestFeed_ValidateDelete(t *testing.T) {
 			},
 		}).WithObjects(&v12.ConfigMap{
 		Data: map[string]string{"group1": "sport,news"},
-	}).Build()
+	}, &HotNews{ObjectMeta: v1.ObjectMeta{
+		Name: "hotnews",
+		UID:  "123",
+	}},
+	).Build()
 
 	tests := []struct {
 		name    string
@@ -272,23 +330,18 @@ func TestFeed_ValidateDelete(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Feed is used in hotnews",
-			fields: fields{
-				TypeMeta:   v1.TypeMeta{},
-				ObjectMeta: v1.ObjectMeta{},
-				Spec: FeedSpec{
-					Name: "sport",
-				},
-				Status: FeedStatus{},
-			},
-			want:    nil,
-			wantErr: true,
-		},
-		{
 			name: "Feed is used in feed groups",
 			fields: fields{
-				TypeMeta:   v1.TypeMeta{},
-				ObjectMeta: v1.ObjectMeta{},
+				TypeMeta: v1.TypeMeta{},
+				ObjectMeta: v1.ObjectMeta{
+					OwnerReferences: []v1.OwnerReference{
+						{
+							Kind: "HotNews",
+							Name: "hotnews",
+							UID:  "123",
+						},
+					},
+				},
 				Spec: FeedSpec{
 					Name: "sport",
 				},
@@ -324,6 +377,20 @@ func TestFeed_ValidateUpdate(t *testing.T) {
 
 	k8sClient = fake.NewClientBuilder().
 		WithScheme(scheme).
+		WithLists(&FeedList{
+			Items: []Feed{
+				{
+					ObjectMeta: v1.ObjectMeta{
+						Name:      "FeedName",
+						Namespace: "default",
+					},
+					Spec: FeedSpec{
+						Name: "UniqueFeedName",
+						Link: "https://example.com",
+					},
+				},
+			},
+		}).
 		WithObjects(&v12.ConfigMap{
 			TypeMeta:   v1.TypeMeta{},
 			ObjectMeta: v1.ObjectMeta{},
@@ -345,12 +412,12 @@ func TestFeed_ValidateUpdate(t *testing.T) {
 		setup   func()
 	}{
 		{
-			name: "Validate delete",
+			name: "Validate update",
 			fields: fields{
 				TypeMeta:   v1.TypeMeta{},
 				ObjectMeta: v1.ObjectMeta{},
 				Spec: FeedSpec{
-					Name: "UniqueFeedName",
+					Name: "Non existing name",
 					Link: "https://example.com",
 				},
 				Status: FeedStatus{},
@@ -364,8 +431,12 @@ func TestFeed_ValidateUpdate(t *testing.T) {
 		{
 			name: "Duplicate feed name",
 			fields: fields{
-				TypeMeta:   v1.TypeMeta{},
-				ObjectMeta: v1.ObjectMeta{},
+				TypeMeta: v1.TypeMeta{},
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "FeedName",
+					UID:       "123",
+					Namespace: "default",
+				},
 				Spec: FeedSpec{
 					Name: "UniqueFeedName",
 					Link: "https://example.com",
@@ -373,18 +444,6 @@ func TestFeed_ValidateUpdate(t *testing.T) {
 				Status: FeedStatus{},
 			},
 			setup: func() {
-				k8sClient = fake.NewClientBuilder().
-					WithScheme(scheme).
-					WithLists(&FeedList{
-						Items: []Feed{
-							{
-								Spec: FeedSpec{
-									Name: "UniqueFeedName",
-									Link: "https://example.com",
-								},
-							},
-						},
-					}).Build()
 			},
 			want:    nil,
 			wantErr: true,
@@ -406,197 +465,6 @@ func TestFeed_ValidateUpdate(t *testing.T) {
 				assert.Nil(t, err)
 			}
 			assert.Equalf(t, tt.want, got, "ValidateCreate()")
-		})
-	}
-}
-
-func TestIsFeedUsed(t *testing.T) {
-	scheme := runtime.NewScheme()
-	_ = AddToScheme(scheme)
-	_ = v12.AddToScheme(scheme)
-
-	k8sClient = fake.NewClientBuilder().
-		WithScheme(scheme).
-		WithObjects(
-			&v12.ConfigMap{
-				ObjectMeta: v1.ObjectMeta{
-					Namespace: "default",
-					Name:      "feed-groups",
-				},
-				Data: map[string]string{"group1": "sport,news"},
-			},
-		).
-		Build()
-
-	feed := &Feed{}
-
-	tests := []struct {
-		name       string
-		feedName   string
-		hotNews    []HotNews
-		configMaps []v12.ConfigMap
-		setup      func()
-		wantErr    bool
-	}{
-		{
-			name:     "Feed used in HotNews",
-			feedName: "sport",
-			hotNews: []HotNews{
-				{
-					Spec: HotNewsSpec{
-						Feeds: []string{"sport"},
-					},
-				},
-			},
-			configMaps: []v12.ConfigMap{
-				{
-					ObjectMeta: v1.ObjectMeta{
-						Namespace: "default",
-						Name:      "feed-groups",
-					},
-					Data: map[string]string{"group1": "sport,news"},
-				},
-			},
-			setup:   func() {},
-			wantErr: true,
-		},
-		{
-			name:     "Feed used in ConfigMap",
-			feedName: "sport",
-			hotNews: []HotNews{
-				{
-					Spec: HotNewsSpec{
-						FeedGroups: []string{"group1"},
-					},
-				},
-			},
-			configMaps: []v12.ConfigMap{
-				{
-					ObjectMeta: v1.ObjectMeta{
-						Namespace: "default",
-						Name:      "feed-groups",
-					},
-					Data: map[string]string{"group1": "sport,news"},
-				},
-			},
-			setup:   func() {},
-			wantErr: true,
-		},
-		{
-			name:     "K8s Client Hot news List error",
-			hotNews:  nil,
-			feedName: "music",
-			setup: func() {
-				k8sClient = fake.NewClientBuilder().Build()
-			},
-			wantErr: true,
-		},
-		{
-			name:     "K8s Client Config Map List error",
-			hotNews:  nil,
-			feedName: "music",
-			setup: func() {
-				scheme = runtime.NewScheme()
-				_ = AddToScheme(scheme)
-				k8sClient = fake.NewClientBuilder().WithScheme(scheme).Build()
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			if tt.configMaps != nil {
-				if tt.hotNews != nil {
-					k8sClient = fake.NewClientBuilder().
-						WithScheme(scheme).
-						WithLists(&v12.ConfigMapList{Items: tt.configMaps},
-							&HotNewsList{Items: tt.hotNews},
-						).
-						Build()
-				} else {
-					k8sClient = fake.NewClientBuilder().
-						WithScheme(scheme).
-						WithLists(&v12.ConfigMapList{Items: tt.configMaps}).
-						Build()
-				}
-			}
-
-			err := feed.isFeedUsed(tt.feedName)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestFeedIsInFeedGroups(t *testing.T) {
-	feed := &Feed{}
-
-	tests := []struct {
-		name       string
-		feedGroups map[string]string
-		feed       string
-		expected   bool
-	}{
-		{
-			name: "Feed is in a single group",
-			feedGroups: map[string]string{
-				"group1": "sport,news,music",
-			},
-			feed:     "sport",
-			expected: true,
-		},
-		{
-			name: "Feed is not in the groups",
-			feedGroups: map[string]string{
-				"group1": "news,music",
-			},
-			feed:     "sport",
-			expected: false,
-		},
-		{
-			name: "Feed is in multiple groups",
-			feedGroups: map[string]string{
-				"group1": "news,music",
-				"group2": "sport,tech",
-			},
-			feed:     "sport",
-			expected: true,
-		},
-		{
-			name: "Feed is a substring but not a full match",
-			feedGroups: map[string]string{
-				"group1": "sports,news,music",
-			},
-			feed:     "sport",
-			expected: false,
-		},
-		{
-			name: "Empty feed groups",
-			feedGroups: map[string]string{
-				"group1": "",
-			},
-			feed:     "sport",
-			expected: false,
-		},
-		{
-			name: "Empty feed name",
-			feedGroups: map[string]string{
-				"group1": "sport,news,music",
-			},
-			feed:     "",
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := feed.feedIsInFeedGroups(tt.feedGroups, tt.feed)
-			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
@@ -635,7 +503,8 @@ func TestFeed_checkLinkUniqueness(t *testing.T) {
 				Spec:       tt.fields.Spec,
 				Status:     tt.fields.Status,
 			}
-			_, err := r.checkLinkUniqueness()
+
+			err := r.checkLinkUniqueness()
 			if tt.wantErr {
 				assert.NotNil(t, err)
 			} else {
@@ -679,7 +548,8 @@ func TestFeed_checkNameUniqueness(t *testing.T) {
 				Spec:       tt.fields.Spec,
 				Status:     tt.fields.Status,
 			}
-			_, err := r.checkNameUniqueness()
+
+			err := r.checkNameUniqueness()
 			if tt.wantErr {
 				assert.NotNil(t, err)
 			} else {

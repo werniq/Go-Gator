@@ -17,7 +17,12 @@ limitations under the License.
 package v1
 
 import (
+	"context"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // HotNewsSpec defines the desired state of HotNews.
@@ -93,6 +98,33 @@ type HotNewsList struct {
 func init() {
 	SchemeBuilder.Register(&Feed{}, &FeedList{})
 	SchemeBuilder.Register(&HotNews{}, &HotNewsList{})
+}
+
+// GetFeedGroupNames returns all config maps which contain hotNew groups names
+func (r *HotNews) GetFeedGroupNames(ctx context.Context) ([]string, error) {
+	s, err := labels.NewRequirement(FeedGroupLabel, selection.Exists, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var configMaps v1.ConfigMapList
+	err = k8sClient.List(ctx, &configMaps, &client.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*s),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var feedGroups []string
+	for _, configMap := range configMaps.Items {
+		for _, source := range r.Spec.FeedGroups {
+			if _, exists := configMap.Data[source]; exists {
+				feedGroups = append(feedGroups, source)
+			}
+		}
+	}
+
+	return feedGroups, nil
 }
 
 // InitHotNewsStatus func initializes HotNews.Status object with the provided data

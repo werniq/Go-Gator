@@ -10,8 +10,10 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"os"
 	"path/filepath"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"strings"
 	"time"
 )
@@ -22,7 +24,6 @@ var (
 
 	// defaultDataDirPath is a default path to the directory where all data will be stored
 	defaultDataDirPath = filepath.Join("cmd", "parsers", "data")
-	//defaultDataDirPath = "/tmp/"
 
 	k8sClient client.Client
 )
@@ -35,7 +36,7 @@ const (
 	defaultCertificatesNamespace = "go-gator"
 
 	// defaultSecretName is a default name of the secret where certificates are stored
-	defaultSecretName = "test-ca-secret"
+	defaultSecretName = "cert-secret"
 
 	// defaultPrivateKey identifies the default name of server's private key
 	defaultPrivateKey = "tls.key"
@@ -80,6 +81,12 @@ func ConfAndRun() error {
 	if err != nil {
 		return err
 	}
+
+	opts := zap.Options{
+		Development: true,
+	}
+
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	flag.IntVar(&serverPort, "p", defaultServerPort,
 		"On which port server will be running")

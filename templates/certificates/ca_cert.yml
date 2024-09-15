@@ -1,21 +1,16 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: ca
+  name: go-gator-ca
   namespace: go-gator
 spec:
   isCA: true
-  commonName: test-ca
-  subject:
-    organizations:
-      - ACME Inc.
-    organizationalUnits:
-      - Widgets
-  secretName: ca-secret
+  commonName: go-gator-ca
+  secretName: go-gator-ca-secret
   privateKey:
     algorithm: ECDSA
     size: 256
   issuerRef:
-    name: selfsigned-issuer
+    name: go-gator-issuer
     kind: Issuer
     group: cert-manager.io

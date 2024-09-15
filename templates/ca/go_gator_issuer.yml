@@ -1,7 +1,8 @@
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: selfsigned-issuer
+  name: go-gator-issuer
   namespace: go-gator
 spec:
-  selfSigned: {}
+  ca:
+    secretName: cert-secret

@@ -98,14 +98,6 @@ func ConfAndRun() error {
 		"Path to directory where all data will be stored")
 	flag.Parse()
 
-	c := config.GetConfigOrDie()
-
-	k8sClient, err = client.New(c, client.Options{})
-	if err != nil {
-		return err
-	}
-	parsers.StoragePath = storagePath
-
 	err = parsers.LoadSourcesFile()
 	if err != nil {
 		if strings.Contains(err.Error(), errNotSpecified) {
@@ -119,6 +111,14 @@ func ConfAndRun() error {
 	}
 
 	setupRoutes(server)
+
+	c := config.GetConfigOrDie()
+
+	k8sClient, err = client.New(c, client.Options{})
+	if err != nil {
+		return err
+	}
+	parsers.StoragePath = storagePath
 
 	certPath, keyPath, err := loadCertsFromSecrets()
 	if err != nil {
@@ -155,7 +155,6 @@ func loadCertsFromSecrets() (string, string, error) {
 	cwdPath, err := os.Getwd()
 	if err != nil {
 		return "", "", err
-
 	}
 
 	defaultCertPath := filepath.Join(cwdPath, defaultCertsPath, defaultCertName)

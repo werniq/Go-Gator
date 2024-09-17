@@ -1,0 +1,108 @@
+Resources:
+  GoGatorVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.1.0/24
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: Go-Gator-Vpc
+
+  GoGatorSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow inbound traffic from port 22 and 443
+      GroupName: Go-Gator-Security-Group
+      VpcId: !Ref GoGatorVpc
+
+  GoGatorSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref GoGatorVpc
+      CidrBlock: 10.0.1.0/26
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: GoGatorSubnet1
+
+  GoGatorSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref GoGatorVpc
+      CidrBlock: 10.0.1.64/26
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [1, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: GoGatorSubnet2
+
+  GoGatorInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Go-Gator-Internet-Gateway
+
+  GoGatorAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref GoGatorVpc
+      InternetGatewayId: !Ref GoGatorInternetGateway
+
+  GoGatorRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref GoGatorVpc
+      Tags:
+        - Key: Name
+          Value: Go-Gator-Route-Table
+
+  GoGatorRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref GoGatorRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref GoGatorInternetGateway
+
+  GoGatorSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref GoGatorSubnet1
+      RouteTableId: !Ref GoGatorRouteTable
+
+  GoGatorSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref GoGatorSubnet2
+      RouteTableId: !Ref GoGatorRouteTable
+
+  GoGatorCluster:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Name: GoGatorCluster
+      ResourcesVpcConfig:
+        SubnetIds:
+          - !Ref GoGatorSubnet1
+          - !Ref GoGatorSubnet2
+      RoleArn: arn:aws:iam::406477933661:role/Oleksandr
+      Version: "1.30"
+      UpgradePolicy:
+        SupportType: EXTENDED
+
+  GoGatorNodeGroup:
+    Type: AWS::EKS::Nodegroup
+    Properties:
+      ClusterName: !Ref GoGatorCluster
+      NodegroupName: Go-Gator-Node-Group
+      NodeRole: arn:aws:iam::406477933661:role/oleksandr-node-group
+      Subnets:
+        - !Ref GoGatorSubnet1
+        - !Ref GoGatorSubnet2
+      ScalingConfig:
+        DesiredSize: 1
+        MinSize: 1
+        MaxSize: 5
+      InstanceTypes:
+        - t2.micro

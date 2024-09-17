@@ -59,7 +59,7 @@ spec:
         #   type: RuntimeDefault
       containers:
       - command:
-          - /manager
+        - /manager
         args:
           - --leader-elect
           - --health-probe-bind-address=:8081
@@ -70,7 +70,7 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
-              - "ALL"
+            - "ALL"
         livenessProbe:
           httpGet:
             path: /healthz

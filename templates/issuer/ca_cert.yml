@@ -5,12 +5,12 @@ metadata:
   namespace: go-gator
 spec:
   isCA: true
-  commonName: go-gator-ca
-  secretName: go-gator-ca-secret
+  commonName: go-gator-ca-cert
+  secretName: go-gator-ca
   privateKey:
     algorithm: ECDSA
     size: 256
   issuerRef:
-    name: go-gator-issuer
+    name: go-gator-self-signed-ca-issuer
     kind: Issuer
     group: cert-manager.io

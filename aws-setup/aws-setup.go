@@ -63,6 +63,10 @@ func NewGoGatorCdkProjectStack(scope constructs.Construct, id string, props *Aws
 		awsec2.Port_Tcp(jsii.Number(443)),
 		jsii.String("Allow HTTPS"),
 		jsii.Bool(true))
+	sg.AddIngressRule(awsec2.Peer_AnyIpv4(),
+		awsec2.Port_Tcp(jsii.Number(80)),
+		jsii.String("Allow HTTP"),
+		jsii.Bool(true))
 
 	igw := awsec2.NewCfnInternetGateway(stack, jsii.String("GoGatorInternetGateway"), &awsec2.CfnInternetGatewayProps{})
 	awsec2.NewCfnVPCGatewayAttachment(stack, jsii.String("GoGatorAttachGateway"), &awsec2.CfnVPCGatewayAttachmentProps{

@@ -15,6 +15,8 @@ type AwsSetupStackProps struct {
 }
 
 const (
+	defaultCidrBlock = "0.0.0.0/0"
+
 	// CoreDnsVersion is the version of the CoreDNS add-on
 	CoreDnsVersion = "v1.11.1-eksbuild.18"
 
@@ -27,6 +29,89 @@ const (
 	// PodIdentityVersion is the version of the pod identity add-on
 	PodIdentityVersion = "v1.3.2-eksbuild.2"
 )
+
+func InternetGateway(stack awscdk.Stack) awsec2.CfnInternetGateway {
+	return awsec2.NewCfnInternetGateway(stack,
+		jsii.String("GoGatorInternetGateway"),
+		&awsec2.CfnInternetGatewayProps{},
+	)
+}
+
+func Cluster(stack awscdk.Stack, role awsiam.IRole, sg awsec2.SecurityGroup, vpc awsec2.Vpc) awseks.Cluster {
+	return awseks.NewCluster(stack, jsii.String("GoGatorCluster"), &awseks.ClusterProps{
+		Version:       awseks.KubernetesVersion_V1_30(),
+		ClusterName:   jsii.String("GoGatorCluster"),
+		Role:          role,
+		SecurityGroup: sg,
+		Vpc:           vpc,
+	})
+}
+
+func EksAddon(stack awscdk.Stack, cluster awseks.Cluster, addonName string, addonVersion string, addonId string) {
+	awseks.NewCfnAddon(stack, jsii.String(addonId), &awseks.CfnAddonProps{
+		ClusterName:  cluster.ClusterName(),
+		AddonName:    jsii.String(addonName),
+		AddonVersion: jsii.String(addonVersion),
+	})
+}
+
+func Route(stack awscdk.Stack, routeTable awsec2.CfnRouteTable, igw awsec2.CfnInternetGateway,
+	destinationCidrBlock string) {
+	awsec2.NewCfnRoute(stack, jsii.String("GoGatorRoute"), &awsec2.CfnRouteProps{
+		RouteTableId:         routeTable.Ref(),
+		DestinationCidrBlock: jsii.String(destinationCidrBlock),
+		GatewayId:            igw.Ref(),
+	})
+}
+
+func RouteTable(stack awscdk.Stack, vpc awsec2.Vpc) awsec2.CfnRouteTable {
+	return awsec2.NewCfnRouteTable(stack, jsii.String("GoGatorRouteTable"), &awsec2.CfnRouteTableProps{
+		VpcId: vpc.VpcId(),
+	})
+}
+
+func Vpc(stack awscdk.Stack) awsec2.Vpc {
+	return awsec2.NewVpc(stack, jsii.String("GoGatorVpc"), &awsec2.VpcProps{
+		EnableDnsSupport:   jsii.Bool(true),
+		EnableDnsHostnames: jsii.Bool(true),
+		MaxAzs:             jsii.Number(2),
+		SubnetConfiguration: &[]*awsec2.SubnetConfiguration{
+			{
+				Name:       jsii.String("GoGatorSubnet1"),
+				CidrMask:   jsii.Number(26),
+				SubnetType: awsec2.SubnetType_PRIVATE_WITH_EGRESS,
+			},
+			{
+				Name:       jsii.String("GoGatorSubnet2"),
+				CidrMask:   jsii.Number(26),
+				SubnetType: awsec2.SubnetType_PUBLIC,
+			},
+		},
+	})
+}
+
+func NewSecurityGroupSecurityGroup(stack awscdk.Stack, vpc awsec2.Vpc) awsec2.SecurityGroup {
+	sg := awsec2.NewSecurityGroup(stack, jsii.String("GoGatorSecurityGroup"), &awsec2.SecurityGroupProps{
+		Vpc:               vpc,
+		SecurityGroupName: jsii.String("Go-Gator-Security-Group"),
+		Description:       jsii.String("Allow inbound traffic from port 22, 443 and 80 (SSH, HTTP and HTTPS)"),
+		AllowAllOutbound:  jsii.Bool(true),
+	})
+	sg.AddIngressRule(awsec2.Peer_AnyIpv4(),
+		awsec2.Port_Tcp(jsii.Number(22)),
+		jsii.String("Allow SSH"),
+		jsii.Bool(true))
+	sg.AddIngressRule(awsec2.Peer_AnyIpv4(),
+		awsec2.Port_Tcp(jsii.Number(443)),
+		jsii.String("Allow HTTPS"),
+		jsii.Bool(true))
+	sg.AddIngressRule(awsec2.Peer_AnyIpv4(),
+		awsec2.Port_Tcp(jsii.Number(80)),
+		jsii.String("Allow HTTP"),
+		jsii.Bool(true))
+
+	return sg
+}
 
 // AddParameters adds the parameters to the stack
 func AddParameters(stack awscdk.Stack) {
@@ -96,57 +181,17 @@ func NewGoGatorCdkProjectStack(scope constructs.Construct, id string, props *Aws
 
 	AddParameters(stack)
 
-	vpc := awsec2.NewVpc(stack, jsii.String("GoGatorVpc"), &awsec2.VpcProps{
-		EnableDnsSupport:   jsii.Bool(true),
-		EnableDnsHostnames: jsii.Bool(true),
-		MaxAzs:             jsii.Number(2),
-		SubnetConfiguration: &[]*awsec2.SubnetConfiguration{
-			{
-				Name:       jsii.String("GoGatorSubnet1"),
-				CidrMask:   jsii.Number(26),
-				SubnetType: awsec2.SubnetType_PRIVATE_WITH_EGRESS,
-			},
-			{
-				Name:       jsii.String("GoGatorSubnet2"),
-				CidrMask:   jsii.Number(26),
-				SubnetType: awsec2.SubnetType_PUBLIC,
-			},
-		},
-	})
+	vpc := Vpc(stack)
+	sg := NewSecurityGroupSecurityGroup(stack, vpc)
 
-	sg := awsec2.NewSecurityGroup(stack, jsii.String("GoGatorSecurityGroup"), &awsec2.SecurityGroupProps{
-		Vpc:               vpc,
-		SecurityGroupName: jsii.String("Go-Gator-Security-Group"),
-		Description:       jsii.String("Allow inbound traffic from port 22 and 443"),
-		AllowAllOutbound:  jsii.Bool(true),
-	})
-	sg.AddIngressRule(awsec2.Peer_AnyIpv4(),
-		awsec2.Port_Tcp(jsii.Number(22)),
-		jsii.String("Allow SSH"),
-		jsii.Bool(true))
-	sg.AddIngressRule(awsec2.Peer_AnyIpv4(),
-		awsec2.Port_Tcp(jsii.Number(443)),
-		jsii.String("Allow HTTPS"),
-		jsii.Bool(true))
-	sg.AddIngressRule(awsec2.Peer_AnyIpv4(),
-		awsec2.Port_Tcp(jsii.Number(80)),
-		jsii.String("Allow HTTP"),
-		jsii.Bool(true))
-
-	igw := awsec2.NewCfnInternetGateway(stack, jsii.String("GoGatorInternetGateway"), &awsec2.CfnInternetGatewayProps{})
+	igw := InternetGateway(stack)
 	awsec2.NewCfnVPCGatewayAttachment(stack, jsii.String("GoGatorAttachGateway"), &awsec2.CfnVPCGatewayAttachmentProps{
 		VpcId:             vpc.VpcId(),
 		InternetGatewayId: igw.Ref(),
 	})
 
-	routeTable := awsec2.NewCfnRouteTable(stack, jsii.String("GoGatorRouteTable"), &awsec2.CfnRouteTableProps{
-		VpcId: vpc.VpcId(),
-	})
-	awsec2.NewCfnRoute(stack, jsii.String("GoGatorRoute"), &awsec2.CfnRouteProps{
-		RouteTableId:         routeTable.Ref(),
-		DestinationCidrBlock: jsii.String("0.0.0.0/0"),
-		GatewayId:            igw.Ref(),
-	})
+	routeTable := RouteTable(stack, vpc)
+	Route(stack, routeTable, igw, defaultCidrBlock)
 
 	subnets := vpc.PublicSubnets()
 	subnet1 := (*subnets)[0]
@@ -163,37 +208,12 @@ func NewGoGatorCdkProjectStack(scope constructs.Construct, id string, props *Aws
 
 	role := awsiam.Role_FromRoleArn(stack, jsii.String("EksClusterRole"), jsii.String("arn:aws:iam::406477933661:role/Oleksandr"), nil)
 
-	cluster := awseks.NewCluster(stack, jsii.String("GoGatorCluster"), &awseks.ClusterProps{
-		Version:       awseks.KubernetesVersion_V1_30(),
-		ClusterName:   jsii.String("GoGatorCluster"),
-		Role:          role,
-		SecurityGroup: sg,
-		Vpc:           vpc,
-	})
+	cluster := Cluster(stack, role, sg, vpc)
 
-	awseks.NewCfnAddon(stack, jsii.String("GoGatorCoreDnsAddon"), &awseks.CfnAddonProps{
-		ClusterName:  cluster.ClusterName(),
-		AddonName:    jsii.String("coredns"),
-		AddonVersion: jsii.String(CoreDnsVersion),
-	})
-
-	awseks.NewCfnAddon(stack, jsii.String("GoGatorKubeProxyAddon"), &awseks.CfnAddonProps{
-		ClusterName:  cluster.ClusterName(),
-		AddonName:    jsii.String("kube-proxy"),
-		AddonVersion: jsii.String(KubeProxyVersion),
-	})
-
-	awseks.NewCfnAddon(stack, jsii.String("GoGatorVpcCniAddon"), &awseks.CfnAddonProps{
-		ClusterName:  cluster.ClusterName(),
-		AddonName:    jsii.String("vpc-cni"),
-		AddonVersion: jsii.String(AmazonVpcCniVersion),
-	})
-
-	awseks.NewCfnAddon(stack, jsii.String("GoGatorEksPodIdentityAddon"), &awseks.CfnAddonProps{
-		AddonName:    jsii.String("eks-pod-identity-agent"),
-		ClusterName:  cluster.ClusterName(),
-		AddonVersion: jsii.String(PodIdentityVersion),
-	})
+	EksAddon(stack, cluster, "coredns", CoreDnsVersion, "GoGatorCodeDnsAddon")
+	EksAddon(stack, cluster, "kube-proxy", KubeProxyVersion, "GoGatorKubeProxyAddon")
+	EksAddon(stack, cluster, "vpc-cni", AmazonVpcCniVersion, "GoGatorVpcCniAddon")
+	EksAddon(stack, cluster, "eks-pod-identity-agent", PodIdentityVersion, "GoGatorPodIdentityAddon")
 
 	cluster.AddAutoScalingGroupCapacity(jsii.String("GoGatorNodeGroup"), &awseks.AutoScalingGroupCapacityOptions{
 		InstanceType:    awsec2.NewInstanceType(jsii.String("t2.micro")),

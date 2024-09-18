@@ -1,12 +1,15 @@
 {
-  "app": "go mod download && go run aws-setup.go",
+  "app": "go mod download && go run aws-cdk-setup.go",
   "watch": {
     "include": [
       "**"
     ],
     "exclude": [
       "README.md",
-      "cdk*.json"
+      "cdk*.json",
+      "go.mod",
+      "go.sum",
+      "**/*test.go"
     ]
   },
   "context": {

@@ -1,4 +1,4 @@
-module aws-setup
+module aws-cdk-setup
 
 go 1.18
 
@@ -10,6 +10,8 @@ require (
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
+	github.com/aws/aws-cdk-go v0.0.0-20240911201947-3ca75719a838 // indirect
+	github.com/aws/constructs-go v0.0.0-20231007124402-9c1294112c1b // indirect
 	github.com/cdklabs/awscdk-asset-awscli-go/awscliv1/v2 v2.2.202 // indirect
 	github.com/cdklabs/awscdk-asset-kubectl-go/kubectlv20/v2 v2.1.2 // indirect
 	github.com/cdklabs/awscdk-asset-node-proxy-agent-go/nodeproxyagentv6/v2 v2.1.0 // indirect

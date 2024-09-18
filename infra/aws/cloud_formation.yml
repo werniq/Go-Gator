@@ -91,6 +91,34 @@ Resources:
       UpgradePolicy:
         SupportType: EXTENDED
 
+  CoreDNSAddon:
+    Type: AWS::EKS::Addon
+    Properties:
+      AddonName: coredns
+      ClusterName: !Ref GoGatorCluster
+      ResolveConflicts: OVERWRITE
+
+  KubeProxyAddon:
+    Type: AWS::EKS::Addon
+    Properties:
+      AddonName: kube-proxy
+      ClusterName: !Ref GoGatorCluster
+      ResolveConflicts: OVERWRITE
+
+  AmazonVPCCniAddon:
+    Type: AWS::EKS::Addon
+    Properties:
+      AddonName: vpc-cni
+      ClusterName: !Ref GoGatorCluster
+      ResolveConflicts: OVERWRITE
+
+  PodIdentityAddon:
+    Type: AWS::EKS::Addon
+    Properties:
+      AddonName: eks-pod-identity-agent
+      ClusterName: !Ref GoGatorCluster
+      ResolveConflicts: OVERWRITE
+
   GoGatorNodeGroup:
     Type: AWS::EKS::Nodegroup
     Properties:

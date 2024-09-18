@@ -28,8 +28,73 @@ const (
 	PodIdentityVersion = "v1.3.2-eksbuild.2"
 )
 
+// AddParameters adds the parameters to the stack
+func AddParameters(stack awscdk.Stack) {
+	awscdk.NewCfnParameter(stack, jsii.String("VpcName"), &awscdk.CfnParameterProps{
+		Type:        jsii.String("String"),
+		Description: jsii.String("The name of the VPC."),
+		Default:     jsii.String("GoGatorVpc"),
+	})
+
+	awscdk.NewCfnParameter(stack, jsii.String("CidrBlock"), &awscdk.CfnParameterProps{
+		Type:        jsii.String("String"),
+		Description: jsii.String("The CIDR block for the VPC."),
+		Default:     jsii.String("10.0.1.0/24"),
+	})
+
+	awscdk.NewCfnParameter(stack, jsii.String("NodeGroupInstanceType"), &awscdk.CfnParameterProps{
+		Type:        jsii.String("String"),
+		Description: jsii.String("The EC2 instance type for the node group."),
+		Default:     jsii.String("t3.medium"),
+		AllowedValues: jsii.Strings(
+			"t3.medium",
+			"t2.medium",
+			"t2.small",
+		),
+	})
+
+	awscdk.NewCfnParameter(stack, jsii.String("MinimalNodeGroupSize"), &awscdk.CfnParameterProps{
+		Type:        jsii.String("Number"),
+		Description: jsii.String("The minimal number of nodes in the node group."),
+		Default:     jsii.Number(1),
+		MinValue:    jsii.Number(1),
+		MaxValue:    jsii.Number(5),
+	})
+
+	awscdk.NewCfnParameter(stack, jsii.String("MaximalNodeGroupSize"), &awscdk.CfnParameterProps{
+		Type:        jsii.String("Number"),
+		Description: jsii.String("The maximal number of nodes in the node group."),
+		Default:     jsii.Number(5),
+		MinValue:    jsii.Number(1),
+		MaxValue:    jsii.Number(10),
+	})
+
+	awscdk.NewCfnParameter(stack, jsii.String("NodeGroupDesiredCapacity"), &awscdk.CfnParameterProps{
+		Type:        jsii.String("Number"),
+		Description: jsii.String("The desired number of nodes in the node group."),
+		Default:     jsii.Number(1),
+	})
+
+	awscdk.NewCfnParameter(stack, jsii.String("KubernetesVersion"), &awscdk.CfnParameterProps{
+		Type:        jsii.String("String"),
+		Description: jsii.String("The Kubernetes version for the cluster."),
+		Default:     jsii.String("1.30"),
+		AllowedValues: jsii.Strings(
+			"1.24",
+			"1.25",
+			"1.26",
+			"1.27",
+			"1.28",
+			"1.29",
+			"1.30",
+		),
+	})
+}
+
 func NewGoGatorCdkProjectStack(scope constructs.Construct, id string, props *AwsSetupStackProps) awscdk.Stack {
 	stack := awscdk.NewStack(scope, &id, &props.StackProps)
+
+	AddParameters(stack)
 
 	vpc := awsec2.NewVpc(stack, jsii.String("GoGatorVpc"), &awsec2.VpcProps{
 		EnableDnsSupport:   jsii.Bool(true),

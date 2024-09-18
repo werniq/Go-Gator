@@ -14,6 +14,20 @@ type AwsSetupStackProps struct {
 	awscdk.StackProps
 }
 
+const (
+	// CoreDnsVersion is the version of the CoreDNS add-on
+	CoreDnsVersion = "v1.11.1-eksbuild.18"
+
+	// KubeProxyVersion is the version of the kube-proxy add-on
+	KubeProxyVersion = "v1.30.0-eksbuild.3"
+
+	// AmazonVpcCniVersion is the version of the Amazon VPC CNI add-on
+	AmazonVpcCniVersion = "v1.18.1-eksbuild.3"
+
+	// PodIdentityVersion is the version of the pod identity add-on
+	PodIdentityVersion = "v1.3.2-eksbuild.2"
+)
+
 func NewGoGatorCdkProjectStack(scope constructs.Construct, id string, props *AwsSetupStackProps) awscdk.Stack {
 	stack := awscdk.NewStack(scope, &id, &props.StackProps)
 
@@ -89,23 +103,27 @@ func NewGoGatorCdkProjectStack(scope constructs.Construct, id string, props *Aws
 	})
 
 	awseks.NewCfnAddon(stack, jsii.String("GoGatorCoreDnsAddon"), &awseks.CfnAddonProps{
-		ClusterName: cluster.ClusterName(),
-		AddonName:   jsii.String("coredns"),
+		ClusterName:  cluster.ClusterName(),
+		AddonName:    jsii.String("coredns"),
+		AddonVersion: jsii.String(CoreDnsVersion),
 	})
 
 	awseks.NewCfnAddon(stack, jsii.String("GoGatorKubeProxyAddon"), &awseks.CfnAddonProps{
-		ClusterName: cluster.ClusterName(),
-		AddonName:   jsii.String("kube-proxy"),
+		ClusterName:  cluster.ClusterName(),
+		AddonName:    jsii.String("kube-proxy"),
+		AddonVersion: jsii.String(KubeProxyVersion),
 	})
 
 	awseks.NewCfnAddon(stack, jsii.String("GoGatorVpcCniAddon"), &awseks.CfnAddonProps{
-		ClusterName: cluster.ClusterName(),
-		AddonName:   jsii.String("vpc-cni"),
+		ClusterName:  cluster.ClusterName(),
+		AddonName:    jsii.String("vpc-cni"),
+		AddonVersion: jsii.String(AmazonVpcCniVersion),
 	})
 
 	awseks.NewCfnAddon(stack, jsii.String("GoGatorEksPodIdentityAddon"), &awseks.CfnAddonProps{
-		AddonName:   jsii.String("eks-pod-identity-agent"),
-		ClusterName: cluster.ClusterName(),
+		AddonName:    jsii.String("eks-pod-identity-agent"),
+		ClusterName:  cluster.ClusterName(),
+		AddonVersion: jsii.String(PodIdentityVersion),
 	})
 
 	cluster.AddAutoScalingGroupCapacity(jsii.String("GoGatorNodeGroup"), &awseks.AutoScalingGroupCapacityOptions{

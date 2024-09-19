@@ -4,6 +4,7 @@ import (
 	awscdk "github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsec2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awseks"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
@@ -26,68 +27,70 @@ const (
 	PodIdentityAddonVersion = "v1.3.2-eksbuild.2"
 )
 
-//func AddParameters(stack awscdk.Stack) {
-//	awscdk.NewCfnParameter(stack, jsii.String("CidrBlock"), &awscdk.CfnParameterProps{
-//		Type:        jsii.String("String"),
-//		Description: jsii.String("The CIDR block for the VPC. This should be a valid private (RFC 1918) CIDR block."),
-//		Default:     jsii.String("10.0.1.0/24"),
-//	})
-//
-//	awscdk.NewCfnParameter(stack, jsii.String("NodeGroupInstanceType"), &awscdk.CfnParameterProps{
-//		Type:        jsii.String("String"),
-//		Description: jsii.String("The EC2 instance type for the node group."),
-//		Default:     jsii.String("t3.medium"),
-//		AllowedValues: &[]*string{
-//			jsii.String("t3.medium"),
-//			jsii.String("t2.medium"),
-//			jsii.String("t2.small"),
-//		},
-//	})
-//
-//	minimalNodeGroupSize := awscdk.NewCfnParameter(stack, jsii.String("MinimalNodeGroupSize"), &awscdk.CfnParameterProps{
-//		Type:        jsii.String("Number"),
-//		Description: jsii.String("The minimal number of nodes in the node group."),
-//		Default:     jsii.Number(1),
-//		MinValue:    jsii.Number(1),
-//		MaxValue:    jsii.Number(5),
-//	})
-//
-//	maximalNodeGroupSize := awscdk.NewCfnParameter(stack, jsii.String("MaximalNodeGroupSize"), &awscdk.CfnParameterProps{
-//		Type:        jsii.String("Number"),
-//		Description: jsii.String("The maximal number of nodes in the node group."),
-//		Default:     jsii.Number(5),
-//		MinValue:    jsii.Number(1),
-//		MaxValue:    jsii.Number(10),
-//	})
-//
-//	awscdk.NewCfnParameter(stack, jsii.String("NodeGroupDesiredCapacity"), &awscdk.CfnParameterProps{
-//		Type:        jsii.String("Number"),
-//		Description: jsii.String("The desired number of nodes in the node group."),
-//		Default:     jsii.Number(1),
-//		MinValue:    minimalNodeGroupSize.ValueAsNumber(),
-//		MaxValue:    maximalNodeGroupSize.ValueAsNumber(),
-//	})
-//
-//	awscdk.NewCfnParameter(stack, jsii.String("KubernetesVersion"), &awscdk.CfnParameterProps{
-//		Type:        jsii.String("String"),
-//		Description: jsii.String("The Kubernetes version for the cluster."),
-//		Default:     jsii.String("1.30"),
-//		AllowedValues: &[]*string{
-//			jsii.String("1.24"),
-//			jsii.String("1.25"),
-//			jsii.String("1.26"),
-//			jsii.String("1.27"),
-//			jsii.String("1.28"),
-//			jsii.String("1.29"),
-//			jsii.String("1.30"),
-//		},
-//	})
-//}
+func AddParameters(stack awscdk.Stack) {
+	awscdk.NewCfnParameter(stack, jsii.String("NodeGroupInstanceType"), &awscdk.CfnParameterProps{
+		Type:        jsii.String("String"),
+		Description: jsii.String("The EC2 instance type for the node group."),
+		Default:     jsii.String("t3.medium"),
+		AllowedValues: &[]*string{
+			jsii.String("t3.medium"),
+			jsii.String("t2.medium"),
+			jsii.String("t2.small"),
+		},
+	})
+
+	_ = awscdk.NewCfnParameter(stack, jsii.String("MinimalNodeGroupSize"), &awscdk.CfnParameterProps{
+		Type:        jsii.String("Number"),
+		Description: jsii.String("The minimal number of nodes in the node group."),
+		Default:     jsii.Number(1),
+		MinValue:    jsii.Number(1),
+		MaxValue:    jsii.Number(5),
+	})
+
+	_ = awscdk.NewCfnParameter(stack, jsii.String("NodeDiskSize"), &awscdk.CfnParameterProps{
+		Type:        jsii.String("Number"),
+		Description: jsii.String("The minimal number of nodes in the node group."),
+		MinValue:    jsii.Number(1 * 1024 * 1024 * 1024),
+		MaxValue:    jsii.Number(50 * 1024 * 1024 * 1024),
+		Default:     jsii.Number(10 * 1024 * 1024 * 1024),
+	})
+
+	_ = awscdk.NewCfnParameter(stack, jsii.String("MaximalNodeGroupSize"), &awscdk.CfnParameterProps{
+		Type:        jsii.String("Number"),
+		Description: jsii.String("The maximal number of nodes in the node group."),
+		Default:     jsii.Number(5),
+		MinValue:    jsii.Number(1),
+		MaxValue:    jsii.Number(10),
+	})
+
+	awscdk.NewCfnParameter(stack, jsii.String("NodeGroupDesiredCapacity"), &awscdk.CfnParameterProps{
+		Type:        jsii.String("Number"),
+		Description: jsii.String("The desired number of nodes in the node group."),
+		Default:     jsii.Number(1),
+		//MinValue:    minimalNodeGroupSize.ValueAsNumber(),
+		//MaxValue:    maximalNodeGroupSize.ValueAsNumber(),
+	})
+
+	awscdk.NewCfnParameter(stack, jsii.String("KubernetesVersion"), &awscdk.CfnParameterProps{
+		Type:        jsii.String("String"),
+		Description: jsii.String("The Kubernetes version for the cluster."),
+		Default:     jsii.String("1.30"),
+		AllowedValues: &[]*string{
+			jsii.String("1.24"),
+			jsii.String("1.25"),
+			jsii.String("1.26"),
+			jsii.String("1.27"),
+			jsii.String("1.28"),
+			jsii.String("1.29"),
+			jsii.String("1.30"),
+		},
+	})
+}
 
 func NewGoGatorCdkProjectStack(scope constructs.Construct, id string, props *AwsSetupStackProps) awscdk.Stack {
 	stack := awscdk.NewStack(scope, &id, &props.StackProps)
 
-	//AddParameters(stack)
+	AddParameters(stack)
 
 	vpc := awsec2.NewVpc(stack, jsii.String("GoGatorVpc"), &awsec2.VpcProps{
 		EnableDnsSupport:   jsii.Bool(true),
@@ -122,24 +125,6 @@ func NewGoGatorCdkProjectStack(scope constructs.Construct, id string, props *Aws
 		jsii.String("Allow HTTPS"),
 		jsii.Bool(true))
 
-	//clusterCreationRole := awsiam.NewRole(stack, jsii.String("GoGatorRole"), &awsiam.RoleProps{
-	//	AssumedBy: awsiam.NewServicePrincipal(jsii.String("eks.amazonaws.com"), &awsiam.ServicePrincipalOpts{
-	//		Region: jsii.String("us-east-2"),
-	//	}),
-	//	Description: jsii.String("Role to create EKS cluster"),
-	//})
-	//clusterCreationRole.AddManagedPolicy(awsiam.ManagedPolicy_FromManagedPolicyName(stack,
-	//	jsii.String("GoGatorAmazonEKSClusterPolicy"),
-	//	jsii.String("AmazonEKSClusterPolicy")))
-
-	subnet1RouteTable := awsec2.NewCfnRouteTable(stack, jsii.String("GoGatorRouteTable1"), &awsec2.CfnRouteTableProps{
-		VpcId: vpc.VpcId(),
-	})
-	awsec2.NewCfnRoute(stack, jsii.String("GoGatorRoute1"), &awsec2.CfnRouteProps{
-		RouteTableId:         subnet1RouteTable.Ref(),
-		DestinationCidrBlock: jsii.String("0.0.0.0/0"),
-		GatewayId:            vpc.InternetGatewayId(),
-	})
 	subnet2RouteTable := awsec2.NewCfnRouteTable(stack, jsii.String("GoGatorRouteTable2"), &awsec2.CfnRouteTableProps{
 		VpcId: vpc.VpcId(),
 	})
@@ -150,24 +135,38 @@ func NewGoGatorCdkProjectStack(scope constructs.Construct, id string, props *Aws
 	})
 
 	subnets := vpc.PublicSubnets()
-	subnet1 := (*subnets)[0]
-	subnet2 := (*subnets)[1]
+	subnet := (*subnets)[0]
 
-	awsec2.NewCfnSubnetRouteTableAssociation(stack, jsii.String("GoGatorSubnet1RouteTableAssociation"), &awsec2.CfnSubnetRouteTableAssociationProps{
-		SubnetId:     subnet1.SubnetId(),
-		RouteTableId: subnet1RouteTable.Ref(),
-	})
 	awsec2.NewCfnSubnetRouteTableAssociation(stack, jsii.String("GoGatorSubnet2RouteTableAssociation"), &awsec2.CfnSubnetRouteTableAssociationProps{
-		SubnetId:     subnet2.SubnetId(),
+		SubnetId:     subnet.SubnetId(),
 		RouteTableId: subnet2RouteTable.Ref(),
 	})
 
-	cluster := awseks.NewCluster(stack, jsii.String("GoGatorCluster"), &awseks.ClusterProps{
-		Version:     awseks.KubernetesVersion_V1_30(),
-		ClusterName: jsii.String("GoGatorCluster"),
-		//Role:          clusterCreationRole,
+	clusterRole := awsiam.NewRole(stack, jsii.String("GoGatorRoleForCluster"), &awsiam.RoleProps{
+		AssumedBy:   awsiam.NewServicePrincipal(jsii.String("eks.amazonaws.com"), &awsiam.ServicePrincipalOpts{}),
+		Description: jsii.String("Role for EKS cluster"),
+		RoleName:    jsii.String("GoGatorClusterAdministratorRole1"),
+	})
+	clusterRole.AddToPolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Resources: &[]*string{jsii.String("*")},
+		Actions:   &[]*string{jsii.String("*")},
+		Effect:    awsiam.Effect(awsiam.Effect_ALLOW),
+	}))
+
+	cluster := awseks.NewCluster(stack, jsii.String("GoGoGatorCluster"), &awseks.ClusterProps{
+		Version:       awseks.KubernetesVersion_V1_30(),
+		ClusterName:   jsii.String("GoGatorCluster"),
 		SecurityGroup: sg,
+		Role:          clusterRole,
 		Vpc:           vpc,
+	})
+
+	cluster.AddHelmChart(jsii.String("GoGatorHelmChart"), &awseks.HelmChartOptions{
+		Chart:           nil,
+		CreateNamespace: jsii.Bool(true),
+		Namespace:       jsii.String("go-gator"),
+		Release:         nil,
+		Repository:      nil,
 	})
 
 	awseks.NewCfnAddon(stack, jsii.String("GoGatorCoreDnsAddon"), &awseks.CfnAddonProps{
@@ -199,9 +198,9 @@ func NewGoGatorCdkProjectStack(scope constructs.Construct, id string, props *Aws
 		MaxCapacity:     jsii.Number(5),
 		MinCapacity:     jsii.Number(1),
 		VpcSubnets: &awsec2.SubnetSelection{
-			AvailabilityZones: jsii.Strings(*subnet1.AvailabilityZone(), *subnet2.AvailabilityZone()),
+			AvailabilityZones: jsii.Strings(*subnet.AvailabilityZone()),
 		},
-		InstanceType: awsec2.NewInstanceType(jsii.String("t2.micro")),
+		InstanceType: awsec2.NewInstanceType(jsii.String("t2.medium")),
 		MapRole:      jsii.Bool(true),
 	})
 

@@ -1,0 +1,16 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: go-gator-ca
+  namespace: go-gator
+spec:
+  isCA: true
+  commonName: go-gator-ca-cert
+  secretName: go-gator-ca
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: go-gator-self-signed-ca-issuer
+    kind: Issuer
+    group: cert-manager.io

@@ -36,11 +36,6 @@ var (
 	k8sClient client.Client
 )
 
-const (
-	// errFeedUsed is an error message indicating that the feed is used in hot news
-	errFeedUsed = "this feed is used in hot news, it cannot be deleted"
-)
-
 // SetupWebhookWithManager will set up the manager to manage the webhooks
 func (r *Feed) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	k8sClient = mgr.GetClient()

@@ -22,7 +22,7 @@ ENV PORT=443
 ENV UPDATES_FREQUENCY=4
 ENV CERT_FILE="/app/cmd/server/certs/certificate.pem"
 ENV CERT_KEY="/app/cmd/server/certs/key.pem"
-ENV STORAGE_PATH="."
+ENV STORAGE_PATH="./data"
 
 COPY --from=build /app/cmd/parsers/data $STORAGE_PATH
 COPY --from=build /app/go-gator .

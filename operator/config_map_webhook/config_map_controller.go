@@ -38,8 +38,8 @@ var (
 )
 
 const (
-	// errConfigMapIsNil identifies an error when the configMap data is nil, and no feed groups to reconcile
-	errConfigMapIsNil = "configMap data is nil, so no feed groups to reconcile"
+	// errEmptyData identifies an error when the configMap data is nil, and no feed groups to reconcile
+	errEmptyData = "configMap data is nil, so no feed groups to reconcile"
 )
 
 // RunConfigMapController starts the admission controller webhook for validating config maps.
@@ -67,13 +67,6 @@ func RunConfigMapController(tlsCertFile, tlsKeyFile string) error {
 	}
 
 	return nil
-}
-
-// patchOperation is an operation of a JSON patch, see https://tools.ietf.org/html/rfc6902 .
-type patchOperation struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
 }
 
 // webhookApiResponse is minimal required response from a webhook to allow or forbid a request
@@ -114,8 +107,6 @@ func setupRoutes(r *gin.Engine) {
 
 // validatingConfigMapHandler parses the HTTP request for an admission controller webhook, and -- in case of a well-formed
 // request -- delegates the admission control logic to the validateConfigMap func
-//
-// The response body is then returned as raw bytes.
 func validatingConfigMapHandler(c *gin.Context) {
 	var err error
 
@@ -180,7 +171,7 @@ func validatingConfigMapHandler(c *gin.Context) {
 	}
 
 	if !isKubeNamespace(admissionReviewReq.Request.Namespace) {
-		_, err = validateConfigMap(admissionReviewReq.Request)
+		err = validateConfigMap(admissionReviewReq.Request)
 	}
 
 	if err != nil {
@@ -211,32 +202,36 @@ func validatingConfigMapHandler(c *gin.Context) {
 
 // validateConfigMap verifies that the configMap has a data field and triggers a reconcile of all hotnews
 // which have the feed group in their feed groups.
-func validateConfigMap(req *admission.AdmissionRequest) ([]patchOperation, error) {
+func validateConfigMap(req *admission.AdmissionRequest) error {
 	if req.Resource != configMapResource {
-		return nil, fmt.Errorf("expect resource to be %s, got %s", configMapResource, req.Resource)
+		return fmt.Errorf("expect resource to be %s, got %s", configMapResource, req.Resource)
 	}
 
 	raw := req.Object.Raw
 	configMap := v1.ConfigMap{}
 	if _, _, err := universalDeserializer.Decode(raw, nil, &configMap); err != nil {
-		return nil, fmt.Errorf("could not deserialize configMap: %v", err)
+		return fmt.Errorf("could not deserialize configMap: %v", err)
+	}
+
+	if _, exists := configMap.Labels["feed-group-source"]; !exists {
+		return nil
 	}
 
 	if configMap.Data == nil {
-		return nil, fmt.Errorf(errConfigMapIsNil)
+		return fmt.Errorf(errEmptyData)
 	}
 
 	feeds, err := getAllHotNewsFromNamespace(configMap.Namespace)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = triggerHotNewsReconcile(configMap.Data, feeds)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return []patchOperation{}, nil
+	return nil
 }
 
 // getAllHotNewsFromNamespace retrieves all hotnews from the provided namespace

@@ -2,9 +2,9 @@ package main
 
 import (
 	awscdk "github.com/aws/aws-cdk-go/awscdk/v2"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awsec2"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awseks"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
+	ec2 "github.com/aws/aws-cdk-go/awscdk/v2/awsec2"
+	eks "github.com/aws/aws-cdk-go/awscdk/v2/awseks"
+	iam "github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
@@ -15,7 +15,7 @@ type AwsSetupStackProps struct {
 
 const (
 	// CoreDnsAddonVersion is the version of the CoreDNS addon to install.
-	CoreDnsAddonVersion = "v1.11.1-eksbuild.8"
+	CoreDnsAddonVersion = "v1.11.3-eksbuild.1"
 
 	// KubeProxyAddonVersion is the version of the kube-proxy addon to install.
 	KubeProxyAddonVersion = "v1.30.0-eksbuild.3"
@@ -92,43 +92,43 @@ func NewGoGatorCdkProjectStack(scope constructs.Construct, id string, props *Aws
 
 	AddParameters(stack)
 
-	vpc := awsec2.NewVpc(stack, jsii.String("GoGatorVpc"), &awsec2.VpcProps{
+	vpc := ec2.NewVpc(stack, jsii.String("GoGatorVpc"), &ec2.VpcProps{
 		EnableDnsSupport:   jsii.Bool(true),
 		EnableDnsHostnames: jsii.Bool(true),
 		MaxAzs:             jsii.Number(2),
-		SubnetConfiguration: &[]*awsec2.SubnetConfiguration{
+		SubnetConfiguration: &[]*ec2.SubnetConfiguration{
 			{
 				Name:       jsii.String("GoGatorSubnet1"),
 				CidrMask:   jsii.Number(24),
-				SubnetType: awsec2.SubnetType_PRIVATE_WITH_EGRESS,
+				SubnetType: ec2.SubnetType_PRIVATE_WITH_EGRESS,
 			},
 			{
 				Name:       jsii.String("GoGatorSubnet2"),
 				CidrMask:   jsii.Number(24),
-				SubnetType: awsec2.SubnetType_PUBLIC,
+				SubnetType: ec2.SubnetType_PUBLIC,
 			},
 		},
 	})
 
-	sg := awsec2.NewSecurityGroup(stack, jsii.String("GoGatorSecurityGroup"), &awsec2.SecurityGroupProps{
+	sg := ec2.NewSecurityGroup(stack, jsii.String("GoGatorSecurityGroup"), &ec2.SecurityGroupProps{
 		Vpc:               vpc,
 		SecurityGroupName: jsii.String("Go-Gator-Security-Group"),
 		Description:       jsii.String("Allow inbound traffic from port 22 and 443"),
 		AllowAllOutbound:  jsii.Bool(true),
 	})
-	sg.AddIngressRule(awsec2.Peer_AnyIpv4(),
-		awsec2.Port_Tcp(jsii.Number(22)),
+	sg.AddIngressRule(ec2.Peer_AnyIpv4(),
+		ec2.Port_Tcp(jsii.Number(22)),
 		jsii.String("Allow SSH"),
 		jsii.Bool(true))
-	sg.AddIngressRule(awsec2.Peer_AnyIpv4(),
-		awsec2.Port_Tcp(jsii.Number(443)),
+	sg.AddIngressRule(ec2.Peer_AnyIpv4(),
+		ec2.Port_Tcp(jsii.Number(443)),
 		jsii.String("Allow HTTPS"),
 		jsii.Bool(true))
 
-	subnet2RouteTable := awsec2.NewCfnRouteTable(stack, jsii.String("GoGatorRouteTable2"), &awsec2.CfnRouteTableProps{
+	subnet2RouteTable := ec2.NewCfnRouteTable(stack, jsii.String("GoGatorRouteTable2"), &ec2.CfnRouteTableProps{
 		VpcId: vpc.VpcId(),
 	})
-	awsec2.NewCfnRoute(stack, jsii.String("GoGatorRoute2"), &awsec2.CfnRouteProps{
+	ec2.NewCfnRoute(stack, jsii.String("GoGatorRoute2"), &ec2.CfnRouteProps{
 		RouteTableId:         subnet2RouteTable.Ref(),
 		DestinationCidrBlock: jsii.String("0.0.0.0/0"),
 		GatewayId:            vpc.InternetGatewayId(),
@@ -137,71 +137,97 @@ func NewGoGatorCdkProjectStack(scope constructs.Construct, id string, props *Aws
 	subnets := vpc.PublicSubnets()
 	subnet := (*subnets)[0]
 
-	awsec2.NewCfnSubnetRouteTableAssociation(stack, jsii.String("GoGatorSubnet2RouteTableAssociation"), &awsec2.CfnSubnetRouteTableAssociationProps{
+	ec2.NewCfnSubnetRouteTableAssociation(stack, jsii.String("GoGatorSubnet2RouteTableAssociation"), &ec2.CfnSubnetRouteTableAssociationProps{
 		SubnetId:     subnet.SubnetId(),
 		RouteTableId: subnet2RouteTable.Ref(),
 	})
 
-	clusterRole := awsiam.NewRole(stack, jsii.String("GoGatorRoleForCluster"), &awsiam.RoleProps{
-		AssumedBy:   awsiam.NewServicePrincipal(jsii.String("eks.amazonaws.com"), &awsiam.ServicePrincipalOpts{}),
-		Description: jsii.String("Role for EKS cluster"),
-		RoleName:    jsii.String("GoGatorClusterAdministratorRole1"),
-	})
-	clusterRole.AddToPolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
-		Resources: &[]*string{jsii.String("*")},
-		Actions:   &[]*string{jsii.String("*")},
-		Effect:    awsiam.Effect(awsiam.Effect_ALLOW),
-	}))
-
-	cluster := awseks.NewCluster(stack, jsii.String("GoGoGatorCluster"), &awseks.ClusterProps{
-		Version:       awseks.KubernetesVersion_V1_30(),
-		ClusterName:   jsii.String("GoGatorCluster"),
-		SecurityGroup: sg,
-		Role:          clusterRole,
-		Vpc:           vpc,
+	eksRole := iam.NewRole(stack, jsii.String("EksClusterRole"), &iam.RoleProps{
+		AssumedBy: iam.NewServicePrincipal(jsii.String("eks.amazonaws.com"), nil),
+		ManagedPolicies: &[]iam.IManagedPolicy{
+			iam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonEKSClusterPolicy")),
+			iam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonEKSServicePolicy")),
+		},
 	})
 
-	cluster.AddHelmChart(jsii.String("GoGatorHelmChart"), &awseks.HelmChartOptions{
-		Chart:           nil,
-		CreateNamespace: jsii.Bool(true),
-		Namespace:       jsii.String("go-gator"),
-		Release:         nil,
-		Repository:      nil,
+	cluster := eks.NewCluster(stack, jsii.String("NewsAggregatorCluster"), &eks.ClusterProps{
+		ClusterName:     jsii.String("NewsGoGatorCluster"),
+		Version:         eks.KubernetesVersion_V1_30(),
+		Vpc:             vpc,
+		Role:            eksRole,
+		DefaultCapacity: jsii.Number(0),
+		EndpointAccess:  eks.EndpointAccess_PUBLIC_AND_PRIVATE(),
 	})
 
-	awseks.NewCfnAddon(stack, jsii.String("GoGatorCoreDnsAddon"), &awseks.CfnAddonProps{
+	userName := "oleksandr"
+	iamUserArn := "arn:aws:iam::406477933661:user/" + userName
+	cluster.AwsAuth().AddUserMapping(iam.User_FromUserArn(stack, jsii.String(userName), jsii.String(iamUserArn)), &eks.AwsAuthMapping{
+		Username: jsii.String(userName),
+		Groups: &[]*string{
+			jsii.String("system:masters"),
+		},
+	})
+
+	eks.NewCfnAddon(stack, jsii.String("GoGatorCoreDnsAddon"), &eks.CfnAddonProps{
 		ClusterName:  cluster.ClusterName(),
 		AddonName:    jsii.String("coredns"),
 		AddonVersion: jsii.String(CoreDnsAddonVersion),
 	})
 
-	awseks.NewCfnAddon(stack, jsii.String("GoGatorKubeProxyAddon"), &awseks.CfnAddonProps{
+	eks.NewCfnAddon(stack, jsii.String("GoGatorKubeProxyAddon"), &eks.CfnAddonProps{
 		ClusterName:  cluster.ClusterName(),
 		AddonName:    jsii.String("kube-proxy"),
 		AddonVersion: jsii.String(KubeProxyAddonVersion),
 	})
 
-	awseks.NewCfnAddon(stack, jsii.String("GoGatorVpcCniAddon"), &awseks.CfnAddonProps{
+	eks.NewCfnAddon(stack, jsii.String("GoGatorVpcCniAddon"), &eks.CfnAddonProps{
 		ClusterName:  cluster.ClusterName(),
 		AddonName:    jsii.String("vpc-cni"),
 		AddonVersion: jsii.String(AmazonVpcCniAddonVersion),
 	})
 
-	awseks.NewCfnAddon(stack, jsii.String("GoGatorEksPodIdentityAddon"), &awseks.CfnAddonProps{
+	eks.NewCfnAddon(stack, jsii.String("GoGatorEksPodIdentityAddon"), &eks.CfnAddonProps{
 		AddonName:    jsii.String("eks-pod-identity-agent"),
 		ClusterName:  cluster.ClusterName(),
 		AddonVersion: jsii.String(PodIdentityAddonVersion),
 	})
 
-	cluster.AddAutoScalingGroupCapacity(jsii.String("GoGatorNodeGroup"), &awseks.AutoScalingGroupCapacityOptions{
-		DesiredCapacity: jsii.Number(1),
-		MaxCapacity:     jsii.Number(5),
-		MinCapacity:     jsii.Number(1),
-		VpcSubnets: &awsec2.SubnetSelection{
-			AvailabilityZones: jsii.Strings(*subnet.AvailabilityZone()),
+	nodeGroupRole := iam.NewRole(stack, jsii.String("node-group-role"), &iam.RoleProps{
+		AssumedBy:   iam.NewServicePrincipal(jsii.String("ec2.amazonaws.com"), nil),
+		Description: jsii.String("Role for EKS Node Group"),
+		ManagedPolicies: &[]iam.IManagedPolicy{
+			iam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonEC2ContainerRegistryReadOnly")),
+			iam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonEC2FullAccess")),
+			iam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonEKS_CNI_Policy")),
+			iam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonEKSWorkerNodePolicy")),
 		},
-		InstanceType: awsec2.NewInstanceType(jsii.String("t2.medium")),
-		MapRole:      jsii.Bool(true),
+		RoleName: jsii.String("GoGatorNodeGroupRoleAdmin"),
+	})
+
+	cluster.AddNodegroupCapacity(jsii.String("GoGatorNodeGroup"), &eks.NodegroupOptions{
+		DesiredSize:   jsii.Number(1),
+		MaxSize:       jsii.Number(5),
+		MinSize:       jsii.Number(1),
+		NodegroupName: jsii.String("GoGatorNodeGroup"),
+		NodeRole:      nodeGroupRole,
+		RemoteAccess: &eks.NodegroupRemoteAccess{
+			SshKeyName: jsii.String("Go-Gator-Client-Keys"),
+		},
+		Subnets: &ec2.SubnetSelection{
+			Subnets: subnets,
+		},
+	})
+
+	cluster.AddHelmChart(jsii.String("GoGatorHelmChart-Go-Gator"), &eks.HelmChartOptions{
+		Repository:      jsii.String("406477933661.dkr.ecr.us-east-2.amazonaws.com"),
+		CreateNamespace: jsii.Bool(true),
+		Namespace:       jsii.String("go-gator"),
+		Chart:           jsii.String("qniw984/go-gator:0.1.0"),
+	})
+
+	cluster.AddHelmChart(jsii.String("GoGatorHelmChart-Day-0"), &eks.HelmChartOptions{
+		Repository: jsii.String("406477933661.dkr.ecr.us-east-2.amazonaws.com"),
+		Chart:      jsii.String("qniw984/day-0:0.1.0"),
 	})
 
 	return stack
@@ -212,7 +238,7 @@ func main() {
 
 	app := awscdk.NewApp(nil)
 
-	NewGoGatorCdkProjectStack(app, "NewGoGatorAwsSetupStack", &AwsSetupStackProps{
+	NewGoGatorCdkProjectStack(app, "NewsAggregatorAwsSetupStack", &AwsSetupStackProps{
 		awscdk.StackProps{
 			Env: env(),
 		},

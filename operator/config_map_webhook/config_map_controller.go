@@ -38,8 +38,8 @@ var (
 )
 
 const (
-	// errConfigMapIsNil identifies an error when the configMap data is nil, and no feed groups to reconcile
-	errConfigMapIsNil = "configMap data is nil, so no feed groups to reconcile"
+	// errEmptyData identifies an error when the configMap data is nil, and no feed groups to reconcile
+	errEmptyData = "configMap data is nil, so no feed groups to reconcile"
 )
 
 // RunConfigMapController starts the admission controller webhook for validating config maps.
@@ -164,6 +164,7 @@ func validatingConfigMapHandler(c *gin.Context) {
 		return
 	}
 
+	// I've initialized it here, because earlier it was causing a nil pointer exception at admissionReviewReq.Request.UID
 	res := webhookApiResponse{
 		ApiVersion: admissionReviewReq.APIVersion,
 		Kind:       admissionReviewReq.Kind,
@@ -216,7 +217,7 @@ func validateConfigMap(req *admission.AdmissionRequest) error {
 	}
 
 	if configMap.Data == nil {
-		return fmt.Errorf(errConfigMapIsNil)
+		return fmt.Errorf(errEmptyData)
 	}
 
 	feeds, err := getAllHotNewsFromNamespace(configMap.Namespace)

@@ -21,7 +21,7 @@ FROM alpine:3.20
 ENV PORT=443
 ENV CERT_FILE=/app/cmd/server/certs/certificate.pem
 ENV CERT_KEY=/app/cmd/server/certs/key.pem
-ENV STORAGE_PATH=/tmp/
+ENV STORAGE_PATH=./data
 
 COPY --from=build /app/cmd/parsers/data/ $STORAGE_PATH
 COPY --from=build /app/go-gator .

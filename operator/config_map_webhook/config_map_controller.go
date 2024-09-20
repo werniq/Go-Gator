@@ -69,13 +69,6 @@ func RunConfigMapController(tlsCertFile, tlsKeyFile string) error {
 	return nil
 }
 
-// patchOperation is an operation of a JSON patch, see https://tools.ietf.org/html/rfc6902 .
-type patchOperation struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
-}
-
 // webhookApiResponse is minimal required response from a webhook to allow or forbid a request
 type webhookApiResponse struct {
 	ApiVersion string   `json:"apiVersion"`
@@ -180,7 +173,7 @@ func validatingConfigMapHandler(c *gin.Context) {
 	}
 
 	if !isKubeNamespace(admissionReviewReq.Request.Namespace) {
-		_, err = validateConfigMap(admissionReviewReq.Request)
+		err = validateConfigMap(admissionReviewReq.Request)
 	}
 
 	if err != nil {
@@ -211,32 +204,32 @@ func validatingConfigMapHandler(c *gin.Context) {
 
 // validateConfigMap verifies that the configMap has a data field and triggers a reconcile of all hotnews
 // which have the feed group in their feed groups.
-func validateConfigMap(req *admission.AdmissionRequest) ([]patchOperation, error) {
+func validateConfigMap(req *admission.AdmissionRequest) error {
 	if req.Resource != configMapResource {
-		return nil, fmt.Errorf("expect resource to be %s, got %s", configMapResource, req.Resource)
+		return fmt.Errorf("expect resource to be %s, got %s", configMapResource, req.Resource)
 	}
 
 	raw := req.Object.Raw
 	configMap := v1.ConfigMap{}
 	if _, _, err := universalDeserializer.Decode(raw, nil, &configMap); err != nil {
-		return nil, fmt.Errorf("could not deserialize configMap: %v", err)
+		return fmt.Errorf("could not deserialize configMap: %v", err)
 	}
 
 	if configMap.Data == nil {
-		return nil, fmt.Errorf(errConfigMapIsNil)
+		return fmt.Errorf(errConfigMapIsNil)
 	}
 
 	feeds, err := getAllHotNewsFromNamespace(configMap.Namespace)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = triggerHotNewsReconcile(configMap.Data, feeds)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return []patchOperation{}, nil
+	return nil
 }
 
 // getAllHotNewsFromNamespace retrieves all hotnews from the provided namespace

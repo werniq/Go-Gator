@@ -94,6 +94,7 @@ type FeedConditions struct {
 }
 
 // +kubebuilder:subresource:status
+// +kubebuilder:object:root=true
 
 // Feed is the Schema for the feeds API
 // This is the main struct that represents the Feed object, including its specification and status.

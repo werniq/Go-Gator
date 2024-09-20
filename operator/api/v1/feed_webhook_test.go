@@ -107,7 +107,6 @@ func TestFeed_validateFeed(t *testing.T) {
 				},
 			},
 			setup: func() {
-				k8sClient = k8sClient
 			},
 			expectedErr: true,
 		},
@@ -125,7 +124,6 @@ func TestFeed_validateFeed(t *testing.T) {
 				},
 			},
 			setup: func() {
-				k8sClient = k8sClient
 			},
 			expectedErr: true,
 		},

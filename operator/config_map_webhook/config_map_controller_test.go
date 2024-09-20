@@ -485,7 +485,7 @@ func TestValidateConfigMap_UniversalDecoderFails(t *testing.T) {
 		Object:   runtime.RawExtension{Raw: invalidRaw},
 	}
 
-	_, err := validateConfigMap(req)
+	err := validateConfigMap(req)
 
 	if err == nil || !strings.Contains(err.Error(), "could not deserialize configMap") {
 		t.Fatalf("expected deserialization error, got: %v", err)

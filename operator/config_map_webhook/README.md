@@ -1,8 +1,10 @@
-# README.md
-
+# ConfigMap Admission Controller Webhook
 ## Overview
 
-This project implements an **Admission Controller Webhook** for Kubernetes that validates `ConfigMap` objects before they are admitted into the cluster. It ensures the `ConfigMap` has the required structure and triggers a reconcile of specific custom resources (`HotNews`) when necessary.
+This project implements an **Admission Controller Webhook** for Kubernetes that validates 
+`ConfigMap` objects before they are admitted into the cluster. 
+It ensures that every time a feed in the `ConfigMap` is updated, all `HotNews` resources that
+use the same feed group are reconciled.
 
 ## Features
 

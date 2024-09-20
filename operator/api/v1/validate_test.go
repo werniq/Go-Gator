@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -227,7 +226,7 @@ func Test_baseHandler_HandleNext(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &urlValidate{}
 			h.SetNext(tt.fields.next)
-			tt.wantErr(t, h.HandleNext(), fmt.Sprintf("HandleNext()"))
+			tt.wantErr(t, h.HandleNext(), "HandleNext()")
 		})
 	}
 }

@@ -177,7 +177,7 @@ func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsagg
 	logger := log.FromContext(ctx)
 	logger.Info("handling update")
 
-	requestUrl, err := r.constructRequestUrl(ctx, hotNews.Spec)
+	requestUrl, err := r.constructRequestUrl(hotNews.Spec)
 	if err != nil {
 		logger.Error(err, errFailedToConstructRequestUrl)
 		return err
@@ -248,7 +248,7 @@ func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsagg
 // Example:
 // http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&dateEnd=2024-08-06&sources=abc,bbc
 // http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&sources=abc,bbc
-func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsaggregatorv1.HotNewsSpec) (string, error) {
+func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpec) (string, error) {
 	var requestUrl strings.Builder
 
 	requestUrl.WriteString(r.serverUrl)

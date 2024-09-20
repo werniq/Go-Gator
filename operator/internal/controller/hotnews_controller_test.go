@@ -474,7 +474,7 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 				Scheme:    tt.fields.Scheme,
 				serverUrl: serverNewsEndpoint,
 			}
-			got, err := r.constructRequestUrl(context.Background(), tt.args.spec)
+			got, err := r.constructRequestUrl(tt.args.spec)
 
 			if tt.wantErr {
 				assert.NotNil(t, err)

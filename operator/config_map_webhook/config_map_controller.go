@@ -107,8 +107,6 @@ func setupRoutes(r *gin.Engine) {
 
 // validatingConfigMapHandler parses the HTTP request for an admission controller webhook, and -- in case of a well-formed
 // request -- delegates the admission control logic to the validateConfigMap func
-//
-// The response body is then returned as raw bytes.
 func validatingConfigMapHandler(c *gin.Context) {
 	var err error
 
@@ -164,7 +162,6 @@ func validatingConfigMapHandler(c *gin.Context) {
 		return
 	}
 
-	// I've initialized it here, because earlier it was causing a nil pointer exception at admissionReviewReq.Request.UID
 	res := webhookApiResponse{
 		ApiVersion: admissionReviewReq.APIVersion,
 		Kind:       admissionReviewReq.Kind,
@@ -214,6 +211,10 @@ func validateConfigMap(req *admission.AdmissionRequest) error {
 	configMap := v1.ConfigMap{}
 	if _, _, err := universalDeserializer.Decode(raw, nil, &configMap); err != nil {
 		return fmt.Errorf("could not deserialize configMap: %v", err)
+	}
+
+	if _, exists := configMap.Labels["feed-group-source"]; !exists {
+		return nil
 	}
 
 	if configMap.Data == nil {

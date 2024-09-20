@@ -213,10 +213,6 @@ func validateConfigMap(req *admission.AdmissionRequest) error {
 		return fmt.Errorf("could not deserialize configMap: %v", err)
 	}
 
-	if _, exists := configMap.Labels["feed-group-source"]; !exists {
-		return nil
-	}
-
 	if configMap.Data == nil {
 		return fmt.Errorf(errEmptyData)
 	}

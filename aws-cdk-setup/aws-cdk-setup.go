@@ -218,17 +218,17 @@ func NewGoGatorCdkProjectStack(scope constructs.Construct, id string, props *Aws
 		},
 	})
 
-	cluster.AddHelmChart(jsii.String("GoGatorHelmChart-Go-Gator"), &eks.HelmChartOptions{
-		Repository:      jsii.String("406477933661.dkr.ecr.us-east-2.amazonaws.com"),
-		CreateNamespace: jsii.Bool(true),
-		Namespace:       jsii.String("go-gator"),
-		Chart:           jsii.String("qniw984/go-gator:0.1.0"),
-	})
-
-	cluster.AddHelmChart(jsii.String("GoGatorHelmChart-Day-0"), &eks.HelmChartOptions{
-		Repository: jsii.String("406477933661.dkr.ecr.us-east-2.amazonaws.com"),
-		Chart:      jsii.String("qniw984/day-0:0.1.0"),
-	})
+	//cluster.AddHelmChart(jsii.String("GoGatorHelmChart-Go-Gator"), &eks.HelmChartOptions{
+	//	Repository:      jsii.String("406477933661.dkr.ecr.us-east-2.amazonaws.com"),
+	//	CreateNamespace: jsii.Bool(true),
+	//	Namespace:       jsii.String("go-gator"),
+	//	Chart:           jsii.String("qniw984/go-gator:0.1.0"),
+	//})
+	//
+	//cluster.AddHelmChart(jsii.String("GoGatorHelmChart-Day-0"), &eks.HelmChartOptions{
+	//	Repository: jsii.String("406477933661.dkr.ecr.us-east-2.amazonaws.com"),
+	//	Chart:      jsii.String("qniw984/day-0:0.1.0"),
+	//})
 
 	return stack
 }

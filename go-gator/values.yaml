@@ -10,6 +10,9 @@ image:
   pullPolicy: IfNotPresent
   tag: "1.3.0"
 
+cronJob:
+  schedule: "0 0 * * *"
+
 serviceAccount:
   create: true
   automount: true

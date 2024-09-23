@@ -115,12 +115,14 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if !hotNews.DeletionTimestamp.IsZero() {
 		err = r.removeFeedReference(ctx, hotNews)
 		if err != nil {
+			hotNews.SetFailedToCreateCondition("Failed to remove feed reference: ", err.Error())
 			return ctrl.Result{}, err
 		}
 
 		controllerutil.RemoveFinalizer(&hotNews, newsaggregatorv1.HotNewsFinalizer)
 		err = r.Client.Update(ctx, &hotNews)
 		if err != nil {
+			hotNews.SetFailedToCreateCondition("Failed to update fail: ", err.Error())
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, nil
@@ -128,17 +130,20 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	err = r.processHotNews(ctx, &hotNews)
 	if err != nil {
+		hotNews.SetFailedToCreateCondition("Failed to process feed news: ", err.Error())
 		return ctrl.Result{}, err
 	}
 	logger.Info("HotNews object has been updated")
 
 	err = r.setFeedReference(ctx, hotNews)
 	if err != nil {
+		hotNews.SetFailedToCreateCondition("Failed to set feed reference: ", err.Error())
 		return ctrl.Result{}, err
 	}
 
 	err = r.Client.Status().Update(ctx, &hotNews)
 	if err != nil {
+		hotNews.SetFailedToCreateCondition("Failed to update hotnews object: ", err.Error())
 		return ctrl.Result{}, err
 	}
 

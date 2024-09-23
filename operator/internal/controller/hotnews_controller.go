@@ -231,7 +231,7 @@ func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsagg
 	}
 	logger.Info("Total amount of news", "totalAmount", articles.TotalNews)
 
-	hotNews.InitHotNewsStatus(articles.TotalNews, requestUrl, articlesTitles)
+	hotNews.SetStatus(articles.TotalNews, requestUrl, articlesTitles)
 
 	logger.Info("HotNews.processHotNews has been successfully executed")
 	logger.Info("HotNews object", "HotNews", hotNews)

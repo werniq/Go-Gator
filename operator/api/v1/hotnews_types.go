@@ -25,6 +25,28 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	// TypeHotNewsCreated represents the Created condition type
+	TypeHotNewsCreated = "Created"
+
+	// TypeHotNewsUpdated represents the reason for created condition
+	TypeHotNewsUpdated = "Updated"
+
+	// TypeHotNewsFailedToCreate represents the reason for failed to create condition
+	TypeHotNewsFailedToCreate = "FailedToCreate"
+
+	// HotNewsSuccessfullyCreated represents the reason for created condition
+	HotNewsSuccessfullyCreated = "HotNews was successfully created"
+
+	// HotNewsSuccessfullyUpdated represents the reason for updated condition
+	HotNewsSuccessfullyUpdated = "HotNews was successfully updated"
+
+	// hotNewsStatusConditionsCapacity is a capacity of hot news status conditions map
+	// It is defaulted to 3, since we have 3 conditions: Created, Updated, FailedToCreate.
+	// Condition Deleted is not included, since it is not used in the current implementation
+	hotNewsStatusConditionsCapacity = 3
+)
+
 // HotNewsSpec defines the desired state of HotNews.
 //
 // This struct will be used to retrieve news by the criteria, specified here
@@ -72,6 +94,27 @@ type HotNewsStatus struct {
 
 	// ArticlesTitles contains a list of titles of first 10 articles
 	ArticlesTitles []string `json:"articlesTitles"`
+
+	Conditions map[string]HotNewsConditions `json:"conditions,omitempty"`
+}
+
+type HotNewsConditions struct {
+	// Status field is a boolean that represents the status of the condition
+	// A value of true typically indicates the condition is met, while
+	// false indicates it is not.
+	Status bool `json:"status"`
+
+	// Reason field is a string which is populated if status is false
+	// It explains the reason for the current status.
+	Reason string `json:"reason"`
+
+	// Message field is a string which is populated if status is false
+	// It provides additional details or a message about the condition.
+	Message string `json:"message"`
+
+	// LastUpdateTime is a time when an object changes its state
+	// This timestamp indicates the last time the condition was updated.
+	LastUpdateTime metav1.Time `json:"lastUpdateTime"`
 }
 
 // +kubebuilder:object:root=true
@@ -127,8 +170,38 @@ func (r *HotNews) GetFeedGroupNames(ctx context.Context) ([]string, error) {
 	return feedGroups, nil
 }
 
-// InitHotNewsStatus func initializes HotNews.Status object with the provided data
-func (r *HotNews) InitHotNewsStatus(articlesCount int, requestUrl string, articlesTitles []string) {
+// SetCreatedCondition func initializes HotNews.Status.Conditions object with the Created condition
+func (r *HotNews) SetCreatedCondition(reason string) {
+	r.setCondition(TypeHotNewsCreated, createdReason, reason, HotNewsSuccessfullyCreated)
+}
+
+// SetUpdatedCondition creates (or updates) the Updated condition of the HotNews
+// indicating that the HotNews was successfully updated
+func (r *HotNews) SetUpdatedCondition(reason string) {
+	r.setCondition(TypeHotNewsUpdated, createdReason, reason, HotNewsSuccessfullyUpdated)
+}
+
+// SetFailedToCreateCondition initializes (or updates) a condition with the FailedToCreate key
+// with given message and reason
+func (r *HotNews) SetFailedToCreateCondition(message, reason string) {
+	r.setCondition(TypeHotNewsFailedToCreate, failedToCreateReason, reason, message)
+}
+
+func (r *HotNews) setCondition(conditionType string, status bool, reason, message string) {
+	if r.Status.Conditions == nil {
+		r.Status.Conditions = make(map[string]HotNewsConditions, hotNewsStatusConditionsCapacity)
+	}
+
+	r.Status.Conditions[conditionType] = HotNewsConditions{
+		Status:         status,
+		Reason:         reason,
+		Message:        message,
+		LastUpdateTime: metav1.Now(),
+	}
+}
+
+// SetStatus func initializes HotNews.Status object with the provided data
+func (r *HotNews) SetStatus(articlesCount int, requestUrl string, articlesTitles []string) {
 	r.Status.ArticlesCount = articlesCount
 	r.Status.NewsLink = requestUrl
 

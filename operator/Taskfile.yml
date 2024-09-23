@@ -1,7 +1,7 @@
 version: '3'
 
 env:
-  DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "qniw984/hotnews-controller:1.2.6" }}'
+  DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "qniw984/hotnews-controller:1.3.8" }}'
   ENVTEST_K8S_VERSION: '{{ .ENVTEST_K8S_VERSION | default "1.30.0" }}'
   CONTAINER_TOOL: '{{ .CONTAINER_TOOL | default "docker" }}'
   LOCALBIN: /workspaces/Go-Gator/operator/bin
@@ -21,35 +21,6 @@ env:
   GOLANGCI_LINT_VERSION: '{{ .GOLANGCI_LINT_VERSION | default "v1.59.1" }}'
 
 tasks:
-  setup:
-    desc: Install all required tools.
-    cmds:
-      - task: install-kustomize
-      - task: install-controller-gen
-      - task: install-envtest
-      - task: install-golanci-lint
-
-  test-all:
-    desc: Test all tasks one by one after setting up.
-    deps:
-      - setup
-    cmds:
-      - task: manifests
-      - task: generate
-      - task: fmt
-      - task: test
-      # - task: lint
-      # - task: lint-fix
-      - task: build
-      - task: run
-      - task: docker-build
-      - task: docker-push
-      - task: docker-buildx
-      - task: build-installer
-      - task: install
-      - task: uninstall
-      - task: deploy
-      - task: undeploy
 
   manifests:
     desc: Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.

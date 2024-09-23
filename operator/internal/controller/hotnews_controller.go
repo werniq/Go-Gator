@@ -381,7 +381,7 @@ func (r *HotNewsReconciler) removeOwnerReferenceFromFeeds(ctx context.Context, h
 		}, feed)
 		if err != nil {
 			if k8sErrors.IsNotFound(err) {
-				errList = append(errList, field.NotFound(field.NewPath("feeds"), feedName))
+				errList = append(errList, field.Invalid(field.NewPath("feeds").Child(feedName), feedName, "feed not found"))
 			} else {
 				return err
 			}
@@ -392,7 +392,7 @@ func (r *HotNewsReconciler) removeOwnerReferenceFromFeeds(ctx context.Context, h
 
 		err = r.Client.Update(ctx, feed)
 		if err != nil {
-			errList = append(errList, field.InternalError(field.NewPath("feeds"), err))
+			return err
 		}
 	}
 

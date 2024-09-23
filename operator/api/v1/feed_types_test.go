@@ -36,6 +36,27 @@ func TestFeed_SetCreatedCondition(t *testing.T) {
 				reason: "FeedSuccessfullyCreated",
 			},
 		},
+		{
+			name: "Updating existing condition",
+			fields: fields{
+				TypeMeta: v1.TypeMeta{},
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+					Name:      "test",
+				},
+				Spec: FeedSpec{},
+				Status: FeedStatus{
+					Conditions: map[string]FeedConditions{
+						TypeFeedCreated: {
+							Status: true,
+						},
+					},
+				},
+			},
+			args: args{
+				reason: "FeedSuccessfullyCreated",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

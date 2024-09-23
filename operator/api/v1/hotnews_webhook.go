@@ -208,13 +208,18 @@ func (r *HotNews) feedsExists() error {
 		feedNames = append(feedNames, feed.Spec.Name)
 	}
 
+	var errList field.ErrorList
 	for _, source := range r.Spec.Feeds {
 		if !slices.Contains(feedNames, source) {
-			return errors.New("feed name is not found in the namespace, please check the feed name")
+			errList = append(errList, field.Invalid(field.NewPath("spec").Child("feeds"), r.Spec.Feeds, "feed "+source+" is not found in the namespace"))
 		}
 	}
 
-	return err
+	if len(errList) > 0 {
+		return errList.ToAggregate()
+	}
+
+	return nil
 }
 
 // feedGroupsExists checks if the given list of feed groups exist in the config map

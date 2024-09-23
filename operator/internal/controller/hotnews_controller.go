@@ -101,8 +101,7 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if k8sErrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
-		logger.Error(err, "unable to fetch HotNews")
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, err
 	}
 
 	if !controllerutil.ContainsFinalizer(&hotNews, newsaggregatorv1.HotNewsFinalizer) {
@@ -127,23 +126,21 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, nil
 	}
 
-	err = r.setFeedReference(ctx, hotNews)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
 	err = r.processHotNews(ctx, &hotNews)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 	logger.Info("HotNews object has been updated")
 
-	err = r.Client.Status().Update(ctx, &hotNews)
+	err = r.setFeedReference(ctx, hotNews)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	logger.Info("HotNewsReconciler has been successfully executed")
+	err = r.Client.Status().Update(ctx, &hotNews)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }

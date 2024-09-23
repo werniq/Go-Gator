@@ -11,9 +11,9 @@ const (
 	urlValidationError = "url must contain http or https"
 )
 
-// validateFeeds function initializes a chain from all existing validation handlers
+// validateFeedSpec function initializes a chain from all existing validation handlers
 // and returns an error if any of the handlers fails
-func validateFeeds(feed FeedSpec) error {
+func validateFeedSpec(feed FeedSpec) error {
 	urlValidationHandler := &urlValidate{url: feed.Link}
 
 	return urlValidationHandler.Validate()

@@ -70,7 +70,6 @@ const (
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	var res ctrl.Result
 	var feed newsaggregatorv1.Feed
 	var err error
 
@@ -99,7 +98,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	} else {
 		if controllerutil.ContainsFinalizer(&feed, feedFinalizerName) {
 			logger.Info("Handling the delete event")
-			if _, err = r.handleDelete(&feed); err != nil {
+			if err = r.handleDelete(&feed); err != nil {
 				return ctrl.Result{}, err
 			}
 
@@ -118,10 +117,10 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	if isNew {
 		logger.Info("Handling the create event")
-		res, err = r.handleCreate(&feed)
+		err = r.handleCreate(&feed)
 	} else {
 		logger.Info("Handling the update event")
-		res, err = r.handleUpdate(&feed)
+		err = r.handleUpdate(&feed)
 	}
 
 	if err != nil {
@@ -145,7 +144,7 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
-	return res, nil
+	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -171,7 +170,7 @@ type sourceBody struct {
 // It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a POST request with the JSON payload.
 // The function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 201 Created, it attempts to decode and print the server's error message.
-func (r *FeedReconciler) handleCreate(feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
+func (r *FeedReconciler) handleCreate(feed *newsaggregatorv1.Feed) error {
 	source := sourceBody{
 		Name:     feed.Spec.Name,
 		Endpoint: feed.Spec.Link,
@@ -179,13 +178,13 @@ func (r *FeedReconciler) handleCreate(feed *newsaggregatorv1.Feed) (ctrl.Result,
 
 	sourceData, err := json.Marshal(source)
 	if err != nil {
-		return ctrl.Result{}, errors.New(errMarshallingJSON + err.Error())
+		return errors.New(errMarshallingJSON + err.Error())
 	}
 	requestBody := bytes.NewBuffer(sourceData)
 
 	req, err := http.NewRequest(http.MethodPost, r.serverAddress, requestBody)
 	if err != nil {
-		return ctrl.Result{}, errors.New(errCreatingRequest + err.Error())
+		return errors.New(errCreatingRequest + err.Error())
 	}
 
 	customTransport := &http.Transport{
@@ -195,30 +194,30 @@ func (r *FeedReconciler) handleCreate(feed *newsaggregatorv1.Feed) (ctrl.Result,
 
 	res, err := customClient.Do(req)
 	if err != nil {
-		return ctrl.Result{}, errors.New(errExecutingRequest + err.Error())
+		return errors.New(errExecutingRequest + err.Error())
 	}
 	if res.StatusCode != http.StatusCreated {
 		serverError := &serverErr{}
 		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
-			return ctrl.Result{}, errors.New(errDecodingResponse + err.Error())
+			return errors.New(errDecodingResponse + err.Error())
 		}
-		return ctrl.Result{}, serverError
+		return serverError
 	}
 
 	err = res.Body.Close()
 	if err != nil {
-		return ctrl.Result{}, errors.New(errClosingBody + err.Error())
+		return errors.New(errClosingBody + err.Error())
 	}
 
-	return ctrl.Result{}, nil
+	return nil
 }
 
 // handleUpdate makes a request to the news-aggregator service to update an existing feed when the Feed object is modified.
 // It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a PUT request with the JSON payload.
 // This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
-func (r *FeedReconciler) handleUpdate(feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
+func (r *FeedReconciler) handleUpdate(feed *newsaggregatorv1.Feed) error {
 	source := sourceBody{
 		Name:     feed.Spec.Name,
 		Endpoint: feed.Spec.Link,
@@ -226,14 +225,14 @@ func (r *FeedReconciler) handleUpdate(feed *newsaggregatorv1.Feed) (ctrl.Result,
 
 	sourceData, err := json.Marshal(source)
 	if err != nil {
-		return ctrl.Result{}, errors.New(errMarshallingJSON + err.Error())
+		return errors.New(errMarshallingJSON + err.Error())
 	}
 
 	requestBody := bytes.NewBuffer(sourceData)
 
 	req, err := http.NewRequest(http.MethodPut, r.serverAddress, requestBody)
 	if err != nil {
-		return ctrl.Result{}, errors.New(errCreatingRequest + err.Error())
+		return errors.New(errCreatingRequest + err.Error())
 	}
 
 	customTransport := &http.Transport{
@@ -243,31 +242,31 @@ func (r *FeedReconciler) handleUpdate(feed *newsaggregatorv1.Feed) (ctrl.Result,
 
 	res, err := customClient.Do(req)
 	if err != nil {
-		return ctrl.Result{}, errors.New(errExecutingRequest + err.Error())
+		return errors.New(errExecutingRequest + err.Error())
 	}
 
 	if res.StatusCode != http.StatusOK {
 		serverError := &serverErr{}
 		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
-			return ctrl.Result{}, errors.New(errDecodingResponse + err.Error())
+			return errors.New(errDecodingResponse + err.Error())
 		}
-		return ctrl.Result{}, serverError
+		return serverError
 	}
 
 	err = res.Body.Close()
 	if err != nil {
-		return ctrl.Result{}, errors.New(errClosingBody + err.Error())
+		return errors.New(errClosingBody + err.Error())
 	}
 
-	return ctrl.Result{}, nil
+	return nil
 }
 
 // handleDelete makes a request to the news-aggregator service to delete an existing feed based on the Feed object.
 // It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a DELETE request with the JSON payload.
 // This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
 // If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
-func (r *FeedReconciler) handleDelete(feed *newsaggregatorv1.Feed) (ctrl.Result, error) {
+func (r *FeedReconciler) handleDelete(feed *newsaggregatorv1.Feed) error {
 	source := sourceBody{
 		Name:     feed.Spec.Name,
 		Endpoint: feed.Spec.Link,
@@ -275,14 +274,14 @@ func (r *FeedReconciler) handleDelete(feed *newsaggregatorv1.Feed) (ctrl.Result,
 
 	sourceData, err := json.Marshal(source)
 	if err != nil {
-		return ctrl.Result{}, errors.New(errMarshallingJSON + err.Error())
+		return errors.New(errMarshallingJSON + err.Error())
 	}
 
 	requestBody := bytes.NewBuffer(sourceData)
 
 	req, err := http.NewRequest(http.MethodDelete, r.serverAddress, requestBody)
 	if err != nil {
-		return ctrl.Result{}, errors.New(errCreatingRequest + err.Error())
+		return errors.New(errCreatingRequest + err.Error())
 	}
 
 	customTransport := &http.Transport{
@@ -292,24 +291,24 @@ func (r *FeedReconciler) handleDelete(feed *newsaggregatorv1.Feed) (ctrl.Result,
 
 	res, err := customClient.Do(req)
 	if err != nil {
-		return ctrl.Result{}, errors.New(errExecutingRequest + err.Error())
+		return errors.New(errExecutingRequest + err.Error())
 	}
 
 	if res.StatusCode != http.StatusOK {
 		var serverError *serverErr
 		err = json.NewDecoder(res.Body).Decode(&serverError)
 		if err != nil {
-			return ctrl.Result{}, errors.New(errDecodingResponse + err.Error())
+			return errors.New(errDecodingResponse + err.Error())
 		}
-		return ctrl.Result{}, serverError
+		return serverError
 	}
 
 	err = res.Body.Close()
 	if err != nil {
-		return ctrl.Result{}, errors.New(errClosingBody + err.Error())
+		return errors.New(errClosingBody + err.Error())
 	}
 
-	return ctrl.Result{}, nil
+	return nil
 }
 
 // updateAllHotNewsInNamespaceByFeed updates all HotNews objects in the namespace which contains the feed.

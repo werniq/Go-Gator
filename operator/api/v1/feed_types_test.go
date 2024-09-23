@@ -33,7 +33,7 @@ func TestFeed_SetCreatedCondition(t *testing.T) {
 				Status: FeedStatus{},
 			},
 			args: args{
-				reason: "FeedCreated",
+				reason: "FeedSuccessfullyCreated",
 			},
 		},
 	}

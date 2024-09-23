@@ -30,11 +30,11 @@ const (
 	// TypeFeedUpdated represents the Updated condition type
 	TypeFeedUpdated = "Updated"
 
-	// FeedCreated represents the reason for created condition
-	FeedCreated = "FeedCreated"
+	// FeedSuccessfullyCreated represents the reason for created condition
+	FeedSuccessfullyCreated = "Feed was successfully created"
 
-	// FeedUpdated represents the reason for updated condition
-	FeedUpdated = "FeedUpdated"
+	// FeedSuccessfullyUpdated represents the reason for updated condition
+	FeedSuccessfullyUpdated = "Feed was successfully updated"
 
 	// failedToCreateReason is a constant that represents the reason for failed to create condition
 	failedToCreateReason = false
@@ -117,7 +117,7 @@ type FeedList struct {
 
 // SetCreatedCondition sets the created condition of the feed to Created
 func (r *Feed) SetCreatedCondition(reason string) {
-	r.setCondition(TypeFeedCreated, createdReason, reason, FeedCreated)
+	r.setCondition(TypeFeedCreated, createdReason, reason, FeedSuccessfullyCreated)
 }
 
 // SetFailedCondition sets the failed condition of the feed to Failed
@@ -129,7 +129,7 @@ func (r *Feed) SetFailedCondition(message, reason string) {
 
 // SetUpdatedCondition sets the updated condition of the feed to Updated
 func (r *Feed) SetUpdatedCondition(reason string) {
-	r.setCondition(TypeFeedUpdated, createdReason, reason, FeedUpdated)
+	r.setCondition(TypeFeedUpdated, createdReason, reason, FeedSuccessfullyUpdated)
 }
 
 // setCondition sets the created condition of the feed to the one specified in arguments.

@@ -75,7 +75,7 @@ func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 func (r *Feed) validateFeed() (admission.Warnings, error) {
 	var errList field.ErrorList
 
-	err := validateFeeds(r.Spec)
+	err := validateFeedSpec(r.Spec)
 	if err != nil {
 		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}

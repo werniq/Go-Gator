@@ -4,7 +4,7 @@ metadata:
   labels:
     feed-group-source: "true"
   name: feed-group-source
-  namespace: operator-system
+  namespace: {{ .Values.namespace }}
 data:
   sport: "washingtontimes"
   politic: "abc,bbc"

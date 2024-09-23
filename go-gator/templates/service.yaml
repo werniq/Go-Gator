@@ -4,6 +4,7 @@ metadata:
   name: {{ include "go-gator.fullname" . }}
   labels:
     {{- include "go-gator.labels" . | nindent 4 }}
+  namespace: {{ .Values.namespace }}
 spec:
   type: {{ .Values.service.type }}
   ports:

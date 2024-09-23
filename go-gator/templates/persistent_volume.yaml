@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: go-gator-pv
-  namespace: {{ .Values.namespace }}
+  namespace: go-gator
   labels:
     type: local
 spec:
@@ -18,7 +18,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: go-gator-pvc
-  namespace: go-gator
+  namespace: {{ .Values.namespace }}
 spec:
   storageClassName: manual
   accessModes:

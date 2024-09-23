@@ -20,6 +20,7 @@ serviceAccount:
   name: go-gator-service
 
 service:
+  name: go-gator
   type: ClusterIP
   selector:
     app: go-gator
@@ -27,6 +28,7 @@ service:
     - protocol: TCP
       port: 443
       targetPort: 443
+  port: 443
 
 resources:
    limits:

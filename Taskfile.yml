@@ -91,12 +91,13 @@ tasks:
   installChart:
     desc: Install the Helm chart on the Kubernetes cluster
     cmds:
-      - helm install go-gator go-gator
+      - helm install go-gator-0.1.0.tgz go-gator
 
   uninstallChart:
     desc: Uninstall the Helm chart from the Kubernetes cluster
     cmds:
       - helm uninstall go-gator
+      - kubectl delete namespace go-gator
 
   installCertManager:
     desc: Install cert-manager on the Kubernetes cluster using helm

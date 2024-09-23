@@ -316,12 +316,7 @@ func (r *HotNewsReconciler) setOwnerReferenceForFeeds(ctx context.Context, hotNe
 			Namespace: hotNews.Namespace,
 		}, feed)
 		if err != nil {
-			if k8sErrors.IsNotFound(err) {
-				errList = append(errList, field.NotFound(field.NewPath("feeds"), feedName))
-			} else {
-				fmt.Println("error: failed to get Feed", err)
-				return err
-			}
+			errList = append(errList, field.InternalError(field.NewPath("feeds").Child(feedName), err))
 			continue
 		}
 
@@ -330,7 +325,6 @@ func (r *HotNewsReconciler) setOwnerReferenceForFeeds(ctx context.Context, hotNe
 
 			err = r.Update(ctx, feed)
 			if err != nil {
-				fmt.Println("error: failed to update Feed", err)
 				errList = append(errList, field.InternalError(field.NewPath("feeds").Child(feedName), err))
 			}
 		}

@@ -170,6 +170,10 @@ func (r *HotNews) validateHotNews() error {
 		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, errNoFeeds))
 	}
 
+	if r.Spec.Feeds != nil && r.Spec.FeedGroups != nil {
+		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, "either feeds or feedGroups should be specified"))
+	}
+
 	err = r.feedsExists()
 	if err != nil {
 		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))

@@ -108,6 +108,7 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		controllerutil.AddFinalizer(&hotNews, newsaggregatorv1.HotNewsFinalizer)
 		err := r.Client.Update(ctx, &hotNews)
 		if err != nil {
+			hotNews.SetFailedToCreateCondition("Failed to update hotnews: ", err.Error())
 			return ctrl.Result{}, err
 		}
 	}
@@ -122,7 +123,7 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		controllerutil.RemoveFinalizer(&hotNews, newsaggregatorv1.HotNewsFinalizer)
 		err = r.Client.Update(ctx, &hotNews)
 		if err != nil {
-			hotNews.SetFailedToCreateCondition("Failed to update fail: ", err.Error())
+			hotNews.SetFailedToCreateCondition("Failed to update hotnews: ", err.Error())
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, nil

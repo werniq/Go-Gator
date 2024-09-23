@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: go-gator-fetching-news-job
-  namespace: go-gator
+  namespace: {{ .Values.namespace}}
 spec:
   schedule: {{ .Values.cronJob.schedule }}
   successfulJobsHistoryLimit: 3

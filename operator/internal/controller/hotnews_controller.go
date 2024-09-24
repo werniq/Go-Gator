@@ -185,11 +185,14 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 // It Watches for any changes in the ConfigMap with the feed groups, and also watches for changes in Feed CRD.
 func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string) error {
 	r.serverUrl = serverUrl
+
+	hotNewsHandler := &HotNewsHandler{Client: mgr.GetClient()}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.HotNews{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Watches(
 			&newsaggregatorv1.Feed{},
-			&handler.EnqueueRequestForObject{},
+			handler.EnqueueRequestsFromMapFunc(hotNewsHandler.UpdateHotNews),
 			builder.WithPredicates(FeedStatusConditionPredicate{}),
 		).
 		Complete(r)

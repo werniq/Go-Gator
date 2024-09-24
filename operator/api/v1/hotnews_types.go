@@ -41,6 +41,16 @@ const (
 	// HotNewsSuccessfullyUpdated represents the reason for updated condition
 	HotNewsSuccessfullyUpdated = "HotNews was successfully updated"
 
+	// HotNewsError indicates that there were an error during Reconciliation of hot news object
+	HotNewsError = "Error during processing of hot news creation"
+
+	// StatusError is set to false, which says that there was an error and Reconciliation was not
+	// completed successfully
+	StatusError = false
+
+	// StatusSuccess indicates that HotNews object was successfully created or updated
+	StatusSuccess = true
+
 	// hotNewsStatusConditionsCapacity is a capacity of hot news status conditions map
 	// It is defaulted to 3, since we have 3 conditions: Created, Updated, FailedToCreate.
 	// Condition Deleted is not included, since it is not used in the current implementation
@@ -170,24 +180,15 @@ func (r *HotNews) GetFeedGroupNames(ctx context.Context) ([]string, error) {
 	return feedGroups, nil
 }
 
-// SetCreatedCondition func initializes HotNews.Status.Conditions object with the Created condition
-func (r *HotNews) SetCreatedCondition(reason string) {
-	r.setCondition(TypeHotNewsCreated, createdReason, reason, HotNewsSuccessfullyCreated)
-}
-
-// SetUpdatedCondition creates (or updates) the Updated condition of the HotNews
-// indicating that the HotNews was successfully updated
-func (r *HotNews) SetUpdatedCondition(reason string) {
-	r.setCondition(TypeHotNewsUpdated, createdReason, reason, HotNewsSuccessfullyUpdated)
-}
-
-// SetFailedToCreateCondition initializes (or updates) a condition with the FailedToCreate key
-// with given message and reason
-func (r *HotNews) SetFailedToCreateCondition(message, reason string) {
-	r.setCondition(TypeHotNewsFailedToCreate, failedToCreateReason, reason, message)
-}
-
-func (r *HotNews) setCondition(conditionType string, status bool, reason, message string) {
+// SetCondition initializes status.Conditions if they are empty.
+// In this case, capacity of Conditions mapping is 3, since we support 3 conditions:
+// 1. Created
+// 2. Updated
+// 3. Error
+// If Conditions mapping already is not nil, this functions creates or updates condition with given
+// condition type, reason, and message.
+// LastUpdateTime is set by default to metav1.Now()
+func (r *HotNews) SetCondition(conditionType string, status bool, reason, message string) {
 	if r.Status.Conditions == nil {
 		r.Status.Conditions = make(map[string]HotNewsConditions, hotNewsStatusConditionsCapacity)
 	}

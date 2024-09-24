@@ -108,7 +108,6 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		controllerutil.AddFinalizer(&hotNews, newsaggregatorv1.HotNewsFinalizer)
 		err := r.Client.Update(ctx, &hotNews)
 		if err != nil {
-			hotNews.SetFailedToCreateCondition("Failed to update hotnews: ", err.Error())
 			return ctrl.Result{}, err
 		}
 	}
@@ -116,14 +115,21 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if !hotNews.DeletionTimestamp.IsZero() {
 		err = r.removeFeedReference(ctx, hotNews)
 		if err != nil {
-			hotNews.SetFailedToCreateCondition("Failed to remove feed reference: ", err.Error())
+			updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to remove feed reference for feeds", err.Error())
+			if updateErr != nil {
+				return ctrl.Result{}, updateErr
+			}
+
 			return ctrl.Result{}, err
 		}
 
 		controllerutil.RemoveFinalizer(&hotNews, newsaggregatorv1.HotNewsFinalizer)
 		err = r.Client.Update(ctx, &hotNews)
 		if err != nil {
-			hotNews.SetFailedToCreateCondition("Failed to update hotnews: ", err.Error())
+			updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to update hotnews: ", err.Error())
+			if updateErr != nil {
+				return ctrl.Result{}, updateErr
+			}
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, nil
@@ -131,20 +137,41 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	err = r.processHotNews(ctx, &hotNews)
 	if err != nil {
-		hotNews.SetFailedToCreateCondition("Failed to process feed news: ", err.Error())
+		updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to process hotnews", err.Error())
+		if updateErr != nil {
+			return ctrl.Result{}, updateErr
+		}
 		return ctrl.Result{}, err
 	}
 	logger.Info("HotNews object has been updated")
 
 	err = r.setFeedReference(ctx, hotNews)
 	if err != nil {
-		hotNews.SetFailedToCreateCondition("Failed to set feed reference: ", err.Error())
+		updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to set feed reference for hotnews", err.Error())
+		if updateErr != nil {
+			return ctrl.Result{}, updateErr
+		}
 		return ctrl.Result{}, err
 	}
 
 	err = r.Client.Status().Update(ctx, &hotNews)
 	if err != nil {
-		hotNews.SetFailedToCreateCondition("Failed to update hotnews object: ", err.Error())
+		updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to update hotnews", err.Error())
+		if updateErr != nil {
+			return ctrl.Result{}, updateErr
+		}
+
+		return ctrl.Result{}, err
+	}
+
+	err = r.setSuccessfulStatus(ctx, &hotNews, "HotNews successfully updated",
+		"Successfully Reconciled Hot News object")
+	if err != nil {
+		updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to update hotnews", err.Error())
+		if updateErr != nil {
+			return ctrl.Result{}, updateErr
+		}
+
 		return ctrl.Result{}, err
 	}
 
@@ -285,6 +312,36 @@ func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpe
 	}
 
 	return requestUrl.String(), nil
+}
+
+// setSuccessfulStatus checks if condition should be of type Created or Updated.
+// After that, it updates the status of given hot news, than updates hotNews object in K8s Cluster.
+func (r *HotNewsReconciler) setSuccessfulStatus(ctx context.Context, hotNews *newsaggregatorv1.HotNews,
+	reason, message string) error {
+	var condition = newsaggregatorv1.TypeHotNewsCreated
+	if _, exists := hotNews.Status.Conditions[newsaggregatorv1.HotNewsSuccessfullyCreated]; exists {
+		condition = newsaggregatorv1.TypeHotNewsUpdated
+	}
+
+	hotNews.SetCondition(condition, newsaggregatorv1.StatusSuccess, reason, message)
+	err := r.Client.Update(ctx, hotNews)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// setFailedStatus sets
+func (r *HotNewsReconciler) setFailedStatus(ctx context.Context, hotNews *newsaggregatorv1.HotNews,
+	reason, message string) error {
+	hotNews.SetCondition(newsaggregatorv1.HotNewsError, newsaggregatorv1.StatusError, reason, message)
+	err := r.Client.Update(ctx, hotNews)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // setFeedReference sets the owner references for each Feed in the HotNewsSpec.Feeds array.

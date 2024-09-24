@@ -82,12 +82,12 @@ func (r *Feed) validateFeed() (admission.Warnings, error) {
 
 	err = r.checkNameUniqueness()
 	if err != nil {
-		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+		errList = append(errList, field.Invalid(field.NewPath("spec.Name"), r.Spec, err.Error()))
 	}
 
 	err = r.checkLinkUniqueness()
 	if err != nil {
-		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+		errList = append(errList, field.Invalid(field.NewPath("spec.Link"), r.Spec, err.Error()))
 	}
 
 	if len(errList) > 0 {

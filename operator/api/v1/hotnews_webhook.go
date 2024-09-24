@@ -48,10 +48,6 @@ const (
 
 	// FeedGroupLabel is a label for ConfigMap which contains our hotNew groups names and sources
 	FeedGroupLabel = "feed-group-source"
-
-	// HotNewsFinalizer is a finalizer for HotNews resource which will be added when the resource is created
-	// and removed when the resource is deleted
-	HotNewsFinalizer = "finalizer.hotnews.newsaggregator.teamdev.com"
 )
 
 var (

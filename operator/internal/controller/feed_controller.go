@@ -42,6 +42,10 @@ type FeedReconciler struct {
 }
 
 const (
+	// HotNewsFinalizer is a finalizer for HotNews resource which will be added when the resource is created
+	// and removed when the resource is deleted
+	HotNewsFinalizer = "finalizer.hotnews.newsaggregator.teamdev.com"
+
 	// feedFinalizerName is a title of finalizer which will be added to feed object
 	// for proper deletion of feed in news aggregator
 	feedFinalizerName = "feed.finalizers"

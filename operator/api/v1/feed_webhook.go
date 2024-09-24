@@ -38,7 +38,6 @@ var (
 
 // SetupWebhookWithManager will set up the manager to manage the webhooks
 func (r *Feed) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	k8sClient = mgr.GetClient()
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()

@@ -195,6 +195,16 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string)
 			handler.EnqueueRequestsFromMapFunc(hotNewsHandler.UpdateHotNews),
 			builder.WithPredicates(FeedStatusConditionPredicate{}),
 		).
+		Watches(
+			&v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"go-gator": "true",
+					},
+				},
+			},
+			handler.EnqueueRequestsFromMapFunc(hotNewsHandler.UpdateHotNews),
+		).
 		Complete(r)
 }
 

@@ -233,7 +233,9 @@ func validateConfigMap(req *admission.AdmissionRequest) error {
 // getAllHotNewsFromNamespace retrieves all hotnews from the provided namespace
 func getAllHotNewsFromNamespace(namespace string) (newsaggregatorv1.HotNewsList, error) {
 	var hotNewsList newsaggregatorv1.HotNewsList
-	err := k8sClient.List(context.Background(), &hotNewsList, client.InNamespace(namespace))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	err := k8sClient.List(ctx, &hotNewsList, client.InNamespace(namespace))
 	if err != nil {
 		return newsaggregatorv1.HotNewsList{}, fmt.Errorf("error retrieving hotnews CRD: %v\n", err)
 	}

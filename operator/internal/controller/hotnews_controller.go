@@ -24,7 +24,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -507,8 +509,15 @@ func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec)
 
 // getConfigMapData returns all data from config map named FeedGroupsConfigMapName in FeedGroupsNamespace
 func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (v1.ConfigMapList, error) {
+	s, err := labels.NewRequirement(newsaggregatorv1.FeedGroupLabel, selection.Exists, nil)
+	if err != nil {
+		return v1.ConfigMapList{}, err
+	}
+
 	var configMaps v1.ConfigMapList
-	err := r.Client.List(ctx, &configMaps, client.InNamespace(newsaggregatorv1.FeedGroupsNamespace))
+	err = r.Client.List(ctx, &configMaps, &client.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*s),
+	})
 
 	if err != nil {
 		return v1.ConfigMapList{}, err

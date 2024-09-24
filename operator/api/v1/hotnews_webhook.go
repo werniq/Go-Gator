@@ -40,12 +40,6 @@ const (
 	// errWrongFeedGroupName is an error message for wrong hotNew group name
 	errWrongFeedGroupName = "hotNew group name is not found in the ConfigMap, please check the hotNew group name"
 
-	// FeedGroupsNamespace is a namespace where hotNew groups are stored
-	FeedGroupsNamespace = "operator-system"
-
-	// FeedGroupsConfigMapName is a name of the default ConfigMap which contains our hotNew groups names and sources
-	FeedGroupsConfigMapName = "feed-group-source"
-
 	// FeedGroupLabel is a label for ConfigMap which contains our hotNew groups names and sources
 	FeedGroupLabel = "feed-group-source"
 )

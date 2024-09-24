@@ -27,70 +27,8 @@ const (
 	PodIdentityAddonVersion = "v1.3.2-eksbuild.2"
 )
 
-func AddParameters(stack awscdk.Stack) {
-	awscdk.NewCfnParameter(stack, jsii.String("NodeGroupInstanceType"), &awscdk.CfnParameterProps{
-		Type:        jsii.String("String"),
-		Description: jsii.String("The EC2 instance type for the node group."),
-		Default:     jsii.String("t3.medium"),
-		AllowedValues: &[]*string{
-			jsii.String("t3.medium"),
-			jsii.String("t2.medium"),
-			jsii.String("t2.small"),
-		},
-	})
-
-	_ = awscdk.NewCfnParameter(stack, jsii.String("MinimalNodeGroupSize"), &awscdk.CfnParameterProps{
-		Type:        jsii.String("Number"),
-		Description: jsii.String("The minimal number of nodes in the node group."),
-		Default:     jsii.Number(1),
-		MinValue:    jsii.Number(1),
-		MaxValue:    jsii.Number(5),
-	})
-
-	_ = awscdk.NewCfnParameter(stack, jsii.String("NodeDiskSize"), &awscdk.CfnParameterProps{
-		Type:        jsii.String("Number"),
-		Description: jsii.String("The minimal number of nodes in the node group."),
-		MinValue:    jsii.Number(1 * 1024 * 1024 * 1024),
-		MaxValue:    jsii.Number(50 * 1024 * 1024 * 1024),
-		Default:     jsii.Number(10 * 1024 * 1024 * 1024),
-	})
-
-	_ = awscdk.NewCfnParameter(stack, jsii.String("MaximalNodeGroupSize"), &awscdk.CfnParameterProps{
-		Type:        jsii.String("Number"),
-		Description: jsii.String("The maximal number of nodes in the node group."),
-		Default:     jsii.Number(5),
-		MinValue:    jsii.Number(1),
-		MaxValue:    jsii.Number(10),
-	})
-
-	awscdk.NewCfnParameter(stack, jsii.String("NodeGroupDesiredCapacity"), &awscdk.CfnParameterProps{
-		Type:        jsii.String("Number"),
-		Description: jsii.String("The desired number of nodes in the node group."),
-		Default:     jsii.Number(1),
-		//MinValue:    minimalNodeGroupSize.ValueAsNumber(),
-		//MaxValue:    maximalNodeGroupSize.ValueAsNumber(),
-	})
-
-	awscdk.NewCfnParameter(stack, jsii.String("KubernetesVersion"), &awscdk.CfnParameterProps{
-		Type:        jsii.String("String"),
-		Description: jsii.String("The Kubernetes version for the cluster."),
-		Default:     jsii.String("1.30"),
-		AllowedValues: &[]*string{
-			jsii.String("1.24"),
-			jsii.String("1.25"),
-			jsii.String("1.26"),
-			jsii.String("1.27"),
-			jsii.String("1.28"),
-			jsii.String("1.29"),
-			jsii.String("1.30"),
-		},
-	})
-}
-
 func NewGoGatorCdkProjectStack(scope constructs.Construct, id string, props *AwsSetupStackProps) awscdk.Stack {
 	stack := awscdk.NewStack(scope, &id, &props.StackProps)
-
-	AddParameters(stack)
 
 	vpc := ec2.NewVpc(stack, jsii.String("GoGatorVpc"), &ec2.VpcProps{
 		EnableDnsSupport:   jsii.Bool(true),

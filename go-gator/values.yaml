@@ -25,6 +25,21 @@ service:
       port: 443
       targetPort: 443
 
+vpa:
+  name: go-gator-vpa
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: go-gator
+  resourcePolicy:
+    containerName: go-gator
+    minAllowed:
+      cpu: 100m
+      memory: 100Mi
+    maxAllowed:
+      cpu: 200m
+      memory: 200Mi
+
 resources:
    limits:
      cpu: 100m

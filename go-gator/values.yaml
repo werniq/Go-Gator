@@ -40,6 +40,12 @@ resources:
      cpu: 100m
      memory: 128Mi
 
+issuer:
+  name: go-gator-issuer
+
+certSecret:
+  name: cert-secret
+
 autoscaling:
   enabled: false
   minReplicas: 1

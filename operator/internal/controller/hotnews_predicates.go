@@ -25,10 +25,10 @@ func (FeedStatusConditionPredicate) Update(e event.UpdateEvent) bool {
 		return false
 	}
 
-	if condition, exists := feed.Status.Conditions["Created"]; exists && condition.Status {
+	if condition, exists := feed.Status.Conditions[newsaggregatorv1.TypeFeedCreated]; exists && condition.Status {
 		return true
 	}
-	if condition, exists := feed.Status.Conditions["Deleted"]; exists && condition.Status {
+	if condition, exists := feed.Status.Conditions[newsaggregatorv1.TypeFeedDeleted]; exists && condition.Status {
 		return true
 	}
 

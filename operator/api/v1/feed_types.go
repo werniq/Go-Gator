@@ -24,6 +24,9 @@ const (
 	// TypeFeedCreated represents the Created condition type
 	TypeFeedCreated = "Created"
 
+	// TypeFeedDeleted represents the Deleted condition type
+	TypeFeedDeleted = "Deleted"
+
 	// TypeFeedFailedToCreate represents the FailedToCreate condition type
 	TypeFeedFailedToCreate = "FailedToCreate"
 

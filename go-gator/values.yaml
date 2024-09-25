@@ -40,6 +40,28 @@ vpa:
       cpu: 200m
       memory: 200Mi
 
+hpa:
+  name: go-gator-hpa
+  scaleTargetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: go-gator
+  minReplicas: 1
+  maxReplicas: 100
+  metrics:
+    - type: Resource
+      resource:
+        name: cpi
+        target:
+          type: Utilization
+          averageUtilization: 80
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
 resources:
    limits:
      cpu: 100m

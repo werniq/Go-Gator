@@ -51,10 +51,19 @@ func (r *HotNewsHandler) UpdateHotNews(ctx context.Context, obj client.Object) [
 	return requests
 }
 
+// ConfigMapHandler struct is used for triggering HotNews Reconciler whenever Config Map with
+// particular labels are updated.
+//
+// Fields:
+// ConfigMapHandler holds a Kubernetes client.
+// The client is used to interact with the Kubernetes API, allowing the handler to fetch
+// and reconcile HotNews objects.
 type ConfigMapHandler struct {
 	Client client.Client
 }
 
+// UpdateHotNews is a method in ConfigMapHandler, for verifying if object contains particular labels
+// and, if validation was passed successfully it will trigger Hot News Reconciler.
 func (r *ConfigMapHandler) UpdateHotNews(ctx context.Context, obj client.Object) []reconcile.Request {
 	if _, exists := obj.GetLabels()[newsaggregatorv1.FeedGroupLabel]; !exists {
 		return nil

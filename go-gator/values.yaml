@@ -11,7 +11,9 @@ image:
   tag: "1.3.0"
 
 cronJob:
+  name: go-gator-fetching-job
   schedule: "0 0 * * *"
+  image: qniw984/news-fetching-job:1.1.0
 
 serviceAccount:
   create: true

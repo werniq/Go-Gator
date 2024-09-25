@@ -14,8 +14,8 @@ spec:
         spec:
           serviceAccountName: cron-job-sa
           containers:
-            - name: go-gator-fetching-job
-              image: qniw984/news-fetching-job:1.1.0
+            - name: {{ .Values.cronJob.name }}
+              image: {{ .Values.cronJob.image }}
               imagePullPolicy: IfNotPresent
               volumeMounts:
                 - mountPath: /tmp/

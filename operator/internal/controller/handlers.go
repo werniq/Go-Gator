@@ -10,7 +10,11 @@ import (
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
-// HotNewsHandler is a struct that holds a Kubernetes client.
+// HotNewsHandler is a struct that is used for triggering HotNews Reconciler,
+// whenever a feed which is bound to certain Hot News is being updated.
+//
+// Fields:
+// HotNewsHandler holds a Kubernetes client.
 // The client is used to interact with the Kubernetes API, allowing the handler to fetch
 // and reconcile HotNews objects when specific events occur.
 type HotNewsHandler struct {
@@ -24,6 +28,39 @@ type HotNewsHandler struct {
 func (r *HotNewsHandler) UpdateHotNews(ctx context.Context, obj client.Object) []reconcile.Request {
 	logger := log.FromContext(ctx)
 
+	var hotNewsList newsaggregatorv1.HotNewsList
+
+	err := r.Client.List(ctx, &hotNewsList, client.InNamespace(obj.GetNamespace()))
+
+	if err != nil {
+		logger.Error(err, "Error during listing hot news:")
+		return nil
+	}
+
+	var requests []reconcile.Request
+
+	for _, hotNews := range hotNewsList.Items {
+		requests = append(requests, ctrl.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: hotNews.Namespace,
+				Name:      hotNews.Name,
+			},
+		})
+	}
+
+	return requests
+}
+
+type ConfigMapHandler struct {
+	Client client.Client
+}
+
+func (r *ConfigMapHandler) UpdateHotNews(ctx context.Context, obj client.Object) []reconcile.Request {
+	if _, exists := obj.GetLabels()[newsaggregatorv1.FeedGroupLabel]; !exists {
+		return nil
+	}
+
+	logger := log.FromContext(ctx)
 	var hotNewsList newsaggregatorv1.HotNewsList
 
 	err := r.Client.List(ctx, &hotNewsList, client.InNamespace(obj.GetNamespace()))

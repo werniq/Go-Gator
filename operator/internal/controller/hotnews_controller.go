@@ -185,6 +185,7 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string)
 	r.serverUrl = serverUrl
 
 	hotNewsHandler := &HotNewsHandler{Client: mgr.GetClient()}
+	configMapHandler := &ConfigMapHandler{Client: mgr.GetClient()}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.HotNews{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
@@ -194,14 +195,8 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string)
 			builder.WithPredicates(FeedStatusConditionPredicate{}),
 		).
 		Watches(
-			&v1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"go-gator": "true",
-					},
-				},
-			},
-			handler.EnqueueRequestsFromMapFunc(hotNewsHandler.UpdateHotNews),
+			&v1.ConfigMap{},
+			handler.EnqueueRequestsFromMapFunc(configMapHandler.UpdateHotNews),
 		).
 		Complete(r)
 }

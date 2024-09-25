@@ -8,6 +8,7 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: us-east-2
   AWS_ACCOUNT_ID: 406477933661
+  CHART_VERSION: 0.1.0
 
 jobs:
   aws-setup:
@@ -44,4 +45,4 @@ jobs:
 
       - name: Push Helm chart to ECR
         run: |
-          helm push go-gator-0.1.0.tgz oci://${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/qniw984/
+          helm push go-gator-${{ env.CHART_VERSION }}.tgz oci://${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/qniw984/

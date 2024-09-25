@@ -197,7 +197,7 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string)
 		Watches(
 			&v1.ConfigMap{},
 			handler.EnqueueRequestsFromMapFunc(configMapHandler.UpdateHotNews),
-			builder.WithPredicates()
+			builder.WithPredicates(ConfigMapStatusPredicate{}),
 		).
 		Complete(r)
 }

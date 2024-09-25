@@ -37,8 +37,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"strings"
-	"time"
-
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
@@ -222,7 +220,7 @@ func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsagg
 	logger := log.FromContext(ctx)
 	logger.Info("handling update")
 
-	requestUrl, err := r.constructRequestUrl(hotNews.Spec)
+	requestUrl, err := r.constructRequestUrl(ctx, hotNews.Spec)
 	if err != nil {
 		logger.Error(err, errFailedToConstructRequestUrl)
 		return err
@@ -293,7 +291,7 @@ func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsagg
 // Example:
 // http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&dateEnd=2024-08-06&sources=abc,bbc
 // http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&sources=abc,bbc
-func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpec) (string, error) {
+func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsaggregatorv1.HotNewsSpec) (string, error) {
 	var requestUrl strings.Builder
 
 	requestUrl.WriteString(r.serverUrl)
@@ -306,7 +304,7 @@ func (r *HotNewsReconciler) constructRequestUrl(spec newsaggregatorv1.HotNewsSpe
 
 	var feedStr strings.Builder
 	if spec.FeedGroups != nil {
-		feedGroupsStr, err := r.processFeedGroups(spec)
+		feedGroupsStr, err := r.processFeedGroups(ctx, spec)
 		if err != nil {
 			return "", err
 		}
@@ -495,11 +493,8 @@ func (r *HotNewsReconciler) processFeeds(spec newsaggregatorv1.HotNewsSpec) stri
 
 // processFeedGroups function processes feed groups from the ConfigMap and returns a string containing comma-separated
 // feed sources
-func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec) (string, error) {
+func (r *HotNewsReconciler) processFeedGroups(ctx context.Context, spec newsaggregatorv1.HotNewsSpec) (string, error) {
 	var sourcesBuilder strings.Builder
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
 
 	configMaps, err := r.getFeedGroups(ctx)
 	if err != nil {

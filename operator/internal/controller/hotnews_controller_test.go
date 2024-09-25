@@ -82,11 +82,13 @@ func TestHotNewsReconciler_Reconcile_NegativeCases(t *testing.T) {
 			},
 		},
 	}
+	FeedGroupsNamespace := "go-gator"
+	FeedGroupsConfigMapName := "feed-group-source"
 
 	existingConfigMap := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: newsaggregatorv1.FeedGroupsNamespace,
-			Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+			Namespace: FeedGroupsNamespace,
+			Name:      FeedGroupsConfigMapName,
 		},
 		Data: map[string]string{
 			"sport":   "washingtontimes",
@@ -374,6 +376,9 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 	type args struct {
 		spec newsaggregatorv1.HotNewsSpec
 	}
+	FeedGroupsNamespace := "go-gator"
+	FeedGroupsConfigMapName := "feed-group-source"
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -414,8 +419,8 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 				Client: fake.NewClientBuilder().WithScheme(scheme).
 					WithObjects(&v1.ConfigMap{
 						ObjectMeta: metav1.ObjectMeta{
-							Namespace: newsaggregatorv1.FeedGroupsNamespace,
-							Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+							Namespace: FeedGroupsNamespace,
+							Name:      FeedGroupsConfigMapName,
 						},
 						Data: map[string]string{"sport": "abc,bbc"},
 					}).
@@ -450,8 +455,9 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 					WithScheme(scheme).
 					WithObjects(&v1.ConfigMap{
 						ObjectMeta: metav1.ObjectMeta{
-							Namespace: newsaggregatorv1.FeedGroupsNamespace,
-							Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+							Labels: map[string]string{
+								newsaggregatorv1.FeedGroupLabel: "true",
+							},
 						},
 						Data: map[string]string{"sport": "aaaa"},
 					}).
@@ -474,7 +480,7 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 				Scheme:    tt.fields.Scheme,
 				serverUrl: serverNewsEndpoint,
 			}
-			got, err := r.constructRequestUrl(tt.args.spec)
+			got, err := r.constructRequestUrl(context.Background(), tt.args.spec)
 
 			if tt.wantErr {
 				assert.NotNil(t, err)
@@ -491,12 +497,15 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 	_ = newsaggregatorv1.AddToScheme(scheme)
 	_ = v1.AddToScheme(scheme)
 
+	FeedGroupsNamespace := "go-gator"
+	FeedGroupsConfigMapName := "feed-group-source"
+
 	existingConfigMap := v1.ConfigMapList{
 		Items: []v1.ConfigMap{
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace: newsaggregatorv1.FeedGroupsNamespace,
-					Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+					Namespace: FeedGroupsNamespace,
+					Name:      FeedGroupsConfigMapName,
 				},
 				Data: map[string]string{
 					"sport":   "washingtontimes",
@@ -613,10 +622,13 @@ func TestHotNewsReconciler_processHotNews(t *testing.T) {
 		},
 	}
 
+	FeedGroupsNamespace := "go-gator"
+	FeedGroupsConfigMapName := "feed-group-source"
+
 	existingConfigMap := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: newsaggregatorv1.FeedGroupsNamespace,
-			Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+			Namespace: FeedGroupsNamespace,
+			Name:      FeedGroupsConfigMapName,
 		},
 		Data: map[string]string{
 			"sport":   "washingtontimes",
@@ -790,10 +802,13 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 		},
 	}
 
+	FeedGroupsNamespace := "go-gator"
+	FeedGroupsConfigMapName := "feed-group-source"
+
 	existingConfigMap := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: newsaggregatorv1.FeedGroupsNamespace,
-			Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+			Namespace: FeedGroupsNamespace,
+			Name:      FeedGroupsConfigMapName,
 		},
 		Data: map[string]string{
 			"sport":   "washingtontimes",
@@ -835,8 +850,8 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 			setup: func() *v1.ConfigMap {
 				return &v1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      newsaggregatorv1.FeedGroupsConfigMapName,
-						Namespace: newsaggregatorv1.FeedGroupsNamespace,
+						Name:      FeedGroupsConfigMapName,
+						Namespace: FeedGroupsNamespace,
 					},
 					Data: map[string]string{
 						"sport":   "washingtontimes",
@@ -876,8 +891,8 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 			setup: func() *v1.ConfigMap {
 				return &v1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      newsaggregatorv1.FeedGroupsConfigMapName,
-						Namespace: newsaggregatorv1.FeedGroupsNamespace,
+						Name:      FeedGroupsConfigMapName,
+						Namespace: FeedGroupsNamespace,
 					},
 					Data: map[string]string{
 						"sport": "washingtontimes",

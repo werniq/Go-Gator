@@ -10,3 +10,6 @@ dependencies:
     repository: https://charts.jetstack.io
     alias: cert-manager
     condition: cert-manager.enabled
+  - name: vertical-pod-autoscaler
+    repository: https://stevehipwell.github.io/helm-charts/
+    version: 1.7.1

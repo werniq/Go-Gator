@@ -920,7 +920,7 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 				Client: tt.fields.Client,
 				Scheme: tt.fields.Scheme,
 			}
-			got, err := r.processFeedGroups(tt.args.spec)
+			got, err := r.processFeedGroups(context.Background(), tt.args.spec)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("processFeedGroups() error = %v, wantErr %v", err, tt.wantErr)
 				return

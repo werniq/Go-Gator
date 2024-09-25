@@ -7,6 +7,7 @@ env:
   DOCKERHUB_USERNAME: '{{ .DOCKER_LOGIN_USERNAME }}'
   DOCKERHUB_PASSWORD: '{{ .DOCKERHUB_PASSWORD }}'
   TESTDIR_NAME:      '{{ .TESTDIR_NAME | default "pkg_tests" }}'
+  DAY_0_VERSION: '{{ .DAY_0_VERSION | default "0.1.0" }}'
 
 tasks:
   fmt:
@@ -127,3 +128,15 @@ tasks:
       - ecr-build
     cmds:
       - helm push go-gator-0.1.0.tgz oci://406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/
+
+  day-0-ecr-build:
+    desc: Build Helm chart for ECR
+    cmds:
+      - helm package day-0
+
+  day-0-ecr-push:
+    desc: Push image to ECR
+    deps:
+      - ecr-build
+    cmds:
+      - helm push day-0-{{ .DAY_0_VERSION }}.tgz oci://406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/

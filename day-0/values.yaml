@@ -2,6 +2,9 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+namespace: go-gator
+
 awsCredentials:
-  AWS_ACCESS_KEY_ID: AKIAV5I7ZBRO
-  AWS_SECRET_ACCESS_KEY: TFx1nEayOpqwhYiUTiUo3qNYgFFb0eqlAfw17mqS
+
+sa:
+  name: sa-health-check

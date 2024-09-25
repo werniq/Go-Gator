@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -40,7 +39,7 @@ func TestValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateFeeds(tt.input)
+			err := validateFeedSpec(tt.input)
 			if tt.wantErr {
 				assert.NotNil(t, err)
 			} else {
@@ -194,7 +193,7 @@ func Test_validateHotNews(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateHotNews(tt.args.hotNewsSpec)
+			err := validateHotNewsSpec(tt.args.hotNewsSpec)
 			if tt.wantErr {
 				assert.NotNil(t, err)
 			} else {
@@ -227,7 +226,7 @@ func Test_baseHandler_HandleNext(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &urlValidate{}
 			h.SetNext(tt.fields.next)
-			tt.wantErr(t, h.HandleNext(), fmt.Sprintf("HandleNext()"))
+			tt.wantErr(t, h.HandleNext(), "HandleNext()")
 		})
 	}
 }

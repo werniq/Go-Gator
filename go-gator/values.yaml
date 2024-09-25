@@ -50,7 +50,12 @@ volumes:
   - name: go-gator-pv
     persistentVolumeClaim:
       claimName: go-gator-pvc
+  - name: cert-secret
+    secret:
+      secretName: cert-secret
 
 volumeMounts:
   - mountPath: /tmp/
     name: go-gator-pv
+  - mountPath: /cmd/server/certs
+    name: cert-secret

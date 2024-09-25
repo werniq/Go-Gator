@@ -21,6 +21,9 @@ spec:
         - name: go-gator-pv
           persistentVolumeClaim:
             claimName: go-gator-pvc
+        - name: cert-secret
+          secret:
+            secretName: cert-secret
       containers:
         - name: go-gator
           image: qniw984/go-gator:1.1.0
@@ -31,3 +34,5 @@ spec:
           volumeMounts:
             - mountPath: /tmp/
               name: go-gator-pv
+            - mountPath: /cmd/server/certs
+              name: cert-secret

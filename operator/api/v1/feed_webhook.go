@@ -31,9 +31,6 @@ import (
 
 var (
 	feedlog = logf.Log.WithName("feed-resource")
-
-	// k8sClient is a kubernetes client that is used to interact with the k8s API
-	k8sClient client.Client
 )
 
 // SetupWebhookWithManager will set up the manager to manage the webhooks

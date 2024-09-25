@@ -376,8 +376,6 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 	type args struct {
 		spec newsaggregatorv1.HotNewsSpec
 	}
-	FeedGroupsNamespace := "go-gator"
-	FeedGroupsConfigMapName := "feed-group-source"
 
 	tests := []struct {
 		name    string
@@ -408,29 +406,6 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 					Keywords:  []string{"bitcoin"},
 					Feeds:     []string{"abc", "bbc"},
 					DateStart: "2024-08-05",
-				},
-			},
-			want:    serverNewsEndpoint + "?keywords=bitcoin&sources=abc,bbc&dateFrom=2024-08-05",
-			wantErr: false,
-		},
-		{
-			name: "Valid request with keywords, feedGroups, and start date only",
-			fields: fields{
-				Client: fake.NewClientBuilder().WithScheme(scheme).
-					WithObjects(&v1.ConfigMap{
-						ObjectMeta: metav1.ObjectMeta{
-							Namespace: FeedGroupsNamespace,
-							Name:      FeedGroupsConfigMapName,
-						},
-						Data: map[string]string{"sport": "abc,bbc"},
-					}).
-					Build(),
-			},
-			args: args{
-				spec: newsaggregatorv1.HotNewsSpec{
-					Keywords:   []string{"bitcoin"},
-					FeedGroups: []string{"sport"},
-					DateStart:  "2024-08-05",
 				},
 			},
 			want:    serverNewsEndpoint + "?keywords=bitcoin&sources=abc,bbc&dateFrom=2024-08-05",
@@ -497,15 +472,13 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 	_ = newsaggregatorv1.AddToScheme(scheme)
 	_ = v1.AddToScheme(scheme)
 
-	FeedGroupsNamespace := "go-gator"
-	FeedGroupsConfigMapName := "feed-group-source"
-
 	existingConfigMap := v1.ConfigMapList{
 		Items: []v1.ConfigMap{
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace: FeedGroupsNamespace,
-					Name:      FeedGroupsConfigMapName,
+					Labels: map[string]string{
+						newsaggregatorv1.FeedGroupLabel: "true",
+					},
 				},
 				Data: map[string]string{
 					"sport":   "washingtontimes",
@@ -680,23 +653,6 @@ func TestHotNewsReconciler_processHotNews(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Failed to construct request URL",
-			fields: fields{
-				Client: fakeClient,
-				Scheme: scheme,
-			},
-			args: args{
-				ctx: context.TODO(),
-				hotNews: &newsaggregatorv1.HotNews{
-					Spec: newsaggregatorv1.HotNewsSpec{
-						Keywords:   []string{"bitcoin"},
-						FeedGroups: []string{"non-existent feed group"},
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
 			name: "Failed to create HTTP request",
 			fields: fields{
 				Client: fakeClient,
@@ -850,8 +806,9 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 			setup: func() *v1.ConfigMap {
 				return &v1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      FeedGroupsConfigMapName,
-						Namespace: FeedGroupsNamespace,
+						Labels: map[string]string{
+							newsaggregatorv1.FeedGroupLabel: "true",
+						},
 					},
 					Data: map[string]string{
 						"sport":   "washingtontimes",
@@ -891,8 +848,9 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 			setup: func() *v1.ConfigMap {
 				return &v1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      FeedGroupsConfigMapName,
-						Namespace: FeedGroupsNamespace,
+						Labels: map[string]string{
+							newsaggregatorv1.FeedGroupLabel: "true",
+						},
 					},
 					Data: map[string]string{
 						"sport": "washingtontimes",

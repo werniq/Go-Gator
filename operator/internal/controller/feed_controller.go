@@ -80,10 +80,10 @@ func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	err = r.Client.Get(ctx, req.NamespacedName, &feed)
 	if err != nil {
-		logger.Info("the reconciliation of a feed will be skipped, seems it was removed")
 		if k8serrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
+		logger.Info("the reconciliation of a feed will be skipped, seems it was removed")
 
 		return ctrl.Result{}, err
 	}

@@ -19,7 +19,7 @@ func validateFeedSpec(feed FeedSpec) error {
 	return urlValidationHandler.Validate()
 }
 
-func validateHotNews(hotNewsSpec HotNewsSpec) error {
+func validateHotNewsSpec(hotNewsSpec HotNewsSpec) error {
 	dateValidationHandler := &dateValidate{dateStart: hotNewsSpec.DateStart, dateEnd: hotNewsSpec.DateEnd}
 
 	return dateValidationHandler.Validate()

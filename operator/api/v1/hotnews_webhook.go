@@ -151,7 +151,7 @@ func (r *HotNews) getAllFeeds() ([]string, error) {
 func (r *HotNews) validateHotNews() error {
 	var errList field.ErrorList
 
-	err := validateHotNews(r.Spec)
+	err := validateHotNewsSpec(r.Spec)
 	if err != nil {
 		errList = append(errList, field.Invalid(field.NewPath("spec.dateStart"), r.Spec, err.Error()))
 	}

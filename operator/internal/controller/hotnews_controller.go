@@ -197,6 +197,7 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string)
 		Watches(
 			&v1.ConfigMap{},
 			handler.EnqueueRequestsFromMapFunc(configMapHandler.UpdateHotNews),
+			builder.WithPredicates()
 		).
 		Complete(r)
 }
@@ -452,7 +453,7 @@ func (r *HotNewsReconciler) removeOwnerReferenceFromFeeds(ctx context.Context, h
 		}, feed)
 		if err != nil {
 			if k8sErrors.IsNotFound(err) {
-				errList = append(errList, field.Invalid(field.NewPath("feeds").Child(feedName), feedName, "feed not found"))
+				errList = append(errList, field.Invalid(field.NewPath("spec.feeds").Child(feedName), feedName, "feed not found"))
 			} else {
 				return err
 			}

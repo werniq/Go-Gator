@@ -153,25 +153,25 @@ func (r *HotNews) validateHotNews() error {
 
 	err := validateHotNews(r.Spec)
 	if err != nil {
-		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+		errList = append(errList, field.Invalid(field.NewPath("spec.dateStart"), r.Spec, err.Error()))
 	}
 
 	if r.Spec.Feeds == nil && r.Spec.FeedGroups == nil {
-		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, errNoFeeds))
+		errList = append(errList, field.Invalid(field.NewPath("spec.Feeds"), r.Spec, errNoFeeds))
 	}
 
 	if r.Spec.Feeds != nil && r.Spec.FeedGroups != nil {
-		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, "either feeds or feedGroups should be specified"))
+		errList = append(errList, field.Invalid(field.NewPath("spec.Feeds"), r.Spec, "either feeds or feedGroups should be specified"))
 	}
 
 	err = r.feedsExists()
 	if err != nil {
-		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+		errList = append(errList, field.Invalid(field.NewPath("spec.Feeds"), r.Spec, err.Error()))
 	}
 
 	err = r.feedGroupsExists()
 	if err != nil {
-		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+		errList = append(errList, field.Invalid(field.NewPath("spec.FeedGroups"), r.Spec, err.Error()))
 	}
 
 	if len(errList) > 0 {
@@ -197,7 +197,7 @@ func (r *HotNews) feedsExists() error {
 		return err
 	}
 
-	feedNames := []string{}
+	var feedNames []string
 	for _, feed := range feedList.Items {
 		feedNames = append(feedNames, feed.Spec.Name)
 	}

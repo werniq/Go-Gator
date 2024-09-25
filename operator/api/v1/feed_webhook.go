@@ -31,19 +31,10 @@ import (
 
 var (
 	feedlog = logf.Log.WithName("feed-resource")
-
-	// k8sClient is a kubernetes client that is used to interact with the k8s API
-	k8sClient client.Client
-)
-
-const (
-	// errFeedUsed is an error message indicating that the feed is used in hot news
-	errFeedUsed = "this feed is used in hot news, it cannot be deleted"
 )
 
 // SetupWebhookWithManager will set up the manager to manage the webhooks
 func (r *Feed) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	k8sClient = mgr.GetClient()
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -80,19 +71,19 @@ func (r *Feed) ValidateDelete() (admission.Warnings, error) {
 func (r *Feed) validateFeed() (admission.Warnings, error) {
 	var errList field.ErrorList
 
-	err := validateFeeds(r.Spec)
+	err := validateFeedSpec(r.Spec)
 	if err != nil {
 		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
 
 	err = r.checkNameUniqueness()
 	if err != nil {
-		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+		errList = append(errList, field.Invalid(field.NewPath("spec.Name"), r.Spec, err.Error()))
 	}
 
 	err = r.checkLinkUniqueness()
 	if err != nil {
-		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+		errList = append(errList, field.Invalid(field.NewPath("spec.Link"), r.Spec, err.Error()))
 	}
 
 	if len(errList) > 0 {

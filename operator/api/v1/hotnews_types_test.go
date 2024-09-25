@@ -138,7 +138,7 @@ func TestHotNews_InitHotNewsStatus(t *testing.T) {
 				Spec:       tt.fields.Spec,
 				Status:     tt.fields.Status,
 			}
-			r.InitHotNewsStatus(tt.args.articlesCount, tt.args.requestUrl, tt.args.articlesTitles)
+			r.SetStatus(tt.args.articlesCount, tt.args.requestUrl, tt.args.articlesTitles)
 			assert.Equal(t, r.Status.ArticlesCount, tt.args.articlesCount)
 		})
 	}

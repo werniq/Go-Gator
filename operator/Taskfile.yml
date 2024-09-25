@@ -1,158 +1,145 @@
 version: '3'
 
-vars:
-  IMG: "qniw984/hotnews-controller:1.3.8"
-  ENVTEST_K8S_VERSION: "1.30.0"
-  PLATFORMS: "linux/arm64,linux/amd64,linux/s390x,linux/ppc64le"
-  LOCALBIN: "./bin"
-  KUBECTL: "kubectl"
-  KUSTOMIZE_VERSION: "v5.4.2"
-  CONTROLLER_TOOLS_VERSION: "v0.15.0"
-  ENVTEST_VERSION: "release-0.18"
-  GOLANGCI_LINT_VERSION: "v1.59.1"
+env:
+  DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "qniw984/go-gator-controller:1.0.0" }}'
+  ENVTEST_K8S_VERSION: '{{ .ENVTEST_K8S_VERSION | default "1.30.0" }}'
+  CONTAINER_TOOL: '{{ .CONTAINER_TOOL | default "docker" }}'
+  LOCALBIN: ./bin
+  PLATFORMS: 'linux/arm64,linux/amd64,linux/s390x,linux/ppc64le'
+  IGNORE_NOT_FOUND: true
+
+  KUBECTL: 'kubectl'
+  GOBIN: 'go env GOBIN || go env GOPATH/bin'
+  KUSTOMIZE: '{{.LOCALBIN}}/kustomize'
+  CONTROLLER_GEN: '{{.LOCALBIN}}/controller-gen-v0.15.0'
+  ENVTEST: '{{.LOCALBIN}}/setup-envtest'
+  GOLANGCI_LINT: '{{.LOCALBIN}}/golangci-lint'
+
+  KUSTOMIZE_VERSION: '{{ .KUSTOMIZE_VERSION | default "v5.4.2" }}'
+  CONTROLLER_TOOLS_VERSION: '{{ .CONTROLLER_TOOLS_VERSION | default "v0.15.0" }}'
+  ENVTEST_VERSION: '{{ .ENVTEST_VERSION | default "release-0.18" }}'
+  GOLANGCI_LINT_VERSION: '{{ .GOLANGCI_LINT_VERSION | default "v1.59.1" }}'
 
 tasks:
-  help:
-    desc: "Display help"
-    cmds:
-      - "awk 'BEGIN {FS = \":.*##\"; printf \"\\nUsage:\\n  task \\033[36m<target>\\033[0m\\n\"} /^[a-zA-Z_0-9-]+:.*?##/ { printf \"  \\033[36m%-15s\\033[0m %s\\n\", $$1, $$2 } /^##@/ { printf \"\\n\\033[1m%s\\033[0m\\n\", substr($$0, 5) } ' Taskfile.yml"
-
-  ##@ Development
   manifests:
-    desc: "Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects."
+    desc: Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
     cmds:
-      - "{{ .LOCALBIN }}/controller-gen rbac:roleName=manager-role crd webhook paths='./...' output:crd:artifacts:config=config/crd/bases"
-    deps: [controller-gen]
+      - |
+        {{ .CONTROLLER_GEN }} rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
   generate:
-    desc: "Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations."
+    desc: Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
     cmds:
-      - "{{ .LOCALBIN }}/controller-gen object:headerFile='hack/boilerplate.go.txt' paths='./...'"
-    deps: [controller-gen]
+      - |
+        {{ .CONTROLLER_GEN }} object:headerFile="./hack/boilerplate.go.txt" paths="./..."
 
   fmt:
-    desc: "Run go fmt against code."
+    desc: Run go fmt against code.
     cmds:
-      - "go fmt ./..."
+      - go fmt ./...
 
   vet:
-    desc: "Run go vet against code."
+    desc: Run go vet against code.
     cmds:
-      - "go vet ./..."
+      - go vet ./...
 
   test:
-    desc: "Run tests."
+    desc: Run tests.
+    deps:
+      - manifests
+      - generate
+      - fmt
+      - envtest
     cmds:
-      - "KUBEBUILDER_ASSETS='$(shell {{ .LOCALBIN }}/setup-envtest use {{ .ENVTEST_K8S_VERSION }} --bin-dir {{ .LOCALBIN }} -p path)' go test $(go list ./... | grep -v /e2e) -coverprofile cover.out"
+      - KUBEBUILDER_ASSETS="{{ .ENVTEST }} use {{.ENVTEST_K8S_VERSION}} --bin-dir {{.LOCALBIN}} -p path" go test $(go list ./... | grep -v /e2e) -coverprofile cover.out
 
-  test-e2e:
-    desc: "Run the e2e tests against a Kind k8s instance that is spun up."
-    cmds:
-      - "go test ./test/e2e/ -v -ginkgo.v"
-
-  lint:
-    desc: "Run golangci-lint linter"
-    cmds:
-      - "{{LOCALBIN}}/golangci-lint run"
-    deps: [golangci-lint]
-
-  lint-fix:
-    desc: "Run golangci-lint linter and perform fixes"
-    cmds:
-      - "{{LOCALBIN}}/golangci-lint run --fix"
-    deps: [golangci-lint]
-
-  ##@ Build
   build:
-    desc: "Build manager binary."
+    desc: Build manager binary.
+    deps:
+      - manifests
+      - generate
+      - fmt
+      - vet
     cmds:
-      - "go build -o bin/manager cmd/main.go"
-    deps: [manifests, generate, fmt, vet]
+      - go build -o bin/manager cmd/main.go
 
   run:
-    desc: "Run a controller from your host."
+    desc: Run a controller from your host.
+    deps:
+      - manifests
+      - generate
+      - fmt
     cmds:
-      - "go run ./cmd/main.go"
-    deps: [manifests, generate, fmt, vet]
+      - 'go run ./cmd/main.go'
 
   docker-build:
-    desc: "Build docker image with the manager."
+    desc: Build docker image with the manager.
     cmds:
-      - "{{ .CONTAINER_TOOL }} build -t {{ .IMG }} ."
+      - |
+        {{.CONTAINER_TOOL}} build -t {{.DOCKER_IMAGE_NAME}} .
 
   docker-push:
-    desc: "Push docker image with the manager."
+    desc: Push docker image with the manager.
     cmds:
-      - "{{ .CONTAINER_TOOL }} push {{ .IMG }}"
+      - |
+        {{.CONTAINER_TOOL}} push {{.DOCKER_IMAGE_NAME}}
 
   docker-buildx:
-    desc: "Build and push docker image for the manager for cross-platform support"
+    desc: Build and push docker image for the manager for cross-platform support.
     cmds:
-      - "sed -e '1 s/\\(^FROM\\)/FROM --platform=\\$${ .BUILDPLATFORM }/; t' -e ' 1,// s//FROM --platform=\\$${BUILDPLATFORM}/' Dockerfile > Dockerfile.cross"
-      - "{{ .CONTAINER_TOOL }} buildx create --name operator-builder"
-      - "{{ .CONTAINER_TOOL }} buildx use operator-builder"
-      - "{{ .CONTAINER_TOOL }} buildx build --push --platform={{ .PLATFORMS }} --tag {{ .IMG }} -f Dockerfile.cross ."
-      - "{{ .CONTAINER_TOOL }} buildx rm operator-builder"
-      - "rm Dockerfile.cross"
+      - |
+        sed -e '1 s/\(^FROM\)/FROM --platform=${BUILDPLATFORM}/; t' -e '1,// s//FROM --platform=${BUILDPLATFORM}/' Dockerfile > Dockerfile.cross
+        {{.CONTAINER_TOOL}} buildx create --name operator-builder
+        {{.CONTAINER_TOOL}} buildx use operator-builder
+        {{.CONTAINER_TOOL}} buildx build --push --platform={{.PLATFORMS}} --tag {{.DOCKER_IMAGE_NAME}} -f Dockerfile.cross .
+        {{.CONTAINER_TOOL}} buildx rm operator-builder
+        rm Dockerfile.cross
 
   build-installer:
-    desc: "Generate a consolidated YAML with CRDs and deployment."
+    desc: Generate a consolidated YAML with CRDs and deployment.
+    deps:
+      - manifests
+      - generate
+      - kustomize
     cmds:
-      - "mkdir -p dist"
-      - "cd config/manager && {{ .LOCALBIN }}/kustomize edit set image controller={{ .IMG }}"
-      - "{{ .LOCALBIN }}/kustomize build config/default > dist/install.yaml"
-    deps: [manifests, kustomize]
+      - 'mkdir -p dist'
+      - 'cd config/manager && {{.KUSTOMIZE}} edit set image controller={{.DOCKER_IMAGE_NAME}}'
+      - '{{ .KUSTOMIZE }} build config/default > dist/install.yaml'
 
-  ##@ Deployment
   install:
-    desc: "Install CRDs into the K8s cluster."
+    desc: Install CRDs to the K8s cluster.
+    deps:
+      - manifests
+      - kustomize
     cmds:
-      - "{{ .LOCALBIN }}/kustomize build config/crd | {{ .KUBECTL }} apply -f -"
-    deps: [manifests, kustomize]
+      - |
+        {{ .KUSTOMIZE }} build config/crd | {{ .KUBECTL }} apply -f -
 
   uninstall:
-    desc: "Uninstall CRDs from the K8s cluster."
+    desc: Uninstall CRDs from the K8s cluster.
+    deps:
+      - manifests
+      - kustomize
     cmds:
-      - "{{ .LOCALBIN }}/kustomize build config/crd | {{ .KUBECTL }} delete --ignore-not-found=true -f -"
-    vars:
-      ignore-not-found: false
-    deps: [manifests, kustomize]
+      - |
+        {{ .KUSTOMIZE }} build config/crd | {{ .KUBECTL }} delete --ignore-not-found={{ .IGNORE_NOT_FOUND }} -f -
 
   deploy:
-    desc: "Deploy controller to the K8s cluster."
+    desc: Deploy controller to the K8s cluster.
+    deps:
+      - manifests
+      - kustomize
     cmds:
-      - "cd config/manager && {{ .LOCALBIN }}/kustomize edit set image controller={{ .IMG }}"
-      - "{{ .LOCALBIN }}/kustomize build config/default | {{ .KUBECTL }} apply -f -"
-    deps: [manifests, kustomize]
+      - |
+        cd config/manager && {{ .KUSTOMIZE }} edit set image controller={{.DOCKER_IMAGE_NAME}} && cd ../.. &&
+        {{.KUSTOMIZE}} build config/default | {{.KUBECTL}} apply -f -
 
   undeploy:
-    desc: "Undeploy controller from the K8s cluster."
-    cmds:
-      - "{{ .LOCALBIN }}/kustomize build config/default | {{ .KUBECTL }} delete --ignore-not-found=true -f -"
+    desc: Undeploy controller from the K8s cluster.
     vars:
-      ignore-not-found: false
-    deps: [kustomize]
-
-  kustomize:
-    desc: "Download kustomize locally if necessary."
+      IGNORE_NOT_FOUND: true
+    deps:
+      - kustomize
     cmds:
-      - "test -f {{ .LOCALBIN }}/kustomize-{{ .KUSTOMIZE_VERSION }} || GOBIN={{ .LOCALBIN }} go install sigs.k8s.io/kustomize/kustomize/v5@{{ .KUSTOMIZE_VERSION }}"
-      - "ln -sf {{ .LOCALBIN }}/kustomize-{{ .KUSTOMIZE_VERSION }} {{ .LOCALBIN }}/kustomize"
-
-  controller-gen:
-    desc: "Download controller-gen locally if necessary."
-    cmds:
-      - "test -f {{ .LOCALBIN }}/controller-gen-{{ .CONTROLLER_TOOLS_VERSION }} || GOBIN={{ .LOCALBIN }} go install sigs.k8s.io/controller-tools/cmd/controller-gen@{{ .CONTROLLER_TOOLS_VERSION }}"
-      - "ln -sf {{ .LOCALBIN }}/controller-gen-{{ .CONTROLLER_TOOLS_VERSION }} {{ .LOCALBIN }}/controller-gen"
-
-  envtest:
-    desc: "Download setup-envtest locally if necessary."
-    cmds:
-      - "test -f {{ .LOCALBIN }}/setup-envtest-{{ .ENVTEST_VERSION }} || GOBIN={{ .LOCALBIN }} go install sigs.k8s.io/controller-runtime/tools/setup-envtest@{{ .ENVTEST_VERSION }}"
-      - "ln -sf {{ .LOCALBIN }}/setup-envtest-{{ .ENVTEST_VERSION }} {{ .LOCALBIN }}/setup-envtest"
-
-  golangci-lint:
-    desc: "Download golangci-lint locally if necessary."
-    cmds:
-      - "test -f {{ .LOCALBIN }}/golangci-lint-{{ .GOLANGCI_LINT_VERSION }} || GOBIN={{ .LOCALBIN }} go install github.com/golangci/golangci-lint/cmd/golangci-lint@{{ .GOLANGCI_LINT_VERSION }}"
-      - "ln -sf {{ .LOCALBIN }}/golangci-lint-{{ .GOLANGCI_LINT_VERSION }} {{ .LOCALBIN }}/golangci-lint"
+      - |
+        {{.KUSTOMIZE}} build config/default | {{.KUBECTL}} delete --ignore-not-found={{ .IGNORE_NOT_FOUND }} -f -

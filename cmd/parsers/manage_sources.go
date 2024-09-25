@@ -15,7 +15,7 @@ var (
 	g ParsingFactory
 
 	// StoragePath is the path to folder with all data from application
-	StoragePath string = "/tmp/"
+	StoragePath string
 
 	// sourceToEndpoint maps source names (as strings) to their corresponding filenames
 	sourceToEndpoint = map[string]string{

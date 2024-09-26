@@ -32,6 +32,9 @@ func TestFeed_validateHotNews(t *testing.T) {
 	_ = AddToScheme(scheme)
 	_ = v1.AddToScheme(scheme)
 
+	FeedGroupsConfigMapName := "feed-group-name"
+	FeedGroupsNamespace := "go-gator"
+
 	existingFeedList := &FeedList{
 		Items: []Feed{
 			{
@@ -352,6 +355,9 @@ func TestHotNews_ValidateUpdate(t *testing.T) {
 			},
 		},
 	}
+
+	FeedGroupsConfigMapName := "feed-group-name"
+	FeedGroupsNamespace := "go-gator"
 
 	existingHotNewsList := &HotNewsList{
 		Items: []HotNews{

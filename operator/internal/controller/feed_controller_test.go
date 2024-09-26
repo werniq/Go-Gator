@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -363,7 +362,7 @@ func TestFeedReconciler_handleCreate(t *testing.T) {
 				defer tt.mockServer.Close()
 			}
 
-			_, err := r.handleCreate(tt.feed)
+			err := r.handleCreate(tt.feed)
 
 			if tt.expectedErr {
 				assert.NotNil(t, err)
@@ -386,7 +385,7 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 		{
 			name: "Successful delete",
 			setup: func(r *FeedReconciler) {
-				_, err := r.handleCreate(&newsaggregatorv1.Feed{
+				err := r.handleCreate(&newsaggregatorv1.Feed{
 					Spec: newsaggregatorv1.FeedSpec{
 						Name: "Test Feed",
 						Link: "http://example.com",
@@ -478,7 +477,7 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 		{
 			name: "Server returns error",
 			setup: func(r *FeedReconciler) {
-				_, err := r.handleCreate(&newsaggregatorv1.Feed{
+				err := r.handleCreate(&newsaggregatorv1.Feed{
 					Spec: newsaggregatorv1.FeedSpec{
 						Name: "Test Feed",
 						Link: "http://example.com",
@@ -512,7 +511,7 @@ func TestFeedReconciler_handleDelete(t *testing.T) {
 
 			tt.setup(r)
 
-			_, err := r.handleDelete(tt.feed)
+			err := r.handleDelete(tt.feed)
 
 			if tt.expectedErr {
 				assert.NotEqual(t, err.Error(), "")
@@ -605,7 +604,7 @@ func TestFeedReconciler_handleUpdate(t *testing.T) {
 				defer tt.mockServer.Close()
 			}
 
-			_, err := r.handleUpdate(tt.feed)
+			err := r.handleUpdate(tt.feed)
 
 			if tt.expectedErr {
 				assert.NotEqual(t, err.Error(), "")
@@ -670,108 +669,6 @@ func TestFeedReconciler_SetupWithManager(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.args.serverUrl, r.serverAddress)
-		})
-	}
-}
-
-func TestFeedReconciler_updateAllHotNewsInNamespaceByFeed(t *testing.T) {
-	scheme := runtime.NewScheme()
-	_ = newsaggregatorv1.AddToScheme(scheme)
-	_ = v1.AddToScheme(scheme)
-
-	hotNewsList := &newsaggregatorv1.HotNewsList{
-		Items: []newsaggregatorv1.HotNews{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-feed",
-					Namespace: "default",
-				},
-				Spec: newsaggregatorv1.HotNewsSpec{
-					Feeds: []string{"test-feed"},
-				},
-			},
-		},
-	}
-
-	fakeClient := fake.NewClientBuilder().
-		WithScheme(scheme).
-		WithLists(hotNewsList).
-		WithObjects(&newsaggregatorv1.Feed{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-feed",
-				Namespace: "default",
-			},
-		}).
-		WithRuntimeObjects().Build()
-
-	type fields struct {
-		Client client.Client
-	}
-	type args struct {
-		ctx  context.Context
-		feed *newsaggregatorv1.Feed
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		server  *httptest.Server
-		args    args
-		setup   func()
-		wantErr assert.ErrorAssertionFunc
-	}{
-		{
-			name: "Successful update of hot news",
-			fields: fields{
-				Client: fakeClient,
-			},
-			args: args{
-				ctx: context.TODO(),
-				feed: &newsaggregatorv1.Feed{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-feed",
-						Namespace: "default",
-					},
-					Spec: newsaggregatorv1.FeedSpec{Name: "test-feed"},
-				},
-			},
-			setup: func() {
-
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "CRD is not found in schema",
-			fields: fields{
-				Client: fake.NewClientBuilder().
-					WithScheme(nil).
-					Build(),
-			},
-			args: args{
-				ctx: context.TODO(),
-				feed: &newsaggregatorv1.Feed{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "non-existent-feed",
-						Namespace: "default",
-					},
-				},
-			},
-			setup: func() {
-			},
-			wantErr: assert.Error,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.setup != nil {
-				tt.setup()
-			}
-
-			r := &FeedReconciler{
-				Client: tt.fields.Client,
-				Scheme: scheme,
-			}
-			tt.wantErr(t, r.updateAllHotNewsInNamespaceByFeed(tt.args.ctx, tt.args.feed), fmt.Sprintf("updateAllHotNewsInNamespaceByFeed(%v, %v)", tt.args.ctx, tt.args.feed))
 		})
 	}
 }

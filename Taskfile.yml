@@ -7,7 +7,7 @@ env:
   DOCKERHUB_USERNAME: '{{ .DOCKER_LOGIN_USERNAME }}'
   DOCKERHUB_PASSWORD: '{{ .DOCKERHUB_PASSWORD }}'
   TESTDIR_NAME:      '{{ .TESTDIR_NAME | default "pkg_tests" }}'
-  DAY_0_VERSION: '{{ .DAY_0_VERSION | default "0.1.0" }}'
+  GO_GATOR_CHART_VERSION: '{{ .GO_GATOR_CHART_VERSION | default "0.1.0" }}'
 
 tasks:
   fmt:
@@ -92,7 +92,7 @@ tasks:
   installChart:
     desc: Install the Helm chart on the Kubernetes cluster
     cmds:
-      - helm install go-gator go-gator
+      - helm install go-gator-{{ .GO_GATOR_CHART_VERSION }}.tgz go-gator
 
   uninstallChart:
     desc: Uninstall the Helm chart from the Kubernetes cluster
@@ -140,3 +140,4 @@ tasks:
       - ecr-build
     cmds:
       - helm push day-0-{{ .DAY_0_VERSION }}.tgz oci://406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/
+      - kubectl delete namespace go-gator

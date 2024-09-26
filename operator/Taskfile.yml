@@ -2,7 +2,6 @@ version: '3'
 
 env:
   DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "qniw984/go-gator-controller:1.0.0" }}'
-  ENVTEST_K8S_VERSION: '{{ .ENVTEST_K8S_VERSION | default "1.30.0" }}'
   CONTAINER_TOOL: '{{ .CONTAINER_TOOL | default "docker" }}'
   LOCALBIN: ./bin
   PLATFORMS: 'linux/arm64,linux/amd64,linux/s390x,linux/ppc64le'
@@ -12,13 +11,6 @@ env:
   GOBIN: 'go env GOBIN || go env GOPATH/bin'
   KUSTOMIZE: '{{.LOCALBIN}}/kustomize'
   CONTROLLER_GEN: '{{.LOCALBIN}}/controller-gen-v0.15.0'
-  ENVTEST: '{{.LOCALBIN}}/setup-envtest'
-  GOLANGCI_LINT: '{{.LOCALBIN}}/golangci-lint'
-
-  KUSTOMIZE_VERSION: '{{ .KUSTOMIZE_VERSION | default "v5.4.2" }}'
-  CONTROLLER_TOOLS_VERSION: '{{ .CONTROLLER_TOOLS_VERSION | default "v0.15.0" }}'
-  ENVTEST_VERSION: '{{ .ENVTEST_VERSION | default "release-0.18" }}'
-  GOLANGCI_LINT_VERSION: '{{ .GOLANGCI_LINT_VERSION | default "v1.59.1" }}'
 
 tasks:
   manifests:

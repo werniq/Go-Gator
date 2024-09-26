@@ -4,3 +4,5 @@ bin/*
 .idea
 coverage
 cover
+go-gator-0.1.0.tgz
+*.tgz

@@ -104,6 +104,15 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
+	configMapList, err := r.retrieveConfigMap(ctx, hotNews.Namespace)
+	if err != nil {
+		updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to retrieve config map", err.Error())
+		if updateErr != nil {
+			return ctrl.Result{}, updateErr
+		}
+		return ctrl.Result{}, err
+	}
+
 	if !controllerutil.ContainsFinalizer(&hotNews, HotNewsFinalizer) {
 		controllerutil.AddFinalizer(&hotNews, HotNewsFinalizer)
 		err := r.Client.Update(ctx, &hotNews)
@@ -113,7 +122,7 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if !hotNews.DeletionTimestamp.IsZero() {
-		err = r.removeFeedReference(ctx, hotNews)
+		err = r.removeFeedReference(ctx, hotNews, configMapList)
 		if err != nil {
 			updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to remove feed reference for feeds", err.Error())
 			if updateErr != nil {
@@ -135,7 +144,7 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, nil
 	}
 
-	err = r.processHotNews(ctx, &hotNews)
+	err = r.processHotNews(ctx, &hotNews, configMapList)
 	if err != nil {
 		updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to process hotnews", err.Error())
 		if updateErr != nil {
@@ -145,7 +154,7 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	logger.Info("HotNews object has been updated")
 
-	err = r.setFeedReference(ctx, hotNews)
+	err = r.setFeedReference(ctx, hotNews, configMapList)
 	if err != nil {
 		updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to set feed reference for hotnews", err.Error())
 		if updateErr != nil {
@@ -212,11 +221,11 @@ type article struct {
 }
 
 // processHotNews function updates the HotNews object and returns an error if something goes wrong.
-func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsaggregatorv1.HotNews) error {
+func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsaggregatorv1.HotNews, configMapList v1.ConfigMapList) error {
 	logger := log.FromContext(ctx)
 	logger.Info("handling update")
 
-	requestUrl, err := r.constructRequestUrl(ctx, hotNews)
+	requestUrl, err := r.constructRequestUrl(ctx, hotNews, configMapList)
 	if err != nil {
 		logger.Error(err, errFailedToConstructRequestUrl)
 		return err
@@ -287,7 +296,8 @@ func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsagg
 // Example:
 // http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&dateEnd=2024-08-06&sources=abc,bbc
 // http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&sources=abc,bbc
-func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, hotNews *newsaggregatorv1.HotNews) (string, error) {
+func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, hotNews *newsaggregatorv1.HotNews,
+	configMapList v1.ConfigMapList) (string, error) {
 	var requestUrl strings.Builder
 
 	requestUrl.WriteString(r.serverUrl)
@@ -300,7 +310,7 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, hotNews *ne
 
 	var feedStr strings.Builder
 	if hotNews.Spec.FeedGroups != nil {
-		feedGroupsStr, err := r.processFeedGroups(ctx, hotNews)
+		feedGroupsStr, err := r.processFeedGroups(hotNews, configMapList)
 		if err != nil {
 			return "", err
 		}
@@ -354,22 +364,16 @@ func (r *HotNewsReconciler) setFailedStatus(ctx context.Context, hotNews *newsag
 }
 
 // setFeedReference sets the owner references for each Feed in the HotNewsSpec.Feeds array.
-func (r *HotNewsReconciler) setFeedReference(ctx context.Context, hotNews newsaggregatorv1.HotNews) error {
+func (r *HotNewsReconciler) setFeedReference(ctx context.Context, hotNews newsaggregatorv1.HotNews,
+	configMapList v1.ConfigMapList) error {
+	var feeds = hotNews.Spec.Feeds
 	if hotNews.Spec.FeedGroups != nil {
-		feedGroups, err := hotNews.GetFeedGroupNames(ctx)
-		if err != nil {
-			return err
-		}
+		feeds = hotNews.GetFeedGroupNames(configMapList)
+	}
 
-		err = r.setOwnerReferenceForFeeds(ctx, hotNews, feedGroups)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := r.setOwnerReferenceForFeeds(ctx, hotNews, hotNews.Spec.Feeds)
-		if err != nil {
-			return err
-		}
+	err := r.setOwnerReferenceForFeeds(ctx, hotNews, feeds)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -388,7 +392,11 @@ func (r *HotNewsReconciler) setOwnerReferenceForFeeds(ctx context.Context, hotNe
 			Namespace: hotNews.Namespace,
 		}, feed)
 		if err != nil {
-			errList = append(errList, field.InternalError(field.NewPath("feeds").Child(feedName), err))
+			if k8sErrors.IsNotFound(err) {
+				errList = append(errList, field.Invalid(field.NewPath("spec.feeds").Child(feedName), feedName, "feed not found"))
+			} else {
+				return err
+			}
 			continue
 		}
 
@@ -397,7 +405,7 @@ func (r *HotNewsReconciler) setOwnerReferenceForFeeds(ctx context.Context, hotNe
 
 			err = r.Update(ctx, feed)
 			if err != nil {
-				errList = append(errList, field.InternalError(field.NewPath("feeds").Child(feedName), err))
+				return err
 			}
 		}
 	}
@@ -420,22 +428,16 @@ func hasOwnerReference(feed *newsaggregatorv1.Feed, ownerRef *metav1.OwnerRefere
 }
 
 // removeFeedReference removes the owner references for each Feed in the HotNewsSpec.Feeds array.
-func (r *HotNewsReconciler) removeFeedReference(ctx context.Context, hotNews newsaggregatorv1.HotNews) error {
+func (r *HotNewsReconciler) removeFeedReference(ctx context.Context, hotNews newsaggregatorv1.HotNews,
+	configMapList v1.ConfigMapList) error {
+	var feeds = hotNews.Spec.Feeds
 	if hotNews.Spec.FeedGroups != nil {
-		feedGroups, err := hotNews.GetFeedGroupNames(ctx)
-		if err != nil {
-			return err
-		}
+		feeds = hotNews.GetFeedGroupNames(configMapList)
+	}
 
-		err = r.removeOwnerReferenceFromFeeds(ctx, &hotNews, feedGroups)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := r.removeOwnerReferenceFromFeeds(ctx, &hotNews, hotNews.Spec.Feeds)
-		if err != nil {
-			return err
-		}
+	err := r.removeOwnerReferenceFromFeeds(ctx, &hotNews, feeds)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -489,16 +491,12 @@ func (r *HotNewsReconciler) processFeeds(spec newsaggregatorv1.HotNewsSpec) stri
 
 // processFeedGroups function processes feed groups from the ConfigMap and returns a string containing comma-separated
 // feed sources
-func (r *HotNewsReconciler) processFeedGroups(ctx context.Context, hotNews *newsaggregatorv1.HotNews) (string, error) {
+func (r *HotNewsReconciler) processFeedGroups(hotNews *newsaggregatorv1.HotNews,
+	configMapList v1.ConfigMapList) (string, error) {
 	var sourcesBuilder strings.Builder
 
-	configMaps, err := r.getFeedGroups(ctx, hotNews)
-	if err != nil {
-		return "", err
-	}
-
 	for _, feedGroup := range hotNews.Spec.FeedGroups {
-		for _, configMap := range configMaps.Items {
+		for _, configMap := range configMapList.Items {
 			if _, ok := configMap.Data[feedGroup]; !ok {
 				return "", fmt.Errorf(errWrongFeedGroupName)
 			} else {
@@ -511,8 +509,8 @@ func (r *HotNewsReconciler) processFeedGroups(ctx context.Context, hotNews *news
 	return sourcesBuilder.String()[:len(sourcesBuilder.String())-1], nil
 }
 
-// getFeedGroups returns all data from config map named FeedGroupsConfigMapName in FeedGroupsNamespace
-func (r *HotNewsReconciler) getFeedGroups(ctx context.Context, hotNews *newsaggregatorv1.HotNews) (v1.ConfigMapList, error) {
+// retrieveConfigMap
+func (r *HotNewsReconciler) retrieveConfigMap(ctx context.Context, namespace string) (v1.ConfigMapList, error) {
 	s, err := labels.NewRequirement(newsaggregatorv1.FeedGroupLabel, selection.Exists, nil)
 	if err != nil {
 		return v1.ConfigMapList{}, err
@@ -521,18 +519,11 @@ func (r *HotNewsReconciler) getFeedGroups(ctx context.Context, hotNews *newsaggr
 	var configMaps v1.ConfigMapList
 	err = r.Client.List(ctx, &configMaps, &client.ListOptions{
 		LabelSelector: labels.NewSelector().Add(*s),
-		Namespace:     hotNews.Namespace,
+		Namespace:     namespace,
 	})
 
 	if err != nil {
 		return v1.ConfigMapList{}, err
-	}
-
-	logger := log.FromContext(ctx)
-	for _, configMap := range configMaps.Items {
-		for key, item := range configMap.Data {
-			logger.Info("ConfigMap data", key, item)
-		}
 	}
 
 	return configMaps, nil

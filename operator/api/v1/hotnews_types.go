@@ -17,12 +17,8 @@ limitations under the License.
 package v1
 
 import (
-	"context"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -148,23 +144,9 @@ func init() {
 }
 
 // GetFeedGroupNames returns all config maps which contain hotNew groups names
-func (r *HotNews) GetFeedGroupNames(ctx context.Context) ([]string, error) {
-	s, err := labels.NewRequirement(FeedGroupLabel, selection.Exists, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var configMaps v1.ConfigMapList
-	err = k8sClient.List(ctx, &configMaps, &client.ListOptions{
-		LabelSelector: labels.NewSelector().Add(*s),
-		Namespace:     r.Namespace,
-	})
-	if err != nil {
-		return nil, err
-	}
-
+func (r *HotNews) GetFeedGroupNames(configMapList v1.ConfigMapList) []string {
 	var feedGroups []string
-	for _, configMap := range configMaps.Items {
+	for _, configMap := range configMapList.Items {
 		for _, source := range r.Spec.FeedGroups {
 			if _, exists := configMap.Data[source]; exists {
 				feedGroups = append(feedGroups, source)
@@ -172,7 +154,7 @@ func (r *HotNews) GetFeedGroupNames(ctx context.Context) ([]string, error) {
 		}
 	}
 
-	return feedGroups, nil
+	return feedGroups
 }
 
 // SetCondition initializes status.Conditions if they are empty.

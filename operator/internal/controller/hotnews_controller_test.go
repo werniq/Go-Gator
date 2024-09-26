@@ -231,6 +231,7 @@ func TestHotNewsReconciler_Reconcile_NegativeCases(t *testing.T) {
 func TestRemoveFeedReference(t *testing.T) {
 	scheme := runtime.NewScheme()
 	newsaggregatorv1.AddToScheme(scheme)
+	v1.AddToScheme(scheme)
 
 	r := &HotNewsReconciler{
 		Client: fake.NewClientBuilder().WithScheme(scheme).Build(),
@@ -244,6 +245,20 @@ func TestRemoveFeedReference(t *testing.T) {
 		},
 		Spec: newsaggregatorv1.HotNewsSpec{
 			Feeds: []string{"feed1", "feed2"},
+		},
+	}
+
+	configMapList := v1.ConfigMapList{
+		Items: []v1.ConfigMap{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						newsaggregatorv1.FeedGroupLabel: "true",
+					},
+					Namespace: hotNews.ObjectMeta.Namespace,
+				},
+				Data: nil,
+			},
 		},
 	}
 
@@ -350,7 +365,7 @@ func TestRemoveFeedReference(t *testing.T) {
 			}
 			r.Client = fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
 
-			err := r.removeFeedReference(ctx, hotNews)
+			err := r.removeFeedReference(ctx, hotNews, configMapList)
 
 			if test.expectedError {
 				assert.Error(t, err)
@@ -375,6 +390,19 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 	}
 	type args struct {
 		spec newsaggregatorv1.HotNewsSpec
+	}
+
+	configMapList := v1.ConfigMapList{
+		Items: []v1.ConfigMap{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						newsaggregatorv1.FeedGroupLabel: "true",
+					},
+				},
+				Data: map[string]string{"sport": "aaaa"},
+			},
+		},
 	}
 
 	tests := []struct {
@@ -455,7 +483,12 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 				Scheme:    tt.fields.Scheme,
 				serverUrl: serverNewsEndpoint,
 			}
-			got, err := r.constructRequestUrl(context.Background(), tt.args.spec)
+			got, err := r.constructRequestUrl(context.Background(), &newsaggregatorv1.HotNews{
+				Spec: tt.args.spec,
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "ns",
+				},
+			}, configMapList)
 
 			if tt.wantErr {
 				assert.NotNil(t, err)
@@ -479,6 +512,7 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 					Labels: map[string]string{
 						newsaggregatorv1.FeedGroupLabel: "true",
 					},
+					Namespace: "default",
 				},
 				Data: map[string]string{
 					"sport":   "washingtontimes",
@@ -552,7 +586,7 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 				Scheme: tt.fields.Scheme,
 			}
 
-			got, err := r.getFeedGroups(context.Background())
+			got, err := r.retrieveConfigMap(context.Background(), "default")
 			if (err != nil) != tt.wantErr {
 				t.Errorf("getFeedGroups() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -596,12 +630,13 @@ func TestHotNewsReconciler_processHotNews(t *testing.T) {
 	}
 
 	FeedGroupsNamespace := "go-gator"
-	FeedGroupsConfigMapName := "feed-group-source"
 
 	existingConfigMap := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: FeedGroupsNamespace,
-			Name:      FeedGroupsConfigMapName,
+			Labels: map[string]string{
+				newsaggregatorv1.FeedGroupLabel: "true",
+			},
 		},
 		Data: map[string]string{
 			"sport":   "washingtontimes",
@@ -730,7 +765,9 @@ func TestHotNewsReconciler_processHotNews(t *testing.T) {
 				Scheme:    tt.fields.Scheme,
 				serverUrl: serverNewsEndpoint,
 			}
-			if err := r.processHotNews(tt.args.ctx, tt.args.hotNews); (err != nil) != tt.wantErr {
+			if err := r.processHotNews(tt.args.ctx, tt.args.hotNews, v1.ConfigMapList{Items: []v1.ConfigMap{
+				existingConfigMap,
+			}}); (err != nil) != tt.wantErr {
 				t.Errorf("processHotNews() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -878,7 +915,11 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 				Client: tt.fields.Client,
 				Scheme: tt.fields.Scheme,
 			}
-			got, err := r.processFeedGroups(context.Background(), tt.args.spec)
+			got, err := r.processFeedGroups(&newsaggregatorv1.HotNews{
+				Spec: tt.args.spec,
+			}, v1.ConfigMapList{Items: []v1.ConfigMap{
+				existingConfigMap,
+			}})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("processFeedGroups() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -199,7 +199,6 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string)
 	r.serverUrl = serverUrl
 
 	hotNewsHandler := &HotNewsHandler{Client: mgr.GetClient()}
-	configMapHandler := &ConfigMapHandler{Client: mgr.GetClient()}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.HotNews{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
@@ -210,7 +209,7 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string)
 		).
 		Watches(
 			&v1.ConfigMap{},
-			handler.EnqueueRequestsFromMapFunc(configMapHandler.UpdateHotNews),
+			handler.EnqueueRequestsFromMapFunc(hotNewsHandler.UpdateHotNews),
 			builder.WithPredicates(ConfigMapStatusPredicate{}),
 		).
 		Complete(r)

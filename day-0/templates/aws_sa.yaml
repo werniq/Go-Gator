@@ -12,7 +12,7 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["delete"]
+    verbs: ["patch"]
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["create"]

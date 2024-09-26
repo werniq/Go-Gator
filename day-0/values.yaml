@@ -6,3 +6,5 @@ namespace: go-gator
 
 sa:
   name: sa-health-check
+
+dockerSecretName: aws-secret

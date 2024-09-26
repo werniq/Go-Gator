@@ -40,18 +40,8 @@ const (
 	// errWrongFeedGroupName is an error message for wrong hotNew group name
 	errWrongFeedGroupName = "hotNew group name is not found in the ConfigMap, please check the hotNew group name"
 
-	// FeedGroupsNamespace is a namespace where hotNew groups are stored
-	FeedGroupsNamespace = "operator-system"
-
-	// FeedGroupsConfigMapName is a name of the default ConfigMap which contains our hotNew groups names and sources
-	FeedGroupsConfigMapName = "feed-group-source"
-
 	// FeedGroupLabel is a label for ConfigMap which contains our hotNew groups names and sources
 	FeedGroupLabel = "feed-group-source"
-
-	// HotNewsFinalizer is a finalizer for HotNews resource which will be added when the resource is created
-	// and removed when the resource is deleted
-	HotNewsFinalizer = "finalizer.hotnews.newsaggregator.teamdev.com"
 )
 
 var (
@@ -161,23 +151,27 @@ func (r *HotNews) getAllFeeds() ([]string, error) {
 func (r *HotNews) validateHotNews() error {
 	var errList field.ErrorList
 
-	err := validateHotNews(r.Spec)
+	err := validateHotNewsSpec(r.Spec)
 	if err != nil {
-		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+		errList = append(errList, field.Invalid(field.NewPath("spec.dateStart"), r.Spec, err.Error()))
 	}
 
 	if r.Spec.Feeds == nil && r.Spec.FeedGroups == nil {
-		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, errNoFeeds))
+		errList = append(errList, field.Invalid(field.NewPath("spec.Feeds"), r.Spec, errNoFeeds))
+	}
+
+	if r.Spec.Feeds != nil && r.Spec.FeedGroups != nil {
+		errList = append(errList, field.Invalid(field.NewPath("spec.Feeds"), r.Spec, "either feeds or feedGroups should be specified"))
 	}
 
 	err = r.feedsExists()
 	if err != nil {
-		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+		errList = append(errList, field.Invalid(field.NewPath("spec.Feeds"), r.Spec, err.Error()))
 	}
 
 	err = r.feedGroupsExists()
 	if err != nil {
-		errList = append(errList, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+		errList = append(errList, field.Invalid(field.NewPath("spec.FeedGroups"), r.Spec, err.Error()))
 	}
 
 	if len(errList) > 0 {
@@ -203,18 +197,23 @@ func (r *HotNews) feedsExists() error {
 		return err
 	}
 
-	feedNames := []string{}
+	var feedNames []string
 	for _, feed := range feedList.Items {
 		feedNames = append(feedNames, feed.Spec.Name)
 	}
 
+	var errList field.ErrorList
 	for _, source := range r.Spec.Feeds {
 		if !slices.Contains(feedNames, source) {
-			return errors.New("feed name is not found in the namespace, please check the feed name")
+			errList = append(errList, field.Invalid(field.NewPath("spec").Child("feeds"), r.Spec.Feeds, "feed "+source+" is not found in the namespace"))
 		}
 	}
 
-	return err
+	if len(errList) > 0 {
+		return errList.ToAggregate()
+	}
+
+	return nil
 }
 
 // feedGroupsExists checks if the given list of feed groups exist in the config map

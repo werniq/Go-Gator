@@ -8,7 +8,6 @@ import (
 	parsers "gogator/cmd/parsers"
 	"os"
 	"path/filepath"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
 )
 
@@ -18,19 +17,11 @@ var (
 
 	// defaultDataDirPath is a default path to the directory where all data will be stored
 	defaultDataDirPath = filepath.Join("cmd", "parsers", "data")
-
-	k8sClient client.Client
 )
 
 const (
 	// defaultServerPort is a default port on which this server will be running
 	defaultServerPort = 443
-
-	// defaultCertificatesNamespace is a default namespace where certificates are stored
-	defaultCertificatesNamespace = "go-gator"
-
-	// defaultSecretName is a default name of the secret where certificates are stored
-	defaultSecretName = "cert-secret"
 
 	// defaultPrivateKey identifies the default name of server's private key
 	defaultPrivateKey = "tls.key"

@@ -32,14 +32,8 @@ const (
 	// TypeHotNewsUpdated represents the reason for created condition
 	TypeHotNewsUpdated = "Updated"
 
-	// TypeHotNewsFailedToCreate represents the reason for failed to create condition
-	TypeHotNewsFailedToCreate = "FailedToCreate"
-
 	// HotNewsSuccessfullyCreated represents the reason for created condition
 	HotNewsSuccessfullyCreated = "HotNews was successfully created"
-
-	// HotNewsSuccessfullyUpdated represents the reason for updated condition
-	HotNewsSuccessfullyUpdated = "HotNews was successfully updated"
 
 	// HotNewsError indicates that there were an error during Reconciliation of hot news object
 	HotNewsError = "Error during processing of hot news creation"

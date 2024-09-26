@@ -83,14 +83,20 @@ type HotNewsReconciler struct {
 // +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=configmaps,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state
+// Reconcile is part of the Kubernetes reconciliation loop, which ensures that
+// the current state of the cluster matches the desired state specified by the HotNews resource.
 //
-// This function will be called when a HotNews object is created, updated or deleted
-// It will send a request to the news aggregator server to retrieve news with the parameters,
-// specified in the HotNews object.
-// Additionally, it is watching for changes in the ConfigMap with the feed groups, and in the Feed CRD.
-// If there were any changes, it will also affect the HotNews object.
+// This function is triggered when a HotNews object is created, updated, or deleted.
+// It performs the following tasks:
+//  1. Retrieves the HotNews object and corresponding ConfigMap containing feed group information.
+//  2. If the HotNews object lacks a finalizer, it adds one to handle cleanup on deletion.
+//  3. If the object is marked for deletion, it removes the associated feed reference and updates the object.
+//  4. If the object is active, it processes the HotNews by sending a request to the news aggregator server
+//     and updating the object based on the response (handled in processHotNews).
+//  5. The function also tracks any changes in the ConfigMap and Feed CRD, ensuring they reflect in the HotNews object.
+//
+// Any errors encountered during retrieval, processing, or updating are logged,
+// and appropriate status updates are made to reflect the success or failure of the operation.
 func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
@@ -211,16 +217,37 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string)
 		Complete(r)
 }
 
-// articles struct is used to parse the response from the news aggregator server
+// article struct is used to parse and represent individual news articles received from the news aggregator server.
+// The struct fields are annotated with both JSON and XML tags to allow parsing of response data in either format.
+// Each article contains details such as the title, publication date, description, publisher/source, and a link to the full article.
 type article struct {
-	Title       string `json:"title" xml:"title"`
-	PubDate     string `json:"publishedAt" xml:"pubDate"`
+	// Title The title of the news article.
+	Title string `json:"title" xml:"title"`
+
+	// PubDate The date and time when the article was published.
+	PubDate string `json:"publishedAt" xml:"pubDate"`
+
+	// Description A brief summary or description of the article's content.
 	Description string `json:"description" xml:"description"`
-	Publisher   string `xml:"source" json:"Publisher"`
-	Link        string `json:"url" xml:"link"`
+
+	// Publisher The name of the source or publisher of the article.
+	Publisher string `xml:"source" json:"Publisher"`
+
+	// Link The URL link to the full article.
+	Link string `json:"url" xml:"link"`
 }
 
-// processHotNews function updates the HotNews object and returns an error if something goes wrong.
+// processHotNews updates the given HotNews object by sending an HTTP GET request to a constructed URL
+// and processing the response.
+//
+// The function constructs the request URL based on the HotNews and ConfigMap data,
+// sends the request to an external server, and handles the server response.
+//
+// If the response is successful, it decodes the JSON response body containing articles,
+// processes the data (e.g., titles and total count), and updates the HotNews object's status with this information.
+//
+// Any errors during the process, such as URL construction, request creation, sending, decoding, or closing
+// the response body, are logged and returned as errors.
 func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsaggregatorv1.HotNews, configMapList v1.ConfigMapList) error {
 	logger := log.FromContext(ctx)
 	logger.Info("handling update")
@@ -333,8 +360,19 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, hotNews *ne
 	return requestUrl.String(), nil
 }
 
-// setSuccessfulStatus checks if condition should be of type Created or Updated.
-// After that, it updates the status of given hot news, than updates hotNews object in K8s Cluster.
+// setSuccessfulStatus checks if the condition should be of type "Created" or "Updated".
+// It examines the current status of the HotNews object to determine if it has been successfully created before.
+// If it has been created, it updates the condition to "Updated"; otherwise, it sets the condition to "Created".
+// After setting the appropriate condition, it updates the HotNews object in the Kubernetes cluster.
+//
+// Parameters:
+// - ctx: A context to manage request cancellation and timeouts.
+// - hotNews: The HotNews resource whose status needs to be updated.
+// - reason: A short string indicating the reason for the status change.
+// - message: A descriptive message explaining the status update.
+//
+// Returns:
+// - error: If the update operation on the HotNews object fails, an error is returned. Otherwise, it returns nil.
 func (r *HotNewsReconciler) setSuccessfulStatus(ctx context.Context, hotNews *newsaggregatorv1.HotNews,
 	reason, message string) error {
 	var condition = newsaggregatorv1.TypeHotNewsCreated
@@ -351,7 +389,18 @@ func (r *HotNewsReconciler) setSuccessfulStatus(ctx context.Context, hotNews *ne
 	return nil
 }
 
-// setFailedStatus sets the status of hotNews.Condition to Error, and updates hotNews object after that
+// setFailedStatus sets the status condition of the HotNews resource to "Error".
+// It is used when the operation on the HotNews object has failed, and the failure needs to be reflected
+// in the status of the resource.
+//
+// Parameters:
+// - ctx: A context to manage request cancellation and timeouts.
+// - hotNews: The HotNews resource whose status needs to be updated.
+// - reason: A short string indicating the reason for the failure.
+// - message: A descriptive message explaining the failure.
+//
+// Returns:
+// - error: If the update operation on the HotNews object fails, an error is returned. Otherwise, it returns nil.
 func (r *HotNewsReconciler) setFailedStatus(ctx context.Context, hotNews *newsaggregatorv1.HotNews,
 	reason, message string) error {
 	hotNews.SetCondition(newsaggregatorv1.HotNewsError, newsaggregatorv1.StatusError, reason, message)
@@ -364,6 +413,12 @@ func (r *HotNewsReconciler) setFailedStatus(ctx context.Context, hotNews *newsag
 }
 
 // setFeedReference sets the owner references for each Feed in the HotNewsSpec.Feeds array.
+//
+// This function is used to set the feed reference for the feed. It determines if feeds or feedGroups should be used as
+// reference, because we support only one of these values.
+// It initializes array of feeds which will be passed further for setting owner reference. By default, it is array of
+// spec.Feeds, but if feedGroups were not nil (meaning that feeds were nil), it retrieves feed names with
+// HotNews method GetFeedGroupNames.
 func (r *HotNewsReconciler) setFeedReference(ctx context.Context, hotNews newsaggregatorv1.HotNews,
 	configMapList v1.ConfigMapList) error {
 	var feeds = hotNews.Spec.Feeds
@@ -379,7 +434,22 @@ func (r *HotNewsReconciler) setFeedReference(ctx context.Context, hotNews newsag
 	return nil
 }
 
-// setOwnerReferenceForFeeds sets the owner references for each Feed in the HotNewsSpec.Feeds array.
+// setOwnerReferenceForFeeds sets the owner references for each Feed in the given array containing feed names.
+//
+// This method iterates over the list of feeds specified in the `HotNews` custom resource and ensures
+// that each `Feed` resource has the current `HotNews` object set as its owner. The purpose of this
+// owner reference is to establish a parent-child relationship between `HotNews` and its associated
+// feeds, which enables Kubernetes' garbage collection to automatically delete orphaned feeds
+// when the `HotNews` object is deleted.
+//
+// Parameters:
+// - ctx: A context to control cancellation signals and request-scoped values across API boundaries.
+// - hotNews: The `HotNews` resource containing metadata and spec about the feeds.
+// - feeds: A list of feed names (strings) to update with owner references.
+//
+// Returns:
+//   - error: Returns an error if there's an issue retrieving or updating a feed.
+//     Returns an aggregated error if multiple feeds cannot be found.
 func (r *HotNewsReconciler) setOwnerReferenceForFeeds(ctx context.Context, hotNews newsaggregatorv1.HotNews, feeds []string) error {
 	var errList field.ErrorList
 
@@ -418,6 +488,16 @@ func (r *HotNewsReconciler) setOwnerReferenceForFeeds(ctx context.Context, hotNe
 }
 
 // hasOwnerReference checks if the given Feed already has the provided OwnerReference.
+//
+// This utility function helps prevent duplication of the owner reference. It compares the UID of the existing
+// owner references in the `Feed` object against the `UID` of the provided owner reference.
+//
+// Parameters:
+// - feed: The feed resource to check.
+// - ownerRef: The owner reference to check for in the feed's list of owner references.
+//
+// Returns:
+// - bool: Returns `true` if the feed already has the given owner reference, otherwise returns `false`.
 func hasOwnerReference(feed *newsaggregatorv1.Feed, ownerRef *metav1.OwnerReference) bool {
 	for _, ref := range feed.GetOwnerReferences() {
 		if ref.UID == ownerRef.UID {
@@ -428,6 +508,18 @@ func hasOwnerReference(feed *newsaggregatorv1.Feed, ownerRef *metav1.OwnerRefere
 }
 
 // removeFeedReference removes the owner references for each Feed in the HotNewsSpec.Feeds array.
+//
+// This function is designed to handle the cleanup process when a `HotNews` resource is deleted. It ensures that the
+// owner references for the given `HotNews` resource are removed from each associated feed.
+//
+// Parameters:
+//   - ctx: A context to control cancellation signals and request-scoped values.
+//   - hotNews: The `HotNews` object containing details about the feeds to update.
+//   - configMapList: A list of ConfigMaps that may define feed groups. This is used if `FeedGroups`
+//     are defined in the `HotNewsSpec`.
+//
+// Returns:
+// - error: Returns an error if any feed fails to be updated.
 func (r *HotNewsReconciler) removeFeedReference(ctx context.Context, hotNews newsaggregatorv1.HotNews,
 	configMapList v1.ConfigMapList) error {
 	var feeds = hotNews.Spec.Feeds
@@ -443,7 +535,18 @@ func (r *HotNewsReconciler) removeFeedReference(ctx context.Context, hotNews new
 	return nil
 }
 
-// removeOwnerReferenceFromFeeds removes the owner references for each Feed in the given feeds array
+// removeOwnerReferenceFromFeeds removes the owner references for each Feed in the given feeds array.
+//
+// This method iterates through the list of feeds provided, removes any existing owner references
+// pointing to the given `HotNews` resource, and updates the feed resource in the cluster.
+//
+// Parameters:
+// - ctx: A context to control cancellation signals and request-scoped values.
+// - hotNews: A pointer to the `HotNews` resource from which the owner reference is being removed.
+// - feeds: A list of feed names whose owner references will be cleared.
+//
+// Returns:
+// - error: Returns an aggregated error if one or more feeds could not be found or updated.
 func (r *HotNewsReconciler) removeOwnerReferenceFromFeeds(ctx context.Context, hotNews *newsaggregatorv1.HotNews, feeds []string) error {
 	var errList field.ErrorList
 
@@ -477,7 +580,9 @@ func (r *HotNewsReconciler) removeOwnerReferenceFromFeeds(ctx context.Context, h
 	return nil
 }
 
-// processFeeds returns a string containing comma-separated feed sources
+// processFeeds concatenates the feed sources from the HotNewsSpec.Feeds array into a single
+// comma-separated string. It iterates through each feed in the spec and appends it to a
+// string builder, followed by a comma. The resulting string is returned without the trailing comma.
 func (r *HotNewsReconciler) processFeeds(spec newsaggregatorv1.HotNewsSpec) string {
 	var sourcesBuilder strings.Builder
 
@@ -489,8 +594,10 @@ func (r *HotNewsReconciler) processFeeds(spec newsaggregatorv1.HotNewsSpec) stri
 	return sourcesBuilder.String()[:len(sourcesBuilder.String())-1]
 }
 
-// processFeedGroups function processes feed groups from the ConfigMap and returns a string containing comma-separated
-// feed sources
+// processFeedGroups processes the feed groups defined in the HotNews object by fetching the corresponding
+// feeds from the given ConfigMap list. It checks if each feed group exists in the ConfigMap's data,
+// and if found, it concatenates the feed sources into a comma-separated string. If a feed group is not found
+// in any ConfigMap, it returns an error indicating the wrong feed group name.
 func (r *HotNewsReconciler) processFeedGroups(hotNews *newsaggregatorv1.HotNews,
 	configMapList v1.ConfigMapList) (string, error) {
 	var sourcesBuilder strings.Builder

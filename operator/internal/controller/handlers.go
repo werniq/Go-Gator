@@ -65,10 +65,6 @@ type ConfigMapHandler struct {
 // UpdateHotNews is a method in ConfigMapHandler, for verifying if object contains particular labels
 // and, if validation was passed successfully it will trigger Hot News Reconciler.
 func (r *ConfigMapHandler) UpdateHotNews(ctx context.Context, obj client.Object) []reconcile.Request {
-	if _, exists := obj.GetLabels()[newsaggregatorv1.FeedGroupLabel]; !exists {
-		return nil
-	}
-
 	logger := log.FromContext(ctx)
 	var hotNewsList newsaggregatorv1.HotNewsList
 

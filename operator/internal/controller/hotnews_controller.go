@@ -351,7 +351,7 @@ func (r *HotNewsReconciler) setSuccessfulStatus(ctx context.Context, hotNews *ne
 	return nil
 }
 
-// setFailedStatus sets
+// setFailedStatus sets the status of hotNews.Condition to Error, and updates hotNews object after that
 func (r *HotNewsReconciler) setFailedStatus(ctx context.Context, hotNews *newsaggregatorv1.HotNews,
 	reason, message string) error {
 	hotNews.SetCondition(newsaggregatorv1.HotNewsError, newsaggregatorv1.StatusError, reason, message)
@@ -509,7 +509,11 @@ func (r *HotNewsReconciler) processFeedGroups(hotNews *newsaggregatorv1.HotNews,
 	return sourcesBuilder.String()[:len(sourcesBuilder.String())-1], nil
 }
 
-// retrieveConfigMap
+// retrieveConfigMap retrieves all config maps from given namespace, based on FeedGroupLabel.
+// If config map has this label, it will be retrieved.
+//
+// This function will be used on the start of HotNewsReconciliation loop, since this config maps will be used often.
+// Returns an error either if failed to construct label Requirement, or during listing of config map.
 func (r *HotNewsReconciler) retrieveConfigMap(ctx context.Context, namespace string) (v1.ConfigMapList, error) {
 	s, err := labels.NewRequirement(newsaggregatorv1.FeedGroupLabel, selection.Exists, nil)
 	if err != nil {

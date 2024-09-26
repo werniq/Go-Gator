@@ -483,7 +483,7 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 				Scheme:    tt.fields.Scheme,
 				serverUrl: serverNewsEndpoint,
 			}
-			got, err := r.constructRequestUrl(context.Background(), &newsaggregatorv1.HotNews{
+			got, err := r.constructRequestUrl(&newsaggregatorv1.HotNews{
 				Spec: tt.args.spec,
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "ns",

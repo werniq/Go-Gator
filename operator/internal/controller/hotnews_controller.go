@@ -179,8 +179,7 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	err = r.setSuccessfulStatus(ctx, &hotNews, "HotNews successfully updated",
-		"Successfully Reconciled Hot News object")
+	err = r.setSuccessfulStatus(ctx, &hotNews, "Successfully Reconciled Hot News object")
 	if err != nil {
 		updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to update hotnews", err.Error())
 		if updateErr != nil {
@@ -252,7 +251,7 @@ func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsagg
 	logger := log.FromContext(ctx)
 	logger.Info("handling update")
 
-	requestUrl, err := r.constructRequestUrl(ctx, hotNews, configMapList)
+	requestUrl, err := r.constructRequestUrl(hotNews, configMapList)
 	if err != nil {
 		logger.Error(err, errFailedToConstructRequestUrl)
 		return err
@@ -323,7 +322,7 @@ func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsagg
 // Example:
 // http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&dateEnd=2024-08-06&sources=abc,bbc
 // http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&sources=abc,bbc
-func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, hotNews *newsaggregatorv1.HotNews,
+func (r *HotNewsReconciler) constructRequestUrl(hotNews *newsaggregatorv1.HotNews,
 	configMapList v1.ConfigMapList) (string, error) {
 	var requestUrl strings.Builder
 
@@ -373,11 +372,12 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, hotNews *ne
 //
 // Returns:
 // - error: If the update operation on the HotNews object fails, an error is returned. Otherwise, it returns nil.
-func (r *HotNewsReconciler) setSuccessfulStatus(ctx context.Context, hotNews *newsaggregatorv1.HotNews,
-	reason, message string) error {
+func (r *HotNewsReconciler) setSuccessfulStatus(ctx context.Context, hotNews *newsaggregatorv1.HotNews, message string) error {
 	var condition = newsaggregatorv1.TypeHotNewsCreated
+	var reason = "Hot news was successfully created"
 	if _, exists := hotNews.Status.Conditions[newsaggregatorv1.HotNewsSuccessfullyCreated]; exists {
 		condition = newsaggregatorv1.TypeHotNewsUpdated
+		reason = "Hot news was successfully updated"
 	}
 
 	hotNews.SetCondition(condition, newsaggregatorv1.StatusSuccess, reason, message)

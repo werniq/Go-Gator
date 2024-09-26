@@ -216,7 +216,7 @@ func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsagg
 	logger := log.FromContext(ctx)
 	logger.Info("handling update")
 
-	requestUrl, err := r.constructRequestUrl(ctx, hotNews.Spec)
+	requestUrl, err := r.constructRequestUrl(ctx, hotNews)
 	if err != nil {
 		logger.Error(err, errFailedToConstructRequestUrl)
 		return err
@@ -287,37 +287,37 @@ func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsagg
 // Example:
 // http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&dateEnd=2024-08-06&sources=abc,bbc
 // http://server.com/news?keywords=bitcoin&dateFrom=2024-08-05&sources=abc,bbc
-func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsaggregatorv1.HotNewsSpec) (string, error) {
+func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, hotNews *newsaggregatorv1.HotNews) (string, error) {
 	var requestUrl strings.Builder
 
 	requestUrl.WriteString(r.serverUrl)
 	var keywordsStr strings.Builder
-	for _, keyword := range spec.Keywords {
+	for _, keyword := range hotNews.Spec.Keywords {
 		keywordsStr.WriteString(keyword)
 		keywordsStr.WriteRune(',')
 	}
 	requestUrl.WriteString("?keywords=" + keywordsStr.String()[:len(keywordsStr.String())-1])
 
 	var feedStr strings.Builder
-	if spec.FeedGroups != nil {
-		feedGroupsStr, err := r.processFeedGroups(ctx, spec)
+	if hotNews.Spec.FeedGroups != nil {
+		feedGroupsStr, err := r.processFeedGroups(ctx, hotNews)
 		if err != nil {
 			return "", err
 		}
 		feedStr.WriteString(feedGroupsStr)
 	} else {
-		feedsStr := r.processFeeds(spec)
+		feedsStr := r.processFeeds(hotNews.Spec)
 		feedStr.WriteString(feedsStr)
 	}
 
 	requestUrl.WriteString("&sources=" + feedStr.String())
 
-	if spec.DateStart != "" {
-		requestUrl.WriteString("&dateFrom=" + spec.DateStart)
+	if hotNews.Spec.DateStart != "" {
+		requestUrl.WriteString("&dateFrom=" + hotNews.Spec.DateStart)
 	}
 
-	if spec.DateEnd != "" {
-		requestUrl.WriteString("&dateEnd=" + spec.DateEnd)
+	if hotNews.Spec.DateEnd != "" {
+		requestUrl.WriteString("&dateEnd=" + hotNews.Spec.DateEnd)
 	}
 
 	return requestUrl.String(), nil
@@ -489,15 +489,15 @@ func (r *HotNewsReconciler) processFeeds(spec newsaggregatorv1.HotNewsSpec) stri
 
 // processFeedGroups function processes feed groups from the ConfigMap and returns a string containing comma-separated
 // feed sources
-func (r *HotNewsReconciler) processFeedGroups(ctx context.Context, spec newsaggregatorv1.HotNewsSpec) (string, error) {
+func (r *HotNewsReconciler) processFeedGroups(ctx context.Context, hotNews *newsaggregatorv1.HotNews) (string, error) {
 	var sourcesBuilder strings.Builder
 
-	configMaps, err := r.getFeedGroups(ctx)
+	configMaps, err := r.getFeedGroups(ctx, hotNews)
 	if err != nil {
 		return "", err
 	}
 
-	for _, feedGroup := range spec.FeedGroups {
+	for _, feedGroup := range hotNews.Spec.FeedGroups {
 		for _, configMap := range configMaps.Items {
 			if _, ok := configMap.Data[feedGroup]; !ok {
 				return "", fmt.Errorf(errWrongFeedGroupName)
@@ -511,8 +511,8 @@ func (r *HotNewsReconciler) processFeedGroups(ctx context.Context, spec newsaggr
 	return sourcesBuilder.String()[:len(sourcesBuilder.String())-1], nil
 }
 
-// getConfigMapData returns all data from config map named FeedGroupsConfigMapName in FeedGroupsNamespace
-func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (v1.ConfigMapList, error) {
+// getFeedGroups returns all data from config map named FeedGroupsConfigMapName in FeedGroupsNamespace
+func (r *HotNewsReconciler) getFeedGroups(ctx context.Context, hotNews *newsaggregatorv1.HotNews) (v1.ConfigMapList, error) {
 	s, err := labels.NewRequirement(newsaggregatorv1.FeedGroupLabel, selection.Exists, nil)
 	if err != nil {
 		return v1.ConfigMapList{}, err
@@ -521,6 +521,7 @@ func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (v1.ConfigMapList
 	var configMaps v1.ConfigMapList
 	err = r.Client.List(ctx, &configMaps, &client.ListOptions{
 		LabelSelector: labels.NewSelector().Add(*s),
+		Namespace:     hotNews.Namespace,
 	})
 
 	if err != nil {

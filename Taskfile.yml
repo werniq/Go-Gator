@@ -7,7 +7,7 @@ env:
   DOCKERHUB_USERNAME: '{{ .DOCKER_LOGIN_USERNAME }}'
   DOCKERHUB_PASSWORD: '{{ .DOCKERHUB_PASSWORD }}'
   TESTDIR_NAME:      '{{ .TESTDIR_NAME | default "pkg_tests" }}'
-  GO_GATOR_CHART_VERSION: '{{ .GO_GATOR_CHART_VERSION | default "0.1.0 }}'
+  GO_GATOR_CHART_VERSION: '{{ .GO_GATOR_CHART_VERSION | default "0.1.0" }}'
 
 tasks:
   fmt:

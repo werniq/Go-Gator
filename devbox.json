@@ -16,7 +16,7 @@
       "go get -u honnef.co/go/tools",
       "export GOPATH=$HOME/go",
       "PATH=$GOPATH/bin:$PATH",
-      "export LOCALBIN=$(cwd)/bin",
+      "export LOCALBIN=$(cwd)/operator/bin",
       "go install sigs.k8s.io/kustomize/kustomize/v5@5.4.3 && mv $LOCALBIN/kustomize $LOCALBIN/kustomize-5.4.3 && ln -sf $LOCALBIN/kustomize-5.4.3 $LOCALBIN/kustomize",
       "go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.12.0 && mv $LOCALBIN/controller-gen $LOCALBIN/controller-gen-0.12.0 && ln -sf $LOCALBIN/controller-gen-0.12.0 $LOCALBIN/controller-gen",
       "go install sigs.k8s.io/controller-runtime/tools/setup-envtest@v0.12.0 && mv $LOCALBIN/setup-envtest $LOCALBIN/setup-envtest-0.12.0 && ln -sf $LOCALBIN/setup-envtest-0.12.0 $LOCALBIN/setup-envtest",

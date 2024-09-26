@@ -157,6 +157,7 @@ func (r *HotNews) GetFeedGroupNames(ctx context.Context) ([]string, error) {
 	var configMaps v1.ConfigMapList
 	err = k8sClient.List(ctx, &configMaps, &client.ListOptions{
 		LabelSelector: labels.NewSelector().Add(*s),
+		Namespace:     r.Namespace,
 	})
 	if err != nil {
 		return nil, err

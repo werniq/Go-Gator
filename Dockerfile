@@ -21,7 +21,7 @@ FROM alpine:3.20
 ENV PORT=443
 ENV STORAGE_PATH=./data
 
-RUN mkdir ./cmd/server/certs
+COPY --from=build /app/cmd/server/certs ./cmd/server/certs
 COPY --from=build /app/cmd/parsers/data $STORAGE_PATH
 COPY --from=build /app/go-gator .
 

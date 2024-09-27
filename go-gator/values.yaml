@@ -46,6 +46,12 @@ issuer:
 certSecret:
   name: cert-secret
 
+certificate:
+  name: go-gator-server
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+
 autoscaling:
   enabled: false
   minReplicas: 1

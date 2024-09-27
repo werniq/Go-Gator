@@ -99,20 +99,20 @@ tasks:
   awsLogin:
     desc: Login to AWS CLI
     cmds:
-      - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 406477933661.dkr.ecr.us-east-2.amazonaws.com
+      - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin {{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com
 
   goGatorImageEcrBuild:
     desc: Build image for ECR
     cmds:
       - docker build -t qniw984/go-gator .
-      - docker tag qniw984/go-gator 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
+      - docker tag qniw984/go-gator {{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
 
   goGatorImageEcrPush:
     desc: Push image to ECR
     deps:
       - img-ecr-build
     cmds:
-      - docker push 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
+      - docker push {{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
 
   goGatorChartEcrBuild:
     desc: Build Helm chart for ECR

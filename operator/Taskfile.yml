@@ -2,6 +2,7 @@ version: '3'
 
 env:
   DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "qniw984/go-gator-controller:1.0.0" }}'
+  ENVTEST_K8S_VERSION: '{{ .ENVTEST_K8S_VERSION | default "1.30.0" }}'
   CONTAINER_TOOL: '{{ .CONTAINER_TOOL | default "docker" }}'
   LOCALBIN: ./bin
   PLATFORMS: 'linux/arm64,linux/amd64,linux/s390x,linux/ppc64le'
@@ -11,6 +12,8 @@ env:
   GOBIN: 'go env GOBIN || go env GOPATH/bin'
   KUSTOMIZE: '{{.LOCALBIN}}/kustomize'
   CONTROLLER_GEN: '{{.LOCALBIN}}/controller-gen-v0.15.0'
+  ENVTEST: '{{.LOCALBIN}}/setup-envtest'
+  ENVTEST_VERSION: '{{ .ENVTEST_VERSION | default "release-0.18" }}'
 
 tasks:
   manifests:
@@ -41,7 +44,6 @@ tasks:
       - manifests
       - generate
       - fmt
-      - envtest
     cmds:
       - KUBEBUILDER_ASSETS="{{ .ENVTEST }} use {{.ENVTEST_K8S_VERSION}} --bin-dir {{.LOCALBIN}} -p path" go test $(go list ./... | grep -v /e2e) -coverprofile cover.out
 
@@ -92,7 +94,6 @@ tasks:
     deps:
       - manifests
       - generate
-      - kustomize
     cmds:
       - 'mkdir -p dist'
       - 'cd config/manager && {{.KUSTOMIZE}} edit set image controller={{.DOCKER_IMAGE_NAME}}'
@@ -102,7 +103,6 @@ tasks:
     desc: Install CRDs to the K8s cluster.
     deps:
       - manifests
-      - kustomize
     cmds:
       - |
         {{ .KUSTOMIZE }} build config/crd | {{ .KUBECTL }} apply -f -
@@ -111,7 +111,6 @@ tasks:
     desc: Uninstall CRDs from the K8s cluster.
     deps:
       - manifests
-      - kustomize
     cmds:
       - |
         {{ .KUSTOMIZE }} build config/crd | {{ .KUBECTL }} delete --ignore-not-found={{ .IGNORE_NOT_FOUND }} -f -
@@ -120,7 +119,6 @@ tasks:
     desc: Deploy controller to the K8s cluster.
     deps:
       - manifests
-      - kustomize
     cmds:
       - |
         cd config/manager && {{ .KUSTOMIZE }} edit set image controller={{.DOCKER_IMAGE_NAME}} && cd ../.. &&
@@ -130,8 +128,6 @@ tasks:
     desc: Undeploy controller from the K8s cluster.
     vars:
       IGNORE_NOT_FOUND: true
-    deps:
-      - kustomize
     cmds:
       - |
         {{.KUSTOMIZE}} build config/default | {{.KUBECTL}} delete --ignore-not-found={{ .IGNORE_NOT_FOUND }} -f -

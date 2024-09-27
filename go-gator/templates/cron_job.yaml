@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: go-gator-fetching-news-job
+  name: {{ .Values.cronJob.name }}
   namespace: {{ .Values.namespace}}
 spec:
   schedule: {{ .Values.cronJob.schedule }}

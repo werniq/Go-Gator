@@ -1,50 +1,53 @@
 Parameters:
   VpcName:
-    Type: string
+    Type: String
     Description: The name of the VPC.
-    Default: GoGatorVpc
+    Default: "GoGatorVpc"
 
   CidrBlock:
-    Type: string
+    Type: String
     Description: The CIDR block for the VPC. This should be a valid private (RFC 1918) CIDR block.
-    Default: 10.0.1.0/24
+    Default: "10.0.1.0/24"
 
   NodeGroupInstanceType:
-    Type: string
+    Type: String
     Description: The EC2 instance type for the node group.
     Default: t3.medium
     AllowedValues:
-      - t3.medium
-      - t2.medium
-      - t2.small
+      - "t3.medium"
+      - "t2.medium"
+      - "t2.small"
 
   MinimalNodeGroupSize:
-    Type: number
+    Type: Number
     Description: The minimal number of nodes in the node group.
     Default: 1
     MinValue: 1
     MaxValue: 5
 
   MaximalNodeGroupSize:
-    Type: number
+    Type: Number
     Description: The maximal number of nodes in the node group.
     Default: 5
     MinValue: 1
     MaxValue: 10
 
   NodeGroupDesiredCapacity:
-    Type: number
+    Type: Number
     Description: The desired number of nodes in the node group.
     Default: 1
-    MinValue: !Ref MinimalNodeGroupSize
-    MaxValue: !Ref MaximalNodeGroupSize
 
   KubernetesVersion:
-    Type: string
+    Type: String
     Description: The Kubernetes version for the cluster.
     Default: "1.30"
-    MinValue: "1.24"
-    MaxValue: "1.30"
+    AllowedValues:
+      - "1.30"
+      - "1.29"
+      - "1.28"
+      - "1.27"
+      - "1.26"
+      - "1.25"
 
 Resources:
   GoGatorVpc:
@@ -146,7 +149,7 @@ Resources:
           - !Ref GoGatorSubnet1
           - !Ref GoGatorSubnet2
       RoleArn: arn:aws:iam::406477933661:role/Oleksandr
-      Version: !Ref KubernetesVErsion
+      Version: !Ref KubernetesVersion
       UpgradePolicy:
         SupportType: EXTENDED
 

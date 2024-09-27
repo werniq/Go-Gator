@@ -84,6 +84,7 @@ tasks:
     cmds:
       - kubectl delete -f templates/
 
+
   installChart:
     desc: Install the Helm chart on the Kubernetes cluster
     cmds:

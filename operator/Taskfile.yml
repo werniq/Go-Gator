@@ -11,8 +11,8 @@ env:
   KUBECTL: 'kubectl'
   GOBIN: 'go env GOBIN || go env GOPATH/bin'
   KUSTOMIZE: '{{.LOCALBIN}}/kustomize'
-  CONTROLLER_GEN: '{{.LOCALBIN}}/controller-gen-v0.15.0'
   ENVTEST: '{{.LOCALBIN}}/setup-envtest'
+  CONTROLLER_GEN: '{{.LOCALBIN}}/controller-gen'
   ENVTEST_VERSION: '{{ .ENVTEST_VERSION | default "release-0.18" }}'
 
 tasks:

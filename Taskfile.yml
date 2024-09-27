@@ -84,10 +84,6 @@ tasks:
     cmds:
       - kubectl delete -f templates/
 
-  createChart:
-    desc: Created a new Helm chart with all needed resources for news aggregator
-    cmds:
-      - helm create go-gator
 
   installChart:
     desc: Install the Helm chart on the Kubernetes cluster
@@ -97,5 +93,5 @@ tasks:
   uninstallChart:
     desc: Uninstall the Helm chart from the Kubernetes cluster
     cmds:
-      - helm uninstall go-gator
+      - helm uninstall go-gator -n go-gator
       - kubectl delete namespace go-gator

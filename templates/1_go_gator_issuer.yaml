@@ -4,5 +4,4 @@ metadata:
   name: go-gator-issuer
   namespace: go-gator
 spec:
-  ca:
-    secretName: cert-secret
+  selfSigned: {}

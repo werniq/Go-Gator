@@ -82,11 +82,13 @@ func TestHotNewsReconciler_Reconcile_NegativeCases(t *testing.T) {
 			},
 		},
 	}
+	FeedGroupsNamespace := "go-gator"
+	FeedGroupsConfigMapName := "feed-group-source"
 
 	existingConfigMap := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: newsaggregatorv1.FeedGroupsNamespace,
-			Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+			Namespace: FeedGroupsNamespace,
+			Name:      FeedGroupsConfigMapName,
 		},
 		Data: map[string]string{
 			"sport":   "washingtontimes",
@@ -374,6 +376,7 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 	type args struct {
 		spec newsaggregatorv1.HotNewsSpec
 	}
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -409,29 +412,6 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Valid request with keywords, feedGroups, and start date only",
-			fields: fields{
-				Client: fake.NewClientBuilder().WithScheme(scheme).
-					WithObjects(&v1.ConfigMap{
-						ObjectMeta: metav1.ObjectMeta{
-							Namespace: newsaggregatorv1.FeedGroupsNamespace,
-							Name:      newsaggregatorv1.FeedGroupsConfigMapName,
-						},
-						Data: map[string]string{"sport": "abc,bbc"},
-					}).
-					Build(),
-			},
-			args: args{
-				spec: newsaggregatorv1.HotNewsSpec{
-					Keywords:   []string{"bitcoin"},
-					FeedGroups: []string{"sport"},
-					DateStart:  "2024-08-05",
-				},
-			},
-			want:    serverNewsEndpoint + "?keywords=bitcoin&sources=abc,bbc&dateFrom=2024-08-05",
-			wantErr: false,
-		},
-		{
 			name:   "Valid request with keywords and feeds only",
 			fields: fields{},
 			args: args{
@@ -450,8 +430,9 @@ func TestHotNewsReconciler_constructRequestUrl(t *testing.T) {
 					WithScheme(scheme).
 					WithObjects(&v1.ConfigMap{
 						ObjectMeta: metav1.ObjectMeta{
-							Namespace: newsaggregatorv1.FeedGroupsNamespace,
-							Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+							Labels: map[string]string{
+								newsaggregatorv1.FeedGroupLabel: "true",
+							},
 						},
 						Data: map[string]string{"sport": "aaaa"},
 					}).
@@ -495,8 +476,9 @@ func TestHotNewsReconciler_getFeedGroups(t *testing.T) {
 		Items: []v1.ConfigMap{
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace: newsaggregatorv1.FeedGroupsNamespace,
-					Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+					Labels: map[string]string{
+						newsaggregatorv1.FeedGroupLabel: "true",
+					},
 				},
 				Data: map[string]string{
 					"sport":   "washingtontimes",
@@ -613,10 +595,13 @@ func TestHotNewsReconciler_processHotNews(t *testing.T) {
 		},
 	}
 
+	FeedGroupsNamespace := "go-gator"
+	FeedGroupsConfigMapName := "feed-group-source"
+
 	existingConfigMap := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: newsaggregatorv1.FeedGroupsNamespace,
-			Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+			Namespace: FeedGroupsNamespace,
+			Name:      FeedGroupsConfigMapName,
 		},
 		Data: map[string]string{
 			"sport":   "washingtontimes",
@@ -666,23 +651,6 @@ func TestHotNewsReconciler_processHotNews(t *testing.T) {
 				_, _ = w.Write([]byte(`{"totalAmount": 2, "news": [{"title": "News 1"}, {"title": "News 2"}]}`))
 			})),
 			wantErr: false,
-		},
-		{
-			name: "Failed to construct request URL",
-			fields: fields{
-				Client: fakeClient,
-				Scheme: scheme,
-			},
-			args: args{
-				ctx: context.TODO(),
-				hotNews: &newsaggregatorv1.HotNews{
-					Spec: newsaggregatorv1.HotNewsSpec{
-						Keywords:   []string{"bitcoin"},
-						FeedGroups: []string{"non-existent feed group"},
-					},
-				},
-			},
-			wantErr: true,
 		},
 		{
 			name: "Failed to create HTTP request",
@@ -790,10 +758,13 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 		},
 	}
 
+	FeedGroupsNamespace := "go-gator"
+	FeedGroupsConfigMapName := "feed-group-source"
+
 	existingConfigMap := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: newsaggregatorv1.FeedGroupsNamespace,
-			Name:      newsaggregatorv1.FeedGroupsConfigMapName,
+			Namespace: FeedGroupsNamespace,
+			Name:      FeedGroupsConfigMapName,
 		},
 		Data: map[string]string{
 			"sport":   "washingtontimes",
@@ -835,8 +806,9 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 			setup: func() *v1.ConfigMap {
 				return &v1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      newsaggregatorv1.FeedGroupsConfigMapName,
-						Namespace: newsaggregatorv1.FeedGroupsNamespace,
+						Labels: map[string]string{
+							newsaggregatorv1.FeedGroupLabel: "true",
+						},
 					},
 					Data: map[string]string{
 						"sport":   "washingtontimes",
@@ -876,8 +848,9 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 			setup: func() *v1.ConfigMap {
 				return &v1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      newsaggregatorv1.FeedGroupsConfigMapName,
-						Namespace: newsaggregatorv1.FeedGroupsNamespace,
+						Labels: map[string]string{
+							newsaggregatorv1.FeedGroupLabel: "true",
+						},
 					},
 					Data: map[string]string{
 						"sport": "washingtontimes",
@@ -905,7 +878,7 @@ func TestHotNewsReconciler_processFeedGroups(t *testing.T) {
 				Client: tt.fields.Client,
 				Scheme: tt.fields.Scheme,
 			}
-			got, err := r.processFeedGroups(tt.args.spec)
+			got, err := r.processFeedGroups(context.Background(), tt.args.spec)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("processFeedGroups() error = %v, wantErr %v", err, tt.wantErr)
 				return

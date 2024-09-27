@@ -49,6 +49,43 @@ Parameters:
       - "1.26"
       - "1.25"
 
+Outputs:
+  VpcId:
+    Description: The ID of the VPC
+    Value: !Ref GoGatorVpc
+    Export:
+      Name: !Sub "${AWS::GoGator}-VpcId"
+
+  Subnet1Id:
+    Description: The ID of Subnet 1
+    Value: !Ref GoGatorSubnet1
+    Export:
+      Name: !Sub "${AWS::GoGator}-Subnet1Id"
+
+  Subnet2Id:
+    Description: The ID of Subnet 2
+    Value: !Ref GoGatorSubnet2
+    Export:
+      Name: !Sub "${AWS::GoGator}-Subnet2Id"
+
+  SecurityGroupId:
+    Description: The ID of the security group
+    Value: !Ref GoGatorSecurityGroup
+    Export:
+      Name: !Sub "${AWS::GoGator}-SecurityGroupId"
+
+  ClusterName:
+    Description: The name of the EKS cluster
+    Value: !Ref GoGatorCluster
+    Export:
+      Name: !Sub "${AWS::GoGator}-ClusterName"
+
+  NodeGroupName:
+    Description: The name of the node group
+    Value: !Ref GoGatorNodeGroup
+    Export:
+      Name: !Sub "${AWS::GoGator}-NodeGroupName"
+
 Resources:
   GoGatorVpc:
     Type: AWS::EC2::VPC
@@ -78,7 +115,7 @@ Resources:
           ToPort: 80
           CidrIp: 0.0.0.0/0
 
-  GoGatorSubnet1:
+  GoGatorPublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref GoGatorVpc
@@ -87,18 +124,18 @@ Resources:
       AvailabilityZone: !Select [0, !GetAZs '']
       Tags:
         - Key: Name
-          Value: GoGatorSubnet1
+          Value: GoGatorPublicSubnet
 
-  GoGatorSubnet2:
+  GoGatorPrivateSubnet:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref GoGatorVpc
       CidrBlock: 10.0.1.64/26
-      MapPublicIpOnLaunch: true
+      MapPublicIpOnLaunch: false
       AvailabilityZone: !Select [1, !GetAZs '']
       Tags:
         - Key: Name
-          Value: GoGatorSubnet2
+          Value: GoGatorPrivateSubnet
 
   GoGatorInternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -113,32 +150,56 @@ Resources:
       VpcId: !Ref GoGatorVpc
       InternetGatewayId: !Ref GoGatorInternetGateway
 
-  GoGatorRouteTable:
+  GoGatorPublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref GoGatorVpc
       Tags:
         - Key: Name
-          Value: Go-Gator-Route-Table
+          Value: Go-Gator-Public-Route-Table
 
-  GoGatorRoute:
+  GoGatorPublicRoute:
     Type: AWS::EC2::Route
     Properties:
-      RouteTableId: !Ref GoGatorRouteTable
+      RouteTableId: !Ref GoGatorPublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref GoGatorInternetGateway
 
-  GoGatorSubnet1RouteTableAssociation:
+  GoGatorPublicSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref GoGatorSubnet1
-      RouteTableId: !Ref GoGatorRouteTable
+      SubnetId: !Ref GoGatorPublicSubnet
+      RouteTableId: !Ref GoGatorPublicRouteTable
 
-  GoGatorSubnet2RouteTableAssociation:
+  GoGatorNATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt GoGatorEIP.AllocationId
+      SubnetId: !Ref GoGatorPublicSubnet
+
+  GoGatorEIP:
+    Type: AWS::EC2::EIP
+
+  GoGatorPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref GoGatorVpc
+      Tags:
+        - Key: Name
+          Value: Go-Gator-Private-Route-Table
+
+  GoGatorPrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref GoGatorPrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref GoGatorNATGateway
+
+  GoGatorPrivateSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref GoGatorSubnet2
-      RouteTableId: !Ref GoGatorRouteTable
+      SubnetId: !Ref GoGatorPrivateSubnet
+      RouteTableId: !Ref GoGatorPrivateRouteTable
 
   GoGatorCluster:
     Type: AWS::EKS::Cluster
@@ -146,8 +207,8 @@ Resources:
       Name: GoGatorCluster
       ResourcesVpcConfig:
         SubnetIds:
-          - !Ref GoGatorSubnet1
-          - !Ref GoGatorSubnet2
+          - !Ref GoGatorPublicSubnet
+          - !Ref GoGatorPrivateSubnet
       RoleArn: arn:aws:iam::406477933661:role/Oleksandr
       Version: !Ref KubernetesVersion
       UpgradePolicy:
@@ -185,15 +246,31 @@ Resources:
       ResolveConflicts: OVERWRITE
       AddonVersion: v1.3.2-eksbuild.2
 
+  GoGatorNodeGroupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerPolicy
+
   GoGatorNodeGroup:
     Type: AWS::EKS::Nodegroup
     Properties:
       ClusterName: !Ref GoGatorCluster
       NodegroupName: Go-Gator-Node-Group
-      NodeRole: arn:aws:iam::406477933661:role/oleksandr-node-group
+      NodeRole: !GetAtt GoGatorNodeGroupRole.Arn
       Subnets:
-        - !Ref GoGatorSubnet1
-        - !Ref GoGatorSubnet2
+        - !Ref GoGatorPublicSubnet
+        - !Ref GoGatorPrivateSubnet
       ScalingConfig:
         DesiredSize: !Ref NodeGroupDesiredCapacity
         MinSize: !Ref MinimalNodeGroupSize

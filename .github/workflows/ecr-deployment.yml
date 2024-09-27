@@ -42,6 +42,7 @@ jobs:
       - name: Update and build dependencies in chart
         run: |
           cd go-gator
+          helm repo add
           helm dependency update
           helm dependency build
 

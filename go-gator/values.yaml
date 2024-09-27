@@ -28,7 +28,7 @@ goGatorRoleBinding:
       namespace: go-gator
 
 cronJobRoleBinding:
-  name: go-gator-service-binding
+  name: cron-job-sa-binding
   subjects:
     - kind: ServiceAccount
       name: cron-job-sa

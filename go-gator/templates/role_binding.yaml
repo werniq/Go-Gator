@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: go-gator-service-binding
+  name: {{ .Values.goGatorRoleBinding.name }}
   namespace: {{ .Values.namespace }}
 subjects:
   {{ range .Values.goGatorRoleBinding.subjects }}
@@ -18,7 +18,7 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ .Values.cronJobRoleBinding }}
+  name: {{ .Values.cronJobRoleBinding.name }}
   namespace: {{ .Values.namespace }}
 subjects:
   {{ range .Values.cronJobRoleBinding.subjects }}

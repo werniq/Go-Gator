@@ -8,6 +8,8 @@ env:
   DOCKERHUB_PASSWORD: '{{ .DOCKERHUB_PASSWORD }}'
   TESTDIR_NAME:      '{{ .TESTDIR_NAME | default "pkg_tests" }}'
   GO_GATOR_CHART_VERSION: '{{ .GO_GATOR_CHART_VERSION | default "0.1.0" }}'
+  DAY_0_CHART_VERSION: '{{ .DAY_0_CHART_VERSION | default "0.1.0" }}'
+  AWS_ACCOUNT_ID: '{{ .AWS_ACCOUNT_ID | default "406477933661" }}'
 
 tasks:
   fmt:
@@ -30,7 +32,7 @@ tasks:
     cmds:
       - staticcheck ./...
 
-  pre-launch:
+  preLaunch:
     label: Prepare code before launching
     desc: Formats code, optimizes dependencies and runs staticcheck tool
     deps:
@@ -57,7 +59,7 @@ tasks:
     cmd: |
       go test ./... -v
 
-  docker-build:
+  dockerBuild:
     desc: Build the docker image using Dockerfile with go-gator as a name
     cmd: docker build -t {{ .DOCKER_IMAGE_NAME }} .
 
@@ -122,7 +124,7 @@ tasks:
     deps:
       - ecr-build
     cmds:
-      - helm push go-gator-0.1.0.tgz oci://406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/
+      - helm push go-gator-{{ .GO_GATOR_CHART_VERSION }}.tgz oci://{{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/
 
   day0EcrBuild:
     desc: Build Helm chart for ECR
@@ -134,4 +136,4 @@ tasks:
     deps:
       - day0EcrBuild
     cmds:
-      - helm push day-0-{{ .DAY_0_VERSION }}.tgz oci://406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/
+      - helm push day-0-{{ .DAY_0_VERSION }}.tgz oci://{{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/

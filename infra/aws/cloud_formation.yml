@@ -49,43 +49,6 @@ Parameters:
       - "1.26"
       - "1.25"
 
-Outputs:
-  VpcId:
-    Description: The ID of the VPC
-    Value: !Ref GoGatorVpc
-    Export:
-      Name: !Sub "${AWS::GoGator}-VpcId"
-
-  Subnet1Id:
-    Description: The ID of Subnet 1
-    Value: !Ref GoGatorSubnet1
-    Export:
-      Name: !Sub "${AWS::GoGator}-Subnet1Id"
-
-  Subnet2Id:
-    Description: The ID of Subnet 2
-    Value: !Ref GoGatorSubnet2
-    Export:
-      Name: !Sub "${AWS::GoGator}-Subnet2Id"
-
-  SecurityGroupId:
-    Description: The ID of the security group
-    Value: !Ref GoGatorSecurityGroup
-    Export:
-      Name: !Sub "${AWS::GoGator}-SecurityGroupId"
-
-  ClusterName:
-    Description: The name of the EKS cluster
-    Value: !Ref GoGatorCluster
-    Export:
-      Name: !Sub "${AWS::GoGator}-ClusterName"
-
-  NodeGroupName:
-    Description: The name of the node group
-    Value: !Ref GoGatorNodeGroup
-    Export:
-      Name: !Sub "${AWS::GoGator}-NodeGroupName"
-
 Resources:
   GoGatorVpc:
     Type: AWS::EC2::VPC
@@ -291,3 +254,41 @@ Resources:
         MaxSize: !Ref MaximalNodeGroupSize
       InstanceTypes:
         - !Ref NodeGroupInstanceType
+
+Outputs:
+  VpcId:
+    Description: The ID of the VPC
+    Value: !Ref GoGatorVpc
+    Export:
+      Name: GoGatorVpc
+
+  Subnet1Id:
+    Description: The ID of Subnet 1
+    Value: !Ref GoGatorPublicSubnet
+    Export:
+      Name: GoGatorPublicSubnet
+
+  Subnet2Id:
+    Description: The ID of Subnet 2
+    Value: !Ref GoGatorPrivateSubnet
+    Export:
+      Name: GoGatorPrivateSubnet
+
+  SecurityGroupId:
+    Description: The ID of the security group
+    Value: !Ref GoGatorSecurityGroup
+    Export:
+      Name: GoGatorSecurityGroup
+
+  ClusterName:
+    Description: The name of the EKS cluster
+    Value: !Ref GoGatorCluster
+    Export:
+      Name: GoGatorCluster
+
+  NodeGroupName:
+    Description: The name of the node group
+    Value: !Ref GoGatorNodeGroup
+    Export:
+      Name: GoGatorNodeGroupRole
+

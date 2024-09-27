@@ -39,6 +39,11 @@ jobs:
         run: |
           docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/qniw984/go-gator
 
+      - name: Update and build dependencies in chart
+        run: |
+          helm dependency update ./go-gator
+          helm dependency build ./go-gator
+
       - name: Build Helm chart
         run: |
           helm package go-gator

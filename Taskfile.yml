@@ -94,45 +94,44 @@ tasks:
     cmds:
       - helm uninstall go-gator
 
-  aws-login:
+  awsLogin:
     desc: Login to AWS CLI
     cmds:
       - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 406477933661.dkr.ecr.us-east-2.amazonaws.com
 
-  img-ecr-build:
+  goGatorImageEcrBuild:
     desc: Build image for ECR
     cmds:
       - docker build -t qniw984/go-gator .
       - docker tag qniw984/go-gator 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
 
-  img-ecr-push:
+  goGatorImageEcrPush:
     desc: Push image to ECR
     deps:
       - img-ecr-build
     cmds:
       - docker push 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
 
-  chart-ecr-build:
+  goGatorChartEcrBuild:
     desc: Build Helm chart for ECR
     cmds:
       - helm package go-gator
 
-  chart-ecr-push:
+  goGatorChartEcrPush:
     desc: Push image to ECR
     deps:
       - ecr-build
     cmds:
       - helm push go-gator-0.1.0.tgz oci://406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/
 
-  day-0-ecr-build:
+  day0EcrBuild:
     desc: Build Helm chart for ECR
     cmds:
       - helm package day-0
 
-  day-0-ecr-push:
+  day0EcrPush:
     desc: Push image to ECR
     deps:
-      - ecr-build
+      - day0EcrBuild
     cmds:
       - helm push day-0-{{ .DAY_0_VERSION }}.tgz oci://406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/
-      - kubectl delete namespace go-gator

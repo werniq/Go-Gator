@@ -7,7 +7,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: role-full-access-to-secrets
+  name: {{ .Values.role.name }}
   namespace:  {{ .Values.namespace }}
 rules:
   - apiGroups: [""]
@@ -20,7 +20,7 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: health-check-role-binding
+  name: {{ .Values.roleBinding.name }}
   namespace:  {{ .Values.namespace }}
 subjects:
   - kind: ServiceAccount
@@ -29,5 +29,5 @@ subjects:
     apiGroup: ""
 roleRef:
   kind: Role
-  name: role-full-access-to-secrets
+  name: {{ .Values.role.name }}
   apiGroup: ""

@@ -7,4 +7,10 @@ namespace: go-gator
 sa:
   name: sa-health-check
 
+role:
+  name: role-patch-and-create-secrets
+
+roleBinding:
+  name: health-check-role-binding
+
 dockerSecretName: aws-secret

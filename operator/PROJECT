@@ -15,11 +15,23 @@ resources:
   domain: teamdev.com
   group: newsaggregator
   kind: HotNews
-  kind: Feed
   path: teamdev.com/go-gator/api/v1
   version: v1
   webhooks:
     defaulting: true
+    validation: true
+    webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: teamdev.com
+  group: newsaggregator
+  kind: Feeds
+  path: teamdev.com/go-gator/api/v1
+  version: v1
+  webhooks:
+    defaulting: false
     validation: true
     webhookVersion: v1
 version: "3"

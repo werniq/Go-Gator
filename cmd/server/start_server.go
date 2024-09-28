@@ -1,21 +1,14 @@
 package server
 
 import (
-	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	parsers "gogator/cmd/parsers"
-	v1 "k8s.io/api/core/v1"
 	"os"
 	"path/filepath"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"strings"
-	"time"
 )
 
 var (
@@ -24,19 +17,11 @@ var (
 
 	// defaultDataDirPath is a default path to the directory where all data will be stored
 	defaultDataDirPath = filepath.Join("cmd", "parsers", "data")
-
-	k8sClient client.Client
 )
 
 const (
 	// defaultServerPort is a default port on which this server will be running
 	defaultServerPort = 443
-
-	// defaultCertificatesNamespace is a default namespace where certificates are stored
-	defaultCertificatesNamespace = "go-gator"
-
-	// defaultSecretName is a default name of the secret where certificates are stored
-	defaultSecretName = "cert-secret"
 
 	// defaultPrivateKey identifies the default name of server's private key
 	defaultPrivateKey = "tls.key"
@@ -82,12 +67,6 @@ func ConfAndRun() error {
 		return err
 	}
 
-	opts := zap.Options{
-		Development: true,
-	}
-
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
-
 	flag.IntVar(&serverPort, "p", defaultServerPort,
 		"On which port server will be running")
 	flag.StringVar(&certFile, "c", filepath.Join(cwdPath, defaultCertsPath, defaultCertName),
@@ -112,69 +91,9 @@ func ConfAndRun() error {
 
 	setupRoutes(server)
 
-	c := config.GetConfigOrDie()
-
-	k8sClient, err = client.New(c, client.Options{})
-	if err != nil {
-		return err
-	}
-	parsers.StoragePath = storagePath
-
-	certPath, keyPath, err := loadCertsFromSecrets()
-	if err != nil {
-		return err
-	}
-
 	err = server.RunTLS(fmt.Sprintf(":%d", serverPort),
-		certPath,
-		keyPath)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// loadCertsFromSecrets loads certificates from Kubernetes secrets
-func loadCertsFromSecrets() (string, string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	var k8sSecret v1.Secret
-	err := k8sClient.Get(ctx, client.ObjectKey{
-		Name:      defaultSecretName,
-		Namespace: defaultCertificatesNamespace,
-	}, &k8sSecret)
-	if err != nil {
-		return "", "", err
-	}
-
-	certData := k8sSecret.Data[defaultCertName]
-	keyData := k8sSecret.Data[defaultPrivateKey]
-
-	cwdPath, err := os.Getwd()
-	if err != nil {
-		return "", "", err
-	}
-
-	defaultCertPath := filepath.Join(cwdPath, defaultCertsPath, defaultCertName)
-	err = createFileFromDataAndPath(certData, defaultCertPath)
-	if err != nil {
-		return "", "", err
-	}
-
-	defaultPrivateKeyPath := filepath.Join(cwdPath, defaultCertsPath, defaultPrivateKey)
-	err = createFileFromDataAndPath(keyData, defaultPrivateKeyPath)
-	if err != nil {
-		return "", "", err
-	}
-
-	return defaultCertPath, defaultPrivateKeyPath, nil
-}
-
-// createFileFromDataAndPath creates a file based on given file data and path
-func createFileFromDataAndPath(fileData []byte, filepath string) error {
-	err := os.WriteFile(filepath, fileData, 0644)
+		certFile,
+		keyFile)
 	if err != nil {
 		return err
 	}

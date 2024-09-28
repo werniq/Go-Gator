@@ -23,6 +23,9 @@ spec:
         - name: go-gator-pv
           persistentVolumeClaim:
             claimName: go-gator-pvc
+        - name: cert-secret
+          secret:
+            secretName: cert-secret
       containers:
         - name: go-gator
           image: 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
@@ -33,3 +36,5 @@ spec:
           volumeMounts:
             - mountPath: /tmp/
               name: go-gator-pv
+            - mountPath: /cmd/server/certs
+              name: cert-secret

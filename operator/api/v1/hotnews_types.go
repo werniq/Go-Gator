@@ -95,6 +95,9 @@ type HotNewsStatus struct {
 	// ArticlesTitles contains a list of titles of first 10 articles
 	ArticlesTitles []string `json:"articlesTitles"`
 
+	// Conditions are used to describe current state of HotNews.
+	// In case of errors, this field is updated, indicating that error had occurred.
+	// If Reconciliation was successful - this fields is also updated, showing that everything had gone well.
 	Conditions map[string]HotNewsConditions `json:"conditions,omitempty"`
 }
 

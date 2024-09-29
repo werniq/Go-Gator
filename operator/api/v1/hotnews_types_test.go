@@ -1,15 +1,10 @@
 package v1
 
 import (
-	"context"
-	"errors"
 	"github.com/stretchr/testify/assert"
 	v12 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 	"testing"
 )
 
@@ -17,65 +12,48 @@ func TestGetFeedGroupNames(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = v12.AddToScheme(scheme)
 
-	c := fake.NewClientBuilder().WithScheme(scheme).Build()
-
 	var res []string
 	testCases := []struct {
 		name           string
+		input          v12.ConfigMapList
 		k8sObjects     []runtime.Object
 		expectedGroups []string
 		expectError    bool
 		setup          func()
-		client         client.Client
 		feedGroups     []string
 	}{
 		{
 			name:           "No config maps exist",
+			input:          v12.ConfigMapList{},
 			k8sObjects:     []runtime.Object{},
 			feedGroups:     []string{"group1", "group2"},
 			expectedGroups: res,
-			client:         c,
 			expectError:    false,
 		},
 		{
 			name: "Config map with no matching feed groups",
-			k8sObjects: []runtime.Object{
-				&v12.ConfigMap{
-					ObjectMeta: v1.ObjectMeta{
-						Name:   "config2",
-						Labels: map[string]string{FeedGroupLabel: "true"},
-					},
-					Data: map[string]string{
-						"othergroup": "some-data",
+			input: v12.ConfigMapList{
+				Items: []v12.ConfigMap{
+					{
+						ObjectMeta: v1.ObjectMeta{
+							Name:   "config2",
+							Labels: map[string]string{FeedGroupLabel: "true"},
+						},
+						Data: map[string]string{
+							"othergroup": "some-data",
+						},
 					},
 				},
 			},
 			feedGroups:     []string{"group1", "group2"},
 			expectedGroups: res,
-			client:         c,
 			setup:          func() {},
 			expectError:    false,
-		},
-		{
-			name:       "Config map listing error",
-			k8sObjects: nil,
-			feedGroups: []string{},
-			setup: func() {
-				scheme = runtime.NewScheme()
-			},
-			expectedGroups: res,
-			client: fake.NewClientBuilder().WithInterceptorFuncs(
-				interceptor.Funcs{List: func(ctx context.Context, client client.WithWatch, list client.ObjectList, opts ...client.ListOption) error {
-					return errors.New("error")
-				}},
-			).Build(),
-			expectError: true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			k8sClient = tc.client
 
 			hotNews := &HotNews{
 				Spec: HotNewsSpec{
@@ -83,14 +61,7 @@ func TestGetFeedGroupNames(t *testing.T) {
 				},
 			}
 
-			result, err := hotNews.GetFeedGroupNames(context.TODO())
-
-			if tc.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-
+			result := hotNews.GetFeedGroupNames(tc.input)
 			assert.Equal(t, tc.expectedGroups, result)
 		})
 	}

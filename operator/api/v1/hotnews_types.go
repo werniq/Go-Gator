@@ -145,6 +145,9 @@ func init() {
 
 // GetFeedGroupNames returns all config maps which contain hotNew groups names
 func (r *HotNews) GetFeedGroupNames(configMapList v1.ConfigMapList) []string {
+	if configMapList.Items == nil {
+		return nil
+	}
 	var feedGroups []string
 	for _, configMap := range configMapList.Items {
 		for _, source := range r.Spec.FeedGroups {

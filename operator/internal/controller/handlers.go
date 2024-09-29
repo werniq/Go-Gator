@@ -165,7 +165,7 @@ func (r *ConfigMapHandler) validateConfigMapFeeds(ctx context.Context, obj clien
 
 // feedGroupsExistsInMap returns true if hotNews contains feedGroups which exists in configMap
 func (r *ConfigMapHandler) feedGroupsExistsInMap(hotNews newsaggregatorv1.HotNews, configMap *v1.ConfigMap) bool {
-	for _, feedGroupName := range hotNews.Spec.Feeds {
+	for _, feedGroupName := range hotNews.Spec.FeedGroups {
 		if _, exists := configMap.Data[feedGroupName]; exists {
 			return true
 		}

@@ -150,13 +150,26 @@ func (r *ConfigMapHandler) validateConfigMapFeeds(ctx context.Context, obj clien
 	var requests []reconcile.Request
 
 	for _, hotNews := range hotNewsList.Items {
-		requests = append(requests, ctrl.Request{
-			NamespacedName: types.NamespacedName{
-				Namespace: hotNews.Namespace,
-				Name:      hotNews.Name,
-			},
-		})
+		if r.feedGroupsExistsInMap(hotNews, configMap) {
+			requests = append(requests, ctrl.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: hotNews.Namespace,
+					Name:      hotNews.Name,
+				},
+			})
+		}
 	}
 
 	return requests
+}
+
+// feedGroupsExistsInMap returns true if hotNews contains feedGroups which exists in configMap
+func (r *ConfigMapHandler) feedGroupsExistsInMap(hotNews newsaggregatorv1.HotNews, configMap *v1.ConfigMap) bool {
+	for _, feedGroupValues := range configMap.Data {
+		if slices.Contains(hotNews.Spec.FeedGroups, feedGroupValues) {
+			return true
+		}
+	}
+
+	return false
 }

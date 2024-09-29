@@ -114,7 +114,7 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if hotNews.Spec.FeedGroups != nil {
 		configMapList, err = r.retrieveConfigMap(ctx, hotNews.Namespace)
 		if err != nil {
-			updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to retrieve config map list", err.Error())
+			updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to retrieve list of config maps", err.Error())
 			if updateErr != nil {
 				return ctrl.Result{}, updateErr
 			}

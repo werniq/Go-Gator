@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	errs "errors"
 	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -111,7 +112,13 @@ type ConfigMapHandler struct {
 func (r *ConfigMapHandler) validateConfigMapFeeds(ctx context.Context, obj client.Object) []reconcile.Request {
 	logger := log.FromContext(ctx)
 
-	configMap := obj.(*v1.ConfigMap)
+	var configMap *v1.ConfigMap
+	var ok bool
+	configMap, ok = obj.(*v1.ConfigMap)
+	if !ok {
+		logger.Error(errs.New("object is not a ConfigMap"), "Invalid object type")
+		return nil
+	}
 
 	var errList field.ErrorList
 

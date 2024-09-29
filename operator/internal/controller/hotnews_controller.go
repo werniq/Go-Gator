@@ -101,6 +101,7 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	logger := log.FromContext(ctx)
 
 	var hotNews newsaggregatorv1.HotNews
+	var configMapList v1.ConfigMapList
 
 	err := r.Client.Get(ctx, req.NamespacedName, &hotNews)
 	if err != nil {
@@ -110,13 +111,15 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	configMapList, err := r.retrieveConfigMap(ctx, hotNews.Namespace)
-	if err != nil {
-		updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to retrieve config map", err.Error())
-		if updateErr != nil {
-			return ctrl.Result{}, updateErr
+	if hotNews.Spec.FeedGroups != nil {
+		configMapList, err = r.retrieveConfigMap(ctx, hotNews.Namespace)
+		if err != nil {
+			updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to retrieve config map list", err.Error())
+			if updateErr != nil {
+				return ctrl.Result{}, updateErr
+			}
+			return ctrl.Result{}, err
 		}
-		return ctrl.Result{}, err
 	}
 
 	if !controllerutil.ContainsFinalizer(&hotNews, HotNewsFinalizer) {
@@ -199,6 +202,7 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string)
 	r.serverUrl = serverUrl
 
 	hotNewsHandler := &HotNewsHandler{Client: mgr.GetClient()}
+	configMapHandler := &ConfigMapHandler{Client: mgr.GetClient()}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.HotNews{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
@@ -209,7 +213,7 @@ func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string)
 		).
 		Watches(
 			&v1.ConfigMap{},
-			handler.EnqueueRequestsFromMapFunc(hotNewsHandler.UpdateHotNews),
+			handler.EnqueueRequestsFromMapFunc(configMapHandler.validateConfigMapFeeds),
 			builder.WithPredicates(ConfigMapStatusPredicate{}),
 		).
 		Complete(r)

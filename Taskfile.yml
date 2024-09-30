@@ -1,5 +1,8 @@
 version: '3'
 
+includes:
+  docs: ./operator
+
 env:
   DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "go-gator" }}'
   DOCKER_USERNAME:   '{{ .DOCKER_USERNAME | default "qniw984" }}'

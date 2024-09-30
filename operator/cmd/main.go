@@ -142,6 +142,7 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+	newsaggregatorv1.SetupClient(mgr.GetClient())
 
 	if err = (&controller.FeedReconciler{
 		Client: mgr.GetClient(),

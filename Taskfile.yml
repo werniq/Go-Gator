@@ -136,6 +136,7 @@ tasks:
     desc: Build Helm chart for ECR
     deps:
       - addChartDependencies
+      - updateAndBuildChartDependencies
     cmds:
       - helm package go-gator
 

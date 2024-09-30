@@ -127,10 +127,8 @@ tasks:
   updateAndBuildChartDependencies:
     desc: Update and build chart dependencies
     cmds:
-      - cd go-gator
-      - helm dependency update
-      - helm dependency build
-
+      - helm dependency update ./go-gator
+      - helm dependency build ./go-gator
 
   goGatorChartEcrBuild:
     desc: Build Helm chart for ECR

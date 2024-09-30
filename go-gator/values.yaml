@@ -71,7 +71,7 @@ certSecret:
   name: cert-secret
 
 certificate:
-  name: go-gator-server
+  name: go-gator-server-cert
   privateKey:
     algorithm: ECDSA
     size: 256

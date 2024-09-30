@@ -155,4 +155,4 @@ tasks:
     deps:
       - day0EcrBuild
     cmds:
-      - helm push day-0-{{ .DAY_0_VERSION }}.tgz oci://{{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/
+      - helm push day-0-{{ .DAY_0_CHART_VERSION }}.tgz oci://{{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/

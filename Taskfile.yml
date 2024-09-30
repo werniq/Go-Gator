@@ -1,7 +1,7 @@
 version: '3'
 
 includes:
-  docs: ./operator
+  operator: ./operator
 
 env:
   DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "go-gator" }}'
@@ -113,19 +113,36 @@ tasks:
   goGatorImageEcrPush:
     desc: Push image to ECR
     deps:
-      - img-ecr-build
+      - goGatorImageEcrBuild
     cmds:
       - docker push {{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
 
+  addChartDependencies:
+    desc: Add required charts to dependencies list
+    cmds:
+      - cd go-gator
+      - helm repo add cert-manager https://charts.jetstack.io
+      - helm repo add vertical-pod-autoscaler https://stevehipwell.github.io/helm-charts/
+
+  updateAndBuildChartDependencies:
+    desc: Update and build chart dependencies
+    cmds:
+      - cd go-gator
+      - helm dependency update
+      - helm dependency build
+
+
   goGatorChartEcrBuild:
     desc: Build Helm chart for ECR
+    deps:
+      - addChartDependencies
     cmds:
       - helm package go-gator
 
   goGatorChartEcrPush:
     desc: Push image to ECR
     deps:
-      - ecr-build
+      - goGatorChartEcrBuild
     cmds:
       - helm push go-gator-{{ .GO_GATOR_CHART_VERSION }}.tgz oci://{{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/
 

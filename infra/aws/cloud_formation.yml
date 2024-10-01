@@ -42,12 +42,28 @@ Parameters:
     Description: The Kubernetes version for the cluster.
     Default: "1.30"
     AllowedValues:
+      - "1.31"
       - "1.30"
       - "1.29"
-      - "1.28"
-      - "1.27"
-      - "1.26"
-      - "1.25"
+
+Mappings:
+  k8sToAddonVersion:
+    '1.29':
+      CoreDnsAddonVersion: v1.10.1-eksbuild.8
+      KubeProxyVersion: v1.29.0-eksbuild.3
+      VpcCniAddonVersion: v1.17.1-eksbuild.3
+      PodIdentityAddonVersion: v1.3.1-eksbuild.2
+    '1.30':
+      CoreDnsAddonVersion: v1.11.1-eksbuild.8
+      KubeProxyVersion: v1.30.0-eksbuild.3
+      VpcCniAddonVersion: v1.18.1-eksbuild.3
+      PodIdentityAddonVersion: v1.3.2-eksbuild.2
+    '1.31':
+      CoreDnsAddonVersion: v1.11.3-eksbuild.1
+      KubeProxyVersion: v1.30.0-eksbuild.3
+      VpcCniAddonVersion: v1.18.1-eksbuild.3
+      PodIdentityAddonVersion: v1.3.2-eksbuild.2
+
 
 Resources:
   GoGatorVpc:
@@ -197,7 +213,7 @@ Resources:
       AddonName: coredns
       ClusterName: !Ref GoGatorCluster
       ResolveConflicts: OVERWRITE
-      AddonVersion: v1.11.1-eksbuild.8
+      AddonVersion: !FindInMap [AddonNameToVersion, !Ref KubernetesVersion, CoreDnsAddonVersion]
 
   KubeProxyAddon:
     Type: AWS::EKS::Addon
@@ -205,7 +221,7 @@ Resources:
       AddonName: kube-proxy
       ClusterName: !Ref GoGatorCluster
       ResolveConflicts: OVERWRITE
-      AddonVersion: v1.30.0-eksbuild.3
+      AddonVersion: !FindInMap [AddonNameToVersion, !Ref KubernetesVersion, KubeProxyVersion]
 
   AmazonVPCCniAddon:
     Type: AWS::EKS::Addon
@@ -213,7 +229,7 @@ Resources:
       AddonName: vpc-cni
       ClusterName: !Ref GoGatorCluster
       ResolveConflicts: OVERWRITE
-      AddonVersion: v1.18.1-eksbuild.3
+      AddonVersion: !FindInMap [AddonNameToVersion, !Ref KubernetesVersion, VpcCniAddonVersion]
 
   PodIdentityAddon:
     Type: AWS::EKS::Addon
@@ -221,7 +237,7 @@ Resources:
       AddonName: eks-pod-identity-agent
       ClusterName: !Ref GoGatorCluster
       ResolveConflicts: OVERWRITE
-      AddonVersion: v1.3.2-eksbuild.2
+      AddonVersion: !FindInMap [AddonNameToVersion, !Ref KubernetesVersion, PodIdentityAddonVersion]
 
   GoGatorNodeGroupRole:
     Type: AWS::IAM::Role

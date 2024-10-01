@@ -104,7 +104,7 @@ tasks:
     cmds:
       - helm uninstall go-gator
 
-  awsLogin:
+  aws_login:
     desc: Login to AWS CLI
     cmds:
       - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin {{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com
@@ -162,8 +162,8 @@ tasks:
     cmds:
       - helm push day-0-{{ .DAY_0_CHART_VERSION }}.tgz oci://{{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/
 
-  deployAll:
+  deploy_all:
     desc: Deploy all images and charts to ECR
     cmds:
-      - for: [awsLogin, operator:docker-build, cronJob:publish, goGatorImageEcrPush, goGatorChartEcrPush, day0EcrPush]
-        task: {{.ITEM}}
+      - for: [ aws_login, operator:docker-build, cronJob:publish, goGatorImageEcrPush, goGatorChartEcrPush, day0EcrPush ]
+        task: '{{.ITEM}}'

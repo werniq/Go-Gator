@@ -1,7 +1,7 @@
 version: '3'
 
 env:
-  DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "news-fetching-job" }}'
+  DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/news-fetching-job" }}'
   DOCKER_USERNAME:   '{{ .DOCKER_USERNAME | default "qniw984" }}'
   DOCKER_IMAGE_TAG:  '{{ .DOCKER_IMAGE_TAG | default "latest" }}'
   DOCKERHUB_USERNAME: '{{ .DOCKER_LOGIN_USERNAME }}'
@@ -40,5 +40,4 @@ tasks:
     deps:
       - docker-build
     cmds:
-      - docker login -u {{ .DOCKERHUB_USERNAME }} -p {{ .DOCKERHUB_PASSWORD }}
-      - docker push {{ .DOCKER_USERNAME }}/{{ .DOCKER_IMAGE_NAME }}:{{ .DOCKER_IMAGE_TAG }}
+      - docker push {{ .DOCKER_IMAGE_NAME }}

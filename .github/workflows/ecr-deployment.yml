@@ -29,23 +29,11 @@ jobs:
         run: |
           sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
 
-      - name: Login to ECR
+      - name: Login to AWS ECR
         id: ecr_login
         run: |
           task awsLogin
 
-      - name: Build and Push Operator Docker image to ECR
+      - name: Build and Push all Charts and All Images to AWS ECR
         run: |
-          task operator:docker-build
-
-      - name: Build and Push Docker image to ECR
-        run: |
-          task goGatorImageEcrPush
-
-      - name: Build and Push Helm chart to ECR
-        run: |
-          task goGatorChartEcrPush
-
-      - name: Build and Push Helm Day-0 chart to ECR
-        run: |
-          task day0EcrPush
+          task deployAll

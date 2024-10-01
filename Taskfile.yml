@@ -162,7 +162,7 @@ tasks:
     cmds:
       - helm push day-0-{{ .DAY_0_CHART_VERSION }}.tgz oci://{{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/
 
-  deploy_all:
+  deployAll:
     desc: Deploy all images and charts to ECR
     cmds:
       - for: [ awsLogin, operator:docker-build, cronJob:publish, goGatorImageEcrPush, goGatorChartEcrPush, day0EcrPush ]

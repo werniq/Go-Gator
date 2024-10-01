@@ -104,7 +104,7 @@ tasks:
     cmds:
       - helm uninstall go-gator
 
-  aws_login:
+  awsLogin:
     desc: Login to AWS CLI
     cmds:
       - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin {{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com

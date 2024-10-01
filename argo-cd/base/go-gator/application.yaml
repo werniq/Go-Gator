@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/
+    targetRevision: 0.1.0
+    chart: go-gator
+    helm:
+      valuesObjects:
+        crds:
+          enabled: true
+        prometheus:
+          enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

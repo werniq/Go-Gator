@@ -165,5 +165,5 @@ tasks:
   deploy_all:
     desc: Deploy all images and charts to ECR
     cmds:
-      - for: [ aws_login, operator:docker-build, cronJob:publish, goGatorImageEcrPush, goGatorChartEcrPush, day0EcrPush ]
+      - for: [ awsLogin, operator:docker-build, cronJob:publish, goGatorImageEcrPush, goGatorChartEcrPush, day0EcrPush ]
         task: '{{.ITEM}}'

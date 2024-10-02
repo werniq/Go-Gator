@@ -4,5 +4,3 @@ resources:
   - ./day-0
   - ./go-gator
   - ./go-gator-operator
-commonLabels:
-  maintainer: werniq

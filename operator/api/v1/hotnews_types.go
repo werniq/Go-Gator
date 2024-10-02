@@ -17,12 +17,8 @@ limitations under the License.
 package v1
 
 import (
-	"context"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -32,14 +28,8 @@ const (
 	// TypeHotNewsUpdated represents the reason for created condition
 	TypeHotNewsUpdated = "Updated"
 
-	// TypeHotNewsFailedToCreate represents the reason for failed to create condition
-	TypeHotNewsFailedToCreate = "FailedToCreate"
-
 	// HotNewsSuccessfullyCreated represents the reason for created condition
 	HotNewsSuccessfullyCreated = "HotNews was successfully created"
-
-	// HotNewsSuccessfullyUpdated represents the reason for updated condition
-	HotNewsSuccessfullyUpdated = "HotNews was successfully updated"
 
 	// HotNewsError indicates that there were an error during Reconciliation of hot news object
 	HotNewsError = "Error during processing of hot news creation"
@@ -105,6 +95,9 @@ type HotNewsStatus struct {
 	// ArticlesTitles contains a list of titles of first 10 articles
 	ArticlesTitles []string `json:"articlesTitles"`
 
+	// Conditions are used to describe current state of HotNews.
+	// In case of errors, this field is updated, indicating that error had occurred.
+	// If Reconciliation was successful - this fields is also updated, showing that everything had gone well.
 	Conditions map[string]HotNewsConditions `json:"conditions,omitempty"`
 }
 
@@ -154,22 +147,12 @@ func init() {
 }
 
 // GetFeedGroupNames returns all config maps which contain hotNew groups names
-func (r *HotNews) GetFeedGroupNames(ctx context.Context) ([]string, error) {
-	s, err := labels.NewRequirement(FeedGroupLabel, selection.Exists, nil)
-	if err != nil {
-		return nil, err
+func (r *HotNews) GetFeedGroupNames(configMapList v1.ConfigMapList) []string {
+	if configMapList.Items == nil {
+		return nil
 	}
-
-	var configMaps v1.ConfigMapList
-	err = k8sClient.List(ctx, &configMaps, &client.ListOptions{
-		LabelSelector: labels.NewSelector().Add(*s),
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	var feedGroups []string
-	for _, configMap := range configMaps.Items {
+	for _, configMap := range configMapList.Items {
 		for _, source := range r.Spec.FeedGroups {
 			if _, exists := configMap.Data[source]; exists {
 				feedGroups = append(feedGroups, source)
@@ -177,7 +160,7 @@ func (r *HotNews) GetFeedGroupNames(ctx context.Context) ([]string, error) {
 		}
 	}
 
-	return feedGroups, nil
+	return feedGroups
 }
 
 // SetCondition initializes status.Conditions if they are empty.

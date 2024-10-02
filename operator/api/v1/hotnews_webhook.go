@@ -19,7 +19,10 @@ package v1
 import (
 	"context"
 	"errors"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -221,10 +224,22 @@ func (r *HotNews) feedGroupsExists() error {
 	if r.Spec.FeedGroups == nil {
 		return nil
 	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	feedGroups, err := r.GetFeedGroupNames(ctx)
+	s, err := labels.NewRequirement(FeedGroupLabel, selection.Exists, nil)
+	if err != nil {
+		return err
+	}
+
+	var configMaps v1.ConfigMapList
+	err = k8sClient.List(ctx, &configMaps, &client.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*s),
+		Namespace:     r.Namespace,
+	})
+
+	feedGroups := r.GetFeedGroupNames(configMaps)
 	if err != nil {
 		return err
 	}

@@ -130,16 +130,15 @@ tasks:
       - helm repo add vertical-pod-autoscaler https://stevehipwell.github.io/helm-charts/
 
   updateAndBuildChartDependencies:
-    desc: Update and build chart dependencies
+    desc: Update and build day-0 chart dependencies
     cmds:
-      - helm dependency update ./go-gator
-      - helm dependency build ./go-gator
+      - helm dependency build ./day-0
+      - helm dependency update ./day-0
 
   goGatorChartEcrBuild:
     desc: Build Helm chart for ECR
     deps:
       - addChartDependencies
-      - updateAndBuildChartDependencies
     cmds:
       - helm package go-gator
 
@@ -152,6 +151,8 @@ tasks:
 
   day0EcrBuild:
     desc: Build Helm chart for ECR
+    deps:
+      - updateAndBuildChartDependencies
     cmds:
       - helm package day-0
 
@@ -169,9 +170,3 @@ tasks:
         task: '{{.ITEM}}'
       - helm uninstall go-gator -n go-gator
       - kubectl delete namespace go-gator
-
-  installArgoCd:
-    desc: Install Argo CD
-    cmds:
-      - kubectl create namespace argocd
-      - kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml

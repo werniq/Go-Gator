@@ -6,15 +6,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/
+    repoURL: 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984
     targetRevision: 0.1.0
     chart: go-gator-operator
-    helm:
-      valuesObjects:
-        crds:
-          enabled: true
-        prometheus:
-          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: go-gator
@@ -24,4 +18,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-  ref: aws-sa

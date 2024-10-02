@@ -1,0 +1,80 @@
+# Default values for go-gator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+namespace: go-gator
+
+image:
+  repository: qniw984/go-gator
+  pullPolicy: IfNotPresent
+  tag: "1.3.0"
+
+cronJob:
+  name: go-gator-fetching-job
+  schedule: "0 0 * * *"
+  image: qniw984/news-fetching-job:1.1.0
+
+goGatorService:
+  name: go-gator-service
+  namespace: go-gator
+
+goGatorRoleBinding:
+  name: go-gator-service-binding
+  subjects:
+    - kind: ServiceAccount
+      name: go-gator-service
+      apiGroup: ""
+      namespace: go-gator
+
+cronJobRoleBinding:
+  name: cron-job-sa-binding
+  subjects:
+    - kind: ServiceAccount
+      name: cron-job-sa
+      apiGroup: ""
+      namespace: go-gator
+
+cronJobRole:
+  name: cron-job-role
+  namespace: go-gator
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: go-gator-service
+
+service:
+  name: go-gator
+  type: ClusterIP
+  selector:
+    app: go-gator
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 443
+  port: 443
+
+resources:
+   limits:
+     cpu: 100m
+     memory: 128Mi
+   requests:
+     cpu: 100m
+     memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+volumes:
+  - name: go-gator-pv
+    persistentVolumeClaim:
+      claimName: go-gator-pvc
+
+volumeMounts:
+  - mountPath: /tmp/
+    name: go-gator-pv

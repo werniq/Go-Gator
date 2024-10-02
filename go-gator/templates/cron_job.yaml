@@ -1,10 +1,10 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: go-gator-fetching-news-job
-  namespace: go-gator
+  name: {{ .Values.cronJob.name }}
+  namespace: {{ .Values.namespace}}
 spec:
-  schedule: "0 0 * * *"
+  schedule: {{ .Values.cronJob.schedule }}
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
   concurrencyPolicy: Forbid
@@ -14,8 +14,8 @@ spec:
         spec:
           serviceAccountName: cron-job-sa
           containers:
-            - name: go-gator-fetching-job
-              image: qniw984/news-fetching-job:1.1.0
+            - name: {{ .Values.cronJob.name }}
+              image: {{ .Values.cronJob.image }}
               imagePullPolicy: IfNotPresent
               volumeMounts:
                 - mountPath: /tmp/

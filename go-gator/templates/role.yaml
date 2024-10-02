@@ -1,8 +1,8 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: go-gator-service
-  namespace: go-gator
+  name: {{ .Values.goGatorService.name }}
+  namespace: {{ .Values.goGatorService.namespace }}
 rules:
   - apiGroups: ["v1"]
     resources: ["pods"]
@@ -11,5 +11,5 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: cron-job-role
-  namespace: go-gator
+  name: {{ .Values.cronJobRole.name }}
+  namespace: {{ .Values.cronJobRole.namespace }}

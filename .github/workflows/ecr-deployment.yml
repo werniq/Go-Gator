@@ -1,0 +1,39 @@
+name: ECR Deployment Pipeline
+
+on:
+  push
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: us-east-2
+  AWS_ACCOUNT_ID: 406477933661
+  CHART_VERSION: 0.1.0
+
+jobs:
+  aws-setup:
+    name: AWS Login
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install Taskfile
+        run: |
+          sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
+
+      - name: Login to AWS ECR
+        id: ecr_login
+        run: |
+          task awsLogin
+
+      - name: Build and Push all Charts and All Images to AWS ECR
+        run: |
+          task deployAll

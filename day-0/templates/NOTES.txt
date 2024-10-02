@@ -1,0 +1,11 @@
+This Helm chart installs a Kubernetes cron job that once in 12 hours updates AWS credentials and stores them
+as secrets in the go-gator namespace.
+
+The job uses a service account and role-based access control to interact with Kubernetes secrets.
+The following components are installed: a service account named sa-health-check,
+which is used by the cron job to authenticate with Kubernetes, and a role named role-full-access-to-secrets,
+which provides full access to manage secrets within the given namespace.
+
+This role allows the cron job to delete and create the secret regcred.
+Additionally, a RoleBinding named health-check-role-binding binds the service account to the role,
+ensuring that the cron job has the necessary permissions to manage secrets in the namespace.

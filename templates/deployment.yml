@@ -16,14 +16,19 @@ spec:
         app: go-gator
     spec:
       serviceAccountName: go-gator-service
-      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: ecr-registry-helper-secrets
+      automountServiceAccountToken: true
       volumes:
         - name: go-gator-pv
           persistentVolumeClaim:
             claimName: go-gator-pvc
+        - name: cert-secret
+          secret:
+            secretName: cert-secret
       containers:
         - name: go-gator
-          image: qniw984/go-gator:1.1.0
+          image: 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
           ports:
             - containerPort: 443
               hostPort: 443
@@ -31,3 +36,5 @@ spec:
           volumeMounts:
             - mountPath: /tmp/
               name: go-gator-pv
+            - mountPath: /cmd/server/certs
+              name: cert-secret

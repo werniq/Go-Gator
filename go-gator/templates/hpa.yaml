@@ -1,0 +1,23 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.hpa.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "go-gator.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: {{ .Values.hpa.scaleTargetRef.apiVersion }}
+    kind: {{ .Values.hpa.scaleTargetRef.kind }}
+    name: {{ .Values.hpa.scaleTargetRef.name }}
+  minReplicas: {{ .Values.hpa.minReplicas }}
+  maxReplicas: {{ .Values.hpa.maxReplicas }}
+  metrics:
+    {{- range .Values.hpa.metrics }}
+    - type: {{ .type }}
+      resource:
+        name: {{ .resource.name }}
+        target:
+          type: {{ .resource.target.type }}
+          averageUtilization: {{ .resource.target.averageUtilization }}
+    {{- end }}

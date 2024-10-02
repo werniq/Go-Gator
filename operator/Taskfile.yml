@@ -1,0 +1,145 @@
+version: '3'
+
+env:
+  DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "qniw984/go-gator-controller:1.0.0" }}'
+  ENVTEST_K8S_VERSION: '{{ .ENVTEST_K8S_VERSION | default "1.30.0" }}'
+  CONTAINER_TOOL: '{{ .CONTAINER_TOOL | default "docker" }}'
+  LOCALBIN: ./bin
+  PLATFORMS: 'linux/arm64,linux/amd64,linux/s390x,linux/ppc64le'
+  IGNORE_NOT_FOUND: true
+
+  KUBECTL: 'kubectl'
+  GOBIN: 'go env GOBIN || go env GOPATH/bin'
+  KUSTOMIZE: '{{.LOCALBIN}}/kustomize'
+  CONTROLLER_GEN: '{{.LOCALBIN}}/controller-gen-v0.15.0'
+  ENVTEST: '{{.LOCALBIN}}/setup-envtest'
+  GOLANGCI_LINT: '{{.LOCALBIN}}/golangci-lint'
+
+  KUSTOMIZE_VERSION: '{{ .KUSTOMIZE_VERSION | default "v5.4.2" }}'
+  CONTROLLER_TOOLS_VERSION: '{{ .CONTROLLER_TOOLS_VERSION | default "v0.15.0" }}'
+  ENVTEST_VERSION: '{{ .ENVTEST_VERSION | default "release-0.18" }}'
+  GOLANGCI_LINT_VERSION: '{{ .GOLANGCI_LINT_VERSION | default "v1.59.1" }}'
+
+tasks:
+  manifests:
+    desc: Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+    cmds:
+      - |
+        {{ .CONTROLLER_GEN }} rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+
+  generate:
+    desc: Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+    cmds:
+      - |
+        {{ .CONTROLLER_GEN }} object:headerFile="./hack/boilerplate.go.txt" paths="./..."
+
+  fmt:
+    desc: Run go fmt against code.
+    cmds:
+      - go fmt ./...
+
+  vet:
+    desc: Run go vet against code.
+    cmds:
+      - go vet ./...
+
+  test:
+    desc: Run tests.
+    deps:
+      - manifests
+      - generate
+      - fmt
+      - envtest
+    cmds:
+      - KUBEBUILDER_ASSETS="{{ .ENVTEST }} use {{.ENVTEST_K8S_VERSION}} --bin-dir {{.LOCALBIN}} -p path" go test $(go list ./... | grep -v /e2e) -coverprofile cover.out
+
+  build:
+    desc: Build manager binary.
+    deps:
+      - manifests
+      - generate
+      - fmt
+      - vet
+    cmds:
+      - go build -o bin/manager cmd/main.go
+
+  run:
+    desc: Run a controller from your host.
+    deps:
+      - manifests
+      - generate
+      - fmt
+    cmds:
+      - 'go run ./cmd/main.go'
+
+  docker-build:
+    desc: Build docker image with the manager.
+    cmds:
+      - |
+        {{.CONTAINER_TOOL}} build -t {{.DOCKER_IMAGE_NAME}} .
+
+  docker-push:
+    desc: Push docker image with the manager.
+    cmds:
+      - |
+        {{.CONTAINER_TOOL}} push {{.DOCKER_IMAGE_NAME}}
+
+  docker-buildx:
+    desc: Build and push docker image for the manager for cross-platform support.
+    cmds:
+      - |
+        sed -e '1 s/\(^FROM\)/FROM --platform=${BUILDPLATFORM}/; t' -e '1,// s//FROM --platform=${BUILDPLATFORM}/' Dockerfile > Dockerfile.cross
+        {{.CONTAINER_TOOL}} buildx create --name operator-builder
+        {{.CONTAINER_TOOL}} buildx use operator-builder
+        {{.CONTAINER_TOOL}} buildx build --push --platform={{.PLATFORMS}} --tag {{.DOCKER_IMAGE_NAME}} -f Dockerfile.cross .
+        {{.CONTAINER_TOOL}} buildx rm operator-builder
+        rm Dockerfile.cross
+
+  build-installer:
+    desc: Generate a consolidated YAML with CRDs and deployment.
+    deps:
+      - manifests
+      - generate
+      - kustomize
+    cmds:
+      - 'mkdir -p dist'
+      - 'cd config/manager && {{.KUSTOMIZE}} edit set image controller={{.DOCKER_IMAGE_NAME}}'
+      - '{{ .KUSTOMIZE }} build config/default > dist/install.yaml'
+
+  install:
+    desc: Install CRDs to the K8s cluster.
+    deps:
+      - manifests
+      - kustomize
+    cmds:
+      - |
+        {{ .KUSTOMIZE }} build config/crd | {{ .KUBECTL }} apply -f -
+
+  uninstall:
+    desc: Uninstall CRDs from the K8s cluster.
+    deps:
+      - manifests
+      - kustomize
+    cmds:
+      - |
+        {{ .KUSTOMIZE }} build config/crd | {{ .KUBECTL }} delete --ignore-not-found={{ .IGNORE_NOT_FOUND }} -f -
+
+  deploy:
+    desc: Deploy controller to the K8s cluster.
+    deps:
+      - manifests
+      - kustomize
+    cmds:
+      - |
+        cd config/manager && {{ .KUSTOMIZE }} edit set image controller={{.DOCKER_IMAGE_NAME}} && cd ../.. &&
+        {{.KUSTOMIZE}} build config/default | {{.KUBECTL}} apply -f -
+
+  undeploy:
+    desc: Undeploy controller from the K8s cluster.
+    vars:
+      IGNORE_NOT_FOUND: true
+    deps:
+      - kustomize
+    cmds:
+      - |
+        {{.KUSTOMIZE}} build config/default | {{.KUBECTL}} delete --ignore-not-found={{ .IGNORE_NOT_FOUND }} -f -

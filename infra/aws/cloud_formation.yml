@@ -1,0 +1,310 @@
+Parameters:
+  VpcName:
+    Type: String
+    Description: The name of the VPC.
+    Default: "GoGatorVpc"
+
+  CidrBlock:
+    Type: String
+    Description: The CIDR block for the VPC. This should be a valid private (RFC 1918) CIDR block.
+    Default: "10.0.1.0/24"
+
+  NodeGroupInstanceType:
+    Type: String
+    Description: The EC2 instance type for the node group.
+    Default: t3.medium
+    AllowedValues:
+      - "t3.medium"
+      - "t2.medium"
+      - "t2.small"
+
+  MinimalNodeGroupSize:
+    Type: Number
+    Description: The minimal number of nodes in the node group.
+    Default: 1
+    MinValue: 1
+    MaxValue: 5
+
+  MaximalNodeGroupSize:
+    Type: Number
+    Description: The maximal number of nodes in the node group.
+    Default: 5
+    MinValue: 1
+    MaxValue: 10
+
+  NodeGroupDesiredCapacity:
+    Type: Number
+    Description: The desired number of nodes in the node group.
+    Default: 1
+
+  KubernetesVersion:
+    Type: String
+    Description: The Kubernetes version for the cluster.
+    Default: "1.30"
+    AllowedValues:
+      - "1.31"
+      - "1.30"
+      - "1.29"
+
+Mappings:
+  k8sToAddonVersion:
+    '1.29':
+      CoreDnsAddonVersion: v1.10.1-eksbuild.8
+      KubeProxyVersion: v1.29.0-eksbuild.3
+      VpcCniAddonVersion: v1.17.1-eksbuild.3
+      PodIdentityAddonVersion: v1.3.1-eksbuild.2
+    '1.30':
+      CoreDnsAddonVersion: v1.11.1-eksbuild.8
+      KubeProxyVersion: v1.30.0-eksbuild.3
+      VpcCniAddonVersion: v1.18.1-eksbuild.3
+      PodIdentityAddonVersion: v1.3.2-eksbuild.2
+    '1.31':
+      CoreDnsAddonVersion: v1.11.3-eksbuild.1
+      KubeProxyVersion: v1.30.0-eksbuild.3
+      VpcCniAddonVersion: v1.18.1-eksbuild.3
+      PodIdentityAddonVersion: v1.3.2-eksbuild.2
+
+
+Resources:
+  GoGatorVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.1.0/24
+      Tags:
+        - Key: Name
+          Value: !Ref VpcName
+
+  GoGatorSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Go-Gator
+      GroupName: Go-Gator-Security-Group
+      VpcId: !Ref GoGatorVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  GoGatorPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref GoGatorVpc
+      CidrBlock: 10.0.1.0/26
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: GoGatorPublicSubnet
+
+  GoGatorPrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref GoGatorVpc
+      CidrBlock: 10.0.1.64/26
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select [1, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: GoGatorPrivateSubnet
+
+  GoGatorInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Go-Gator-Internet-Gateway
+
+  GoGatorAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref GoGatorVpc
+      InternetGatewayId: !Ref GoGatorInternetGateway
+
+  GoGatorPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref GoGatorVpc
+      Tags:
+        - Key: Name
+          Value: Go-Gator-Public-Route-Table
+
+  GoGatorPublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref GoGatorPublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref GoGatorInternetGateway
+
+  GoGatorPublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref GoGatorPublicSubnet
+      RouteTableId: !Ref GoGatorPublicRouteTable
+
+  GoGatorNATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt GoGatorEIP.AllocationId
+      SubnetId: !Ref GoGatorPublicSubnet
+
+  GoGatorEIP:
+    Type: AWS::EC2::EIP
+
+  GoGatorPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref GoGatorVpc
+      Tags:
+        - Key: Name
+          Value: Go-Gator-Private-Route-Table
+
+  GoGatorPrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref GoGatorPrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref GoGatorNATGateway
+
+  GoGatorPrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref GoGatorPrivateSubnet
+      RouteTableId: !Ref GoGatorPrivateRouteTable
+
+  GoGatorClusterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: eks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+        - arn:aws:iam::aws:policy/AmazonEKSServicePolicy
+
+  GoGatorCluster:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Name: GoGatorCluster
+      ResourcesVpcConfig:
+        SubnetIds:
+          - !Ref GoGatorPublicSubnet
+          - !Ref GoGatorPrivateSubnet
+      RoleArn: !GetAtt GoGatorClusterRole.Arn
+      Version: !Ref KubernetesVersion
+      UpgradePolicy:
+        SupportType: EXTENDED
+
+  CoreDNSAddon:
+    Type: AWS::EKS::Addon
+    Properties:
+      AddonName: coredns
+      ClusterName: !Ref GoGatorCluster
+      ResolveConflicts: OVERWRITE
+      AddonVersion: !FindInMap [AddonNameToVersion, !Ref KubernetesVersion, CoreDnsAddonVersion]
+
+  KubeProxyAddon:
+    Type: AWS::EKS::Addon
+    Properties:
+      AddonName: kube-proxy
+      ClusterName: !Ref GoGatorCluster
+      ResolveConflicts: OVERWRITE
+      AddonVersion: !FindInMap [AddonNameToVersion, !Ref KubernetesVersion, KubeProxyVersion]
+
+  AmazonVPCCniAddon:
+    Type: AWS::EKS::Addon
+    Properties:
+      AddonName: vpc-cni
+      ClusterName: !Ref GoGatorCluster
+      ResolveConflicts: OVERWRITE
+      AddonVersion: !FindInMap [AddonNameToVersion, !Ref KubernetesVersion, VpcCniAddonVersion]
+
+  PodIdentityAddon:
+    Type: AWS::EKS::Addon
+    Properties:
+      AddonName: eks-pod-identity-agent
+      ClusterName: !Ref GoGatorCluster
+      ResolveConflicts: OVERWRITE
+      AddonVersion: !FindInMap [AddonNameToVersion, !Ref KubernetesVersion, PodIdentityAddonVersion]
+
+  GoGatorNodeGroupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerPolicy
+
+  GoGatorNodeGroup:
+    Type: AWS::EKS::Nodegroup
+    Properties:
+      ClusterName: !Ref GoGatorCluster
+      NodegroupName: Go-Gator-Node-Group
+      NodeRole: !GetAtt GoGatorNodeGroupRole.Arn
+      Subnets:
+        - !Ref GoGatorPublicSubnet
+        - !Ref GoGatorPrivateSubnet
+      ScalingConfig:
+        DesiredSize: !Ref NodeGroupDesiredCapacity
+        MinSize: !Ref MinimalNodeGroupSize
+        MaxSize: !Ref MaximalNodeGroupSize
+      InstanceTypes:
+        - !Ref NodeGroupInstanceType
+
+Outputs:
+  VpcId:
+    Description: The ID of the VPC
+    Value: !Ref GoGatorVpc
+    Export:
+      Name: GoGatorVpc
+
+  Subnet1Id:
+    Description: The ID of Subnet 1
+    Value: !Ref GoGatorPublicSubnet
+    Export:
+      Name: GoGatorPublicSubnet
+
+  Subnet2Id:
+    Description: The ID of Subnet 2
+    Value: !Ref GoGatorPrivateSubnet
+    Export:
+      Name: GoGatorPrivateSubnet
+
+  SecurityGroupId:
+    Description: The ID of the security group
+    Value: !Ref GoGatorSecurityGroup
+    Export:
+      Name: GoGatorSecurityGroup
+
+  ClusterName:
+    Description: The name of the EKS cluster
+    Value: !Ref GoGatorCluster
+    Export:
+      Name: GoGatorCluster
+
+  NodeGroupName:
+    Description: The name of the node group
+    Value: !Ref GoGatorNodeGroup
+    Export:
+      Name: GoGatorNodeGroupRole
+

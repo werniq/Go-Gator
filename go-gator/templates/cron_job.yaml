@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: go-gator-fetching-news-job
+  namespace: {{ .Values.namespace}}
+spec:
+  schedule: {{ .Values.cronJob.schedule }}
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: cron-job-sa
+          containers:
+            - name: {{ .Values.cronJob.name }}
+              image: {{ .Values.cronJob.image }}
+              imagePullPolicy: IfNotPresent
+              volumeMounts:
+                - mountPath: /tmp/
+                  name: go-gator-pv
+          restartPolicy: OnFailure
+          volumes:
+            - name: go-gator-pv
+              persistentVolumeClaim:
+                claimName: go-gator-pvc

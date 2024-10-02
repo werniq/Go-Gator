@@ -1,12 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: go-gator
-  namespace: argocd
+  name: go-gator-day-0-app
+  namespace: go-gator
 spec:
   project: default
   source:
-    repoURL: 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/
+    repoURL: 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984
     targetRevision: 0.1.0
     chart: day-0
     helm:

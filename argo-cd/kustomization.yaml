@@ -1,6 +1,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./day-0
-  - ./go-gator
-  - ./go-gator-operator
+  - ./day-0/
+  - ./go-gator/
+  - ./go-gator-operator/

@@ -56,6 +56,43 @@ service:
       targetPort: 443
   port: 443
 
+vpa:
+  name: go-gator-vpa
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: go-gator
+  resourcePolicy:
+    containerName: go-gator
+    minAllowed:
+      cpu: 100m
+      memory: 100Mi
+    maxAllowed:
+      cpu: 200m
+      memory: 200Mi
+
+hpa:
+  name: go-gator-hpa
+  scaleTargetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: go-gator
+  minReplicas: 1
+  maxReplicas: 100
+  metrics:
+    - type: Resource
+      resource:
+        name: cpi
+        target:
+          type: Utilization
+          averageUtilization: 80
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
 resources:
    limits:
      cpu: 100m
@@ -78,9 +115,6 @@ certificate:
 
 autoscaling:
   enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
 
 volumes:
   - name: go-gator-pv

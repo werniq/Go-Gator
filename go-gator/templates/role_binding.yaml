@@ -1,0 +1,33 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Values.goGatorRoleBinding.name }}
+  namespace: {{ .Values.namespace }}
+subjects:
+  {{ range .Values.goGatorRoleBinding.subjects }}
+  - kind: {{ .kind }}
+    name: {{ .name }}
+    namespace: {{ .namespace }}
+    apiGroup: {{ .apiGroup }}
+  {{ end }}
+roleRef:
+  kind: Role
+  name: {{ .Values.goGatorService.name }}
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Values.cronJobRoleBinding.name }}
+  namespace: {{ .Values.namespace }}
+subjects:
+  {{ range .Values.cronJobRoleBinding.subjects }}
+  - kind: {{ .kind }}
+    name: {{ .name }}
+    apiGroup: {{ .apiGroup }}
+    namespace: {{ .namespace }}
+  {{ end }}
+roleRef:
+  kind: Role
+  name: {{ .Values.cronJobRole.name }}
+  apiGroup: rbac.authorization.k8s.io

@@ -97,7 +97,7 @@ tasks:
   installChart:
     desc: Install the Helm chart on the Kubernetes cluster
     cmds:
-      - helm install go-gator-{{ .GO_GATOR_CHART_VERSION }}.tgz go-gator
+      - helm install go-gator-{{ .GO_GATOR_CHART_VERSION }}.tgz go-gator --create-namespace -n go-gator
 
   uninstallChart:
     desc: Uninstall the Helm chart from the Kubernetes cluster
@@ -167,3 +167,5 @@ tasks:
     cmds:
       - for: [ awsLogin, operator:docker-build, cronJob:publish, goGatorImageEcrPush, goGatorChartEcrPush, day0EcrPush ]
         task: '{{.ITEM}}'
+      - helm uninstall go-gator -n go-gator
+      - kubectl delete namespace go-gator

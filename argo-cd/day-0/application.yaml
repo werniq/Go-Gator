@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/
     targetRevision: 0.1.0
-    chart: go-gator-operator
+    chart: day-0
     helm:
       valuesObjects:
         crds:

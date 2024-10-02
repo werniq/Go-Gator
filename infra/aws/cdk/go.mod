@@ -1,6 +1,6 @@
 module aws-cdk-setup
 
-go 1.18
+go 1.22.0
 
 require (
 	github.com/aws/aws-cdk-go/awscdk/v2 v2.158.0

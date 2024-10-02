@@ -24,7 +24,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -35,8 +37,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"strings"
-	"time"
-
 	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
 )
 
@@ -101,12 +101,11 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		if k8sErrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
-		logger.Error(err, "unable to fetch HotNews")
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, err
 	}
 
-	if !controllerutil.ContainsFinalizer(&hotNews, newsaggregatorv1.HotNewsFinalizer) {
-		controllerutil.AddFinalizer(&hotNews, newsaggregatorv1.HotNewsFinalizer)
+	if !controllerutil.ContainsFinalizer(&hotNews, HotNewsFinalizer) {
+		controllerutil.AddFinalizer(&hotNews, HotNewsFinalizer)
 		err := r.Client.Update(ctx, &hotNews)
 		if err != nil {
 			return ctrl.Result{}, err
@@ -116,34 +115,65 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if !hotNews.DeletionTimestamp.IsZero() {
 		err = r.removeFeedReference(ctx, hotNews)
 		if err != nil {
+			updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to remove feed reference for feeds", err.Error())
+			if updateErr != nil {
+				return ctrl.Result{}, updateErr
+			}
+
 			return ctrl.Result{}, err
 		}
 
-		controllerutil.RemoveFinalizer(&hotNews, newsaggregatorv1.HotNewsFinalizer)
+		controllerutil.RemoveFinalizer(&hotNews, HotNewsFinalizer)
 		err = r.Client.Update(ctx, &hotNews)
 		if err != nil {
+			updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to update hotnews: ", err.Error())
+			if updateErr != nil {
+				return ctrl.Result{}, updateErr
+			}
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, nil
 	}
 
-	err = r.setFeedReference(ctx, hotNews)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
 	err = r.processHotNews(ctx, &hotNews)
 	if err != nil {
+		updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to process hotnews", err.Error())
+		if updateErr != nil {
+			return ctrl.Result{}, updateErr
+		}
 		return ctrl.Result{}, err
 	}
 	logger.Info("HotNews object has been updated")
 
-	err = r.Client.Status().Update(ctx, &hotNews)
+	err = r.setFeedReference(ctx, hotNews)
 	if err != nil {
+		updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to set feed reference for hotnews", err.Error())
+		if updateErr != nil {
+			return ctrl.Result{}, updateErr
+		}
 		return ctrl.Result{}, err
 	}
 
-	logger.Info("HotNewsReconciler has been successfully executed")
+	err = r.Client.Status().Update(ctx, &hotNews)
+	if err != nil {
+		updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to update hotnews", err.Error())
+		if updateErr != nil {
+			return ctrl.Result{}, updateErr
+		}
+
+		return ctrl.Result{}, err
+	}
+
+	err = r.setSuccessfulStatus(ctx, &hotNews, "HotNews successfully updated",
+		"Successfully Reconciled Hot News object")
+	if err != nil {
+		updateErr := r.setFailedStatus(ctx, &hotNews, "Failed to update hotnews", err.Error())
+		if updateErr != nil {
+			return ctrl.Result{}, updateErr
+		}
+
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -153,12 +183,21 @@ func (r *HotNewsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 // It Watches for any changes in the ConfigMap with the feed groups, and also watches for changes in Feed CRD.
 func (r *HotNewsReconciler) SetupWithManager(mgr ctrl.Manager, serverUrl string) error {
 	r.serverUrl = serverUrl
+
+	hotNewsHandler := &HotNewsHandler{Client: mgr.GetClient()}
+	configMapHandler := &ConfigMapHandler{Client: mgr.GetClient()}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&newsaggregatorv1.HotNews{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Watches(
 			&newsaggregatorv1.Feed{},
-			&handler.EnqueueRequestForObject{},
+			handler.EnqueueRequestsFromMapFunc(hotNewsHandler.UpdateHotNews),
 			builder.WithPredicates(FeedStatusConditionPredicate{}),
+		).
+		Watches(
+			&v1.ConfigMap{},
+			handler.EnqueueRequestsFromMapFunc(configMapHandler.UpdateHotNews),
+			builder.WithPredicates(ConfigMapStatusPredicate{}),
 		).
 		Complete(r)
 }
@@ -234,7 +273,7 @@ func (r *HotNewsReconciler) processHotNews(ctx context.Context, hotNews *newsagg
 	}
 	logger.Info("Total amount of news", "totalAmount", articles.TotalNews)
 
-	hotNews.InitHotNewsStatus(articles.TotalNews, requestUrl, articlesTitles)
+	hotNews.SetStatus(articles.TotalNews, requestUrl, articlesTitles)
 
 	logger.Info("HotNews.processHotNews has been successfully executed")
 	logger.Info("HotNews object", "HotNews", hotNews)
@@ -261,7 +300,7 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsag
 
 	var feedStr strings.Builder
 	if spec.FeedGroups != nil {
-		feedGroupsStr, err := r.processFeedGroups(spec)
+		feedGroupsStr, err := r.processFeedGroups(ctx, spec)
 		if err != nil {
 			return "", err
 		}
@@ -282,6 +321,36 @@ func (r *HotNewsReconciler) constructRequestUrl(ctx context.Context, spec newsag
 	}
 
 	return requestUrl.String(), nil
+}
+
+// setSuccessfulStatus checks if condition should be of type Created or Updated.
+// After that, it updates the status of given hot news, than updates hotNews object in K8s Cluster.
+func (r *HotNewsReconciler) setSuccessfulStatus(ctx context.Context, hotNews *newsaggregatorv1.HotNews,
+	reason, message string) error {
+	var condition = newsaggregatorv1.TypeHotNewsCreated
+	if _, exists := hotNews.Status.Conditions[newsaggregatorv1.HotNewsSuccessfullyCreated]; exists {
+		condition = newsaggregatorv1.TypeHotNewsUpdated
+	}
+
+	hotNews.SetCondition(condition, newsaggregatorv1.StatusSuccess, reason, message)
+	err := r.Client.Update(ctx, hotNews)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// setFailedStatus sets
+func (r *HotNewsReconciler) setFailedStatus(ctx context.Context, hotNews *newsaggregatorv1.HotNews,
+	reason, message string) error {
+	hotNews.SetCondition(newsaggregatorv1.HotNewsError, newsaggregatorv1.StatusError, reason, message)
+	err := r.Client.Update(ctx, hotNews)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // setFeedReference sets the owner references for each Feed in the HotNewsSpec.Feeds array.
@@ -319,12 +388,7 @@ func (r *HotNewsReconciler) setOwnerReferenceForFeeds(ctx context.Context, hotNe
 			Namespace: hotNews.Namespace,
 		}, feed)
 		if err != nil {
-			if k8sErrors.IsNotFound(err) {
-				errList = append(errList, field.NotFound(field.NewPath("feeds"), feedName))
-			} else {
-				fmt.Println("error: failed to get Feed", err)
-				return err
-			}
+			errList = append(errList, field.InternalError(field.NewPath("feeds").Child(feedName), err))
 			continue
 		}
 
@@ -333,7 +397,6 @@ func (r *HotNewsReconciler) setOwnerReferenceForFeeds(ctx context.Context, hotNe
 
 			err = r.Update(ctx, feed)
 			if err != nil {
-				fmt.Println("error: failed to update Feed", err)
 				errList = append(errList, field.InternalError(field.NewPath("feeds").Child(feedName), err))
 			}
 		}
@@ -390,7 +453,7 @@ func (r *HotNewsReconciler) removeOwnerReferenceFromFeeds(ctx context.Context, h
 		}, feed)
 		if err != nil {
 			if k8sErrors.IsNotFound(err) {
-				errList = append(errList, field.NotFound(field.NewPath("feeds"), feedName))
+				errList = append(errList, field.Invalid(field.NewPath("spec.feeds").Child(feedName), feedName, "feed not found"))
 			} else {
 				return err
 			}
@@ -401,7 +464,7 @@ func (r *HotNewsReconciler) removeOwnerReferenceFromFeeds(ctx context.Context, h
 
 		err = r.Client.Update(ctx, feed)
 		if err != nil {
-			errList = append(errList, field.InternalError(field.NewPath("feeds"), err))
+			return err
 		}
 	}
 
@@ -426,11 +489,8 @@ func (r *HotNewsReconciler) processFeeds(spec newsaggregatorv1.HotNewsSpec) stri
 
 // processFeedGroups function processes feed groups from the ConfigMap and returns a string containing comma-separated
 // feed sources
-func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec) (string, error) {
+func (r *HotNewsReconciler) processFeedGroups(ctx context.Context, spec newsaggregatorv1.HotNewsSpec) (string, error) {
 	var sourcesBuilder strings.Builder
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
 
 	configMaps, err := r.getFeedGroups(ctx)
 	if err != nil {
@@ -453,8 +513,15 @@ func (r *HotNewsReconciler) processFeedGroups(spec newsaggregatorv1.HotNewsSpec)
 
 // getConfigMapData returns all data from config map named FeedGroupsConfigMapName in FeedGroupsNamespace
 func (r *HotNewsReconciler) getFeedGroups(ctx context.Context) (v1.ConfigMapList, error) {
+	s, err := labels.NewRequirement(newsaggregatorv1.FeedGroupLabel, selection.Exists, nil)
+	if err != nil {
+		return v1.ConfigMapList{}, err
+	}
+
 	var configMaps v1.ConfigMapList
-	err := r.Client.List(ctx, &configMaps, client.InNamespace(newsaggregatorv1.FeedGroupsNamespace))
+	err = r.Client.List(ctx, &configMaps, &client.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*s),
+	})
 
 	if err != nil {
 		return v1.ConfigMapList{}, err

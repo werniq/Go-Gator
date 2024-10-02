@@ -2,6 +2,15 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-awsCredentials:
-  AWS_ACCESS_KEY_ID: AKIAV5I7ZBRO
-  AWS_SECRET_ACCESS_KEY: TFx1nEayOpqwhYiUTiUo3qNYgFFb0eqlAfw17mqS
+namespace: go-gator
+
+sa:
+  name: sa-health-check
+
+role:
+  name: role-patch-and-create-secrets
+
+roleBinding:
+  name: health-check-role-binding
+
+dockerSecretName: aws-secret

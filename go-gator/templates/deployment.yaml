@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "go-gator.fullname" . }}
-  namespace: {{ include .Values.namespace . }}
+  namespace: {{ .Values.namespace }}
   labels:
     {{- include "go-gator.labels" . | nindent 4 }}
 spec:

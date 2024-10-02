@@ -7,6 +7,9 @@ env:
   DOCKERHUB_USERNAME: '{{ .DOCKER_LOGIN_USERNAME }}'
   DOCKERHUB_PASSWORD: '{{ .DOCKERHUB_PASSWORD }}'
   TESTDIR_NAME:      '{{ .TESTDIR_NAME | default "pkg_tests" }}'
+  GO_GATOR_CHART_VERSION: '{{ .GO_GATOR_CHART_VERSION | default "0.1.0" }}'
+  DAY_0_CHART_VERSION: '{{ .DAY_0_CHART_VERSION | default "0.1.0" }}'
+  AWS_ACCOUNT_ID: '{{ .AWS_ACCOUNT_ID | default "406477933661" }}'
 
 tasks:
   fmt:
@@ -29,7 +32,7 @@ tasks:
     cmds:
       - staticcheck ./...
 
-  pre-launch:
+  preLaunch:
     label: Prepare code before launching
     desc: Formats code, optimizes dependencies and runs staticcheck tool
     deps:
@@ -56,7 +59,7 @@ tasks:
     cmd: |
       go test ./... -v
 
-  docker-build:
+  dockerBuild:
     desc: Build the docker image using Dockerfile with go-gator as a name
     cmd: docker build -t {{ .DOCKER_IMAGE_NAME }} .
 
@@ -83,93 +86,54 @@ tasks:
     cmds:
       - kubectl delete -f templates/
 
-  createChart:
-    desc: Created a new Helm chart with all needed resources for news aggregator
-    cmds:
-      - helm create go-gator
-
   installChart:
     desc: Install the Helm chart on the Kubernetes cluster
     cmds:
-      - helm install go-gator go-gator
+      - helm install go-gator-{{ .GO_GATOR_CHART_VERSION }}.tgz go-gator
 
   uninstallChart:
     desc: Uninstall the Helm chart from the Kubernetes cluster
     cmds:
       - helm uninstall go-gator
 
-  installCertManager:
-    desc: Install cert-manager on the Kubernetes cluster using helm
-    cmds:
-      - helm repo add jetstack https://charts.jetstack.io --force-update
-      - helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.15.2 --set crds.enabled=true
-
-  start:
-    cmds:
-      - minikube start
-      - kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml
-      - echo "Waiting for cert manager to working..."
-      - sleep 10
-      - cd operator
-      - make generate
-      - make manifests
-      - make install
-      - make deploy
-      - kubectl apply -f ../templates/
-
-  installTask:
-    cmds:
-      - go install github.com/go-task/task/v3/cmd/task@latest
-
-  installVpa:
-    desc: Install Vertical Pod Autoscaler
-    cmds:
-      - git clone https://github.com/kubernetes/autoscaler.git
-      - cd autoscaler/vertical-pod-autoscaler
-      - git checkout origin/vpa-release-1.0
-      - REGISTRY=registry.k8s.io/autoscaling TAG=1.0.0 ./hack/vpa-process-yamls.sh apply
-
-  installMetricsServerHelm:
-    desc: Install metrics server using helm
-    cmds:
-      - helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
-
-  installMetricsServer:
-    desc: Install metrics server
-    cmds:
-      - kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.1/components.yaml
-
-  enableMetricsAddon:
-    desc: Enable metrics addon in minikube
-    cmds:
-      - minikube addons enable metrics-server
-
-  aws-login:
+  awsLogin:
     desc: Login to AWS CLI
     cmds:
-      - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 406477933661.dkr.ecr.us-east-2.amazonaws.com
+      - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin {{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com
 
-  img-ecr-build:
+  goGatorImageEcrBuild:
     desc: Build image for ECR
     cmds:
       - docker build -t qniw984/go-gator .
-      - docker tag qniw984/go-gator 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
+      - docker tag qniw984/go-gator {{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
 
-  img-ecr-push:
+  goGatorImageEcrPush:
     desc: Push image to ECR
     deps:
       - img-ecr-build
     cmds:
-      - docker push 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
+      - docker push {{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
 
-  chart-ecr-build:
+  goGatorChartEcrBuild:
     desc: Build Helm chart for ECR
     cmds:
       - helm package go-gator
 
-  chart-ecr-push:
+  goGatorChartEcrPush:
     desc: Push image to ECR
     deps:
       - ecr-build
     cmds:
-      - helm push go-gator-0.1.0.tgz oci://406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984/
+      - helm push go-gator-{{ .GO_GATOR_CHART_VERSION }}.tgz oci://{{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/
+
+  day0EcrBuild:
+    desc: Build Helm chart for ECR
+    cmds:
+      - helm package day-0
+
+  day0EcrPush:
+    desc: Push image to ECR
+    deps:
+      - day0EcrBuild
+    cmds:
+      - helm push day-0-{{ .DAY_0_VERSION }}.tgz oci://{{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/

@@ -25,32 +25,15 @@ jobs:
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Login to ECR
+      - name: Install Taskfile
+        run: |
+          sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
+
+      - name: Login to AWS ECR
         id: ecr_login
         run: |
-          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          task awsLogin
 
-      - name: Build Docker image
+      - name: Build and Push all Charts and All Images to AWS ECR
         run: |
-          docker build -t qniw984/go-gator .
-          docker tag qniw984/go-gator ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/qniw984/go-gator
-
-      - name: Push Docker image to ECR
-        run: |
-          docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/qniw984/go-gator
-
-      - name: Update and build dependencies in chart
-        run: |
-          cd go-gator
-          helm repo add cert-manager https://charts.jetstack.io
-          helm repo add vertical-pod-autoscaler https://stevehipwell.github.io/helm-charts/
-          helm dependency update
-          helm dependency build
-
-      - name: Build Helm chart
-        run: |
-          helm package go-gator
-
-      - name: Push Helm chart to ECR
-        run: |
-          helm push go-gator-${{ env.CHART_VERSION }}.tgz oci://${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/qniw984/
+          task deployAll

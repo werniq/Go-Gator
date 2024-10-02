@@ -1,5 +1,13 @@
 version: '3'
 
+includes:
+  operator:
+    taskfile: ./operator/Taskfile.yml
+    dir: ./operator
+  cronJob:
+    taskfile: ./news_fetcher/Taskfile.yml
+    dir: ./news_fetcher
+
 env:
   DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "go-gator" }}'
   DOCKER_USERNAME:   '{{ .DOCKER_USERNAME | default "qniw984" }}'
@@ -89,7 +97,7 @@ tasks:
   installChart:
     desc: Install the Helm chart on the Kubernetes cluster
     cmds:
-      - helm install go-gator-{{ .GO_GATOR_CHART_VERSION }}.tgz go-gator
+      - helm install go-gator-{{ .GO_GATOR_CHART_VERSION }}.tgz go-gator --create-namespace -n go-gator
 
   uninstallChart:
     desc: Uninstall the Helm chart from the Kubernetes cluster
@@ -110,19 +118,35 @@ tasks:
   goGatorImageEcrPush:
     desc: Push image to ECR
     deps:
-      - img-ecr-build
+      - goGatorImageEcrBuild
     cmds:
       - docker push {{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/go-gator
 
+  addChartDependencies:
+    desc: Add required charts to dependencies list
+    cmds:
+      - cd go-gator
+      - helm repo add cert-manager https://charts.jetstack.io
+      - helm repo add vertical-pod-autoscaler https://stevehipwell.github.io/helm-charts/
+
+  updateAndBuildChartDependencies:
+    desc: Update and build chart dependencies
+    cmds:
+      - helm dependency update ./go-gator
+      - helm dependency build ./go-gator
+
   goGatorChartEcrBuild:
     desc: Build Helm chart for ECR
+    deps:
+      - addChartDependencies
+      - updateAndBuildChartDependencies
     cmds:
       - helm package go-gator
 
   goGatorChartEcrPush:
     desc: Push image to ECR
     deps:
-      - ecr-build
+      - goGatorChartEcrBuild
     cmds:
       - helm push go-gator-{{ .GO_GATOR_CHART_VERSION }}.tgz oci://{{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/
 
@@ -136,7 +160,15 @@ tasks:
     deps:
       - day0EcrBuild
     cmds:
-      - helm push day-0-{{ .DAY_0_VERSION }}.tgz oci://{{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/
+      - helm push day-0-{{ .DAY_0_CHART_VERSION }}.tgz oci://{{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/
+
+  deployAll:
+    desc: Deploy all images and charts to ECR
+    cmds:
+      - for: [ awsLogin, operator:docker-build, cronJob:publish, goGatorImageEcrPush, goGatorChartEcrPush, day0EcrPush ]
+        task: '{{.ITEM}}'
+      - helm uninstall go-gator -n go-gator
+      - kubectl delete namespace go-gator
 
   installArgoCd:
     desc: Install Argo CD

@@ -64,6 +64,18 @@ resources:
      cpu: 100m
      memory: 128Mi
 
+issuer:
+  name: go-gator-issuer
+
+certSecret:
+  name: cert-secret
+
+certificate:
+  name: go-gator-server-cert
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+
 autoscaling:
   enabled: false
   minReplicas: 1
@@ -74,7 +86,12 @@ volumes:
   - name: go-gator-pv
     persistentVolumeClaim:
       claimName: go-gator-pvc
+  - name: cert-secret
+    secret:
+      secretName: cert-secret
 
 volumeMounts:
   - mountPath: /tmp/
     name: go-gator-pv
+  - mountPath: /cmd/server/certs
+    name: cert-secret

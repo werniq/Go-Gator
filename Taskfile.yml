@@ -137,3 +137,9 @@ tasks:
       - day0EcrBuild
     cmds:
       - helm push day-0-{{ .DAY_0_VERSION }}.tgz oci://{{ .AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/qniw984/
+
+  installArgoCd:
+    desc: Install Argo CD
+    cmds:
+      - kubectl create namespace argocd
+      - kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml

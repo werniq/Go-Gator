@@ -1,3 +1,0 @@
-serviceAccount:
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::406477933661:role/oleksandr

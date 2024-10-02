@@ -2,7 +2,6 @@ package parsers
 
 import (
 	"encoding/json"
-	"errors"
 	"gogator/cmd/types"
 	"io"
 	"os"
@@ -36,21 +35,10 @@ var (
 	}
 )
 
-const (
-	// ErrNoSource is thrown when wrong source name was provided
-	ErrNoSource = "no source was detected. please, create source first"
-
-	// ErrSourceExists is thrown when were provided source name that already exists
-	ErrSourceExists = "this source already exists"
-)
-
 // AddNewSource inserts new source to available sources list and determines the appropriate Parser for it
 //
 // Throws an error, if the source was already registered previously.
 func AddNewSource(format, source, endpoint string) error {
-	if _, exists := sourceToEndpoint[source]; exists {
-		return errors.New(ErrSourceExists)
-	}
 	sourceToEndpoint[source] = endpoint
 	sourceToParser[source] = determineParser(format, source)
 
@@ -80,10 +68,6 @@ func GetSourceDetailed(source string) types.Source {
 //
 // Throws an error, if provided source not exists
 func UpdateSourceEndpoint(source, newEndpoint string) error {
-	if _, exists := sourceToParser[source]; exists {
-		return errors.New(ErrNoSource)
-	}
-
 	sourceToEndpoint[source] = newEndpoint
 	err := UpdateSourceFile()
 	if err != nil {
@@ -97,10 +81,6 @@ func UpdateSourceEndpoint(source, newEndpoint string) error {
 //
 // Throws an error, if provided source not exists
 func UpdateSourceFormat(source, format string) error {
-	if _, exists := sourceToParser[source]; exists {
-		return errors.New(ErrNoSource)
-	}
-
 	sourceToParser[source] = determineParser(format, source)
 	err := UpdateSourceFile()
 	if err != nil {
@@ -112,16 +92,12 @@ func UpdateSourceFormat(source, format string) error {
 
 // DeleteSource removes source from the map
 func DeleteSource(source string) error {
-	if _, exists := sourceToEndpoint[source]; exists {
-		delete(sourceToEndpoint, source)
-		delete(sourceToParser, source)
+	delete(sourceToEndpoint, source)
+	delete(sourceToParser, source)
 
-		err := UpdateSourceFile()
-		if err != nil {
-			return err
-		}
-	} else {
-		return errors.New(ErrNoSource)
+	err := UpdateSourceFile()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -130,12 +106,7 @@ func DeleteSource(source string) error {
 // LoadSourcesFile initializes sourceToParser and sourceToEndpoint with data stored in
 // sources.json file.
 func LoadSourcesFile() error {
-	cwdPath, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	sourcesFilepath := filepath.Join(cwdPath, StoragePath, sourcesFile)
+	sourcesFilepath := filepath.Join(StoragePath, sourcesFile)
 
 	file, err := os.Open(sourcesFilepath)
 	if err != nil {

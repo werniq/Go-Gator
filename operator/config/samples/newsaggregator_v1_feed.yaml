@@ -1,0 +1,10 @@
+apiVersion: newsaggregator.teamdev.com/v1
+kind: Feed
+metadata:
+  labels:
+    app.kubernetes.io/name: operator
+    app.kubernetes.io/managed-by: kustomize
+  name: abc
+spec:
+  name: abc
+  link: https://abcnews.go.com/abcnews/internationalheadlines

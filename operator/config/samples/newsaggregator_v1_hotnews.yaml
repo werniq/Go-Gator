@@ -1,0 +1,18 @@
+apiVersion: newsaggregator.teamdev.com/v1
+kind: HotNews
+metadata:
+  labels:
+    app.kubernetes.io/name: operator
+    app.kubernetes.io/managed-by: kustomize
+  name: hotnews-sample-3
+spec:
+  keywords:
+    - Trump
+    - Ukraine
+    - Olympic
+    - China
+    - Russia
+  dateStart: 2024-08-25
+  dateEnd: 2024-08-28
+  feeds: 
+    - abc

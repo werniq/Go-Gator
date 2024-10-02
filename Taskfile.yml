@@ -1,18 +1,16 @@
 version: '3'
 
 env:
-  # this variables can be specified when running task like this
-  # task publish DOCKER_IMAGE_NAME=new-image-title DOCKER_IMAGE_TAG=1.0.1
   DOCKER_IMAGE_NAME: '{{ .DOCKER_IMAGE_NAME | default "go-gator" }}'
   DOCKER_USERNAME:   '{{ .DOCKER_USERNAME | default "qniw984" }}'
-  DOCKER_IMAGE_TAG:  '{{ .DOCKER_IMAGE_TAG | default "1.3.0" }}'
-  TESTDIR_NAME:      '{{ .TESTDIR_NAME | default "pkg_tests" }}'
+  DOCKER_IMAGE_TAG:  '{{ .DOCKER_IMAGE_TAG | default "latest" }}'
   DOCKERHUB_USERNAME: '{{ .DOCKER_LOGIN_USERNAME }}'
   DOCKERHUB_PASSWORD: '{{ .DOCKERHUB_PASSWORD }}'
+  TESTDIR_NAME:      '{{ .TESTDIR_NAME | default "pkg_tests" }}'
 
 tasks:
   fmt:
-    desc: Check if files in the project need formatting
+    desc: Format all code in all subdirectories
     cmds:
       - go fmt ./...
 
@@ -56,7 +54,7 @@ tasks:
     label: Run all tests in application
     desc: This task runs all available test files from all child folders
     cmd: |
-      go test ./... 
+      go test ./... -v
 
   docker-build:
     desc: Build the docker image using Dockerfile with go-gator as a name
@@ -70,7 +68,7 @@ tasks:
     label: Pushing image to dockerhub
     desc: Push docker image to dockerhub
     deps:
-      - docker-build
+     - docker-build
     cmds:
       - docker login -u {{ .DOCKERHUB_USERNAME }} -p {{ .DOCKERHUB_PASSWORD }}
       - docker push {{ .DOCKER_USERNAME }}/{{ .DOCKER_IMAGE_NAME }}:{{ .DOCKER_IMAGE_TAG }}

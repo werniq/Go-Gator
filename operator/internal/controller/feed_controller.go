@@ -1,0 +1,310 @@
+/*
+Copyright 2024.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package controller
+
+import (
+	"bytes"
+	"context"
+	"crypto/tls"
+	"encoding/json"
+	errors "errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	"net/http"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	newsaggregatorv1 "teamdev.com/go-gator/api/v1"
+)
+
+// FeedReconciler reconciles a Feed object
+type FeedReconciler struct {
+	serverAddress string
+	client.Client
+	Scheme *runtime.Scheme
+}
+
+const (
+	// HotNewsFinalizer is a finalizer for HotNews resource which will be added when the resource is created
+	// and removed when the resource is deleted
+	HotNewsFinalizer = "finalizer.hotnews.newsaggregator.teamdev.com"
+
+	// feedFinalizerName is a title of finalizer which will be added to feed object
+	// for proper deletion of feed in news aggregator
+	feedFinalizerName = "feed.finalizers"
+
+	// errMarshallingJSON is thrown when an error occurs while trying to marshal JSON
+	errMarshallingJSON = "Error while trying to marshal JSON: "
+
+	// errCreatingRequest says that there was an error while creating request
+	errCreatingRequest = "Error while trying to create request: "
+
+	// errExecutingRequest identifies that an error occurred while trying to execute request
+	errExecutingRequest = "Error while trying to execute request: "
+
+	// errDecodingResponse says that there was an error while decoding response
+	errDecodingResponse = "Error while trying to decode server response: "
+
+	// errClosingBody indicates that an error occurred while trying to close the response body
+	errClosingBody = "Error while trying to close response body: "
+)
+
+// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds;hotnews,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=newsaggregator.teamdev.com,resources=feeds/finalizers,verbs=update
+
+// Reconcile is part of the main kubernetes reconciliation loop which aims to
+// move the current state of the cluster closer to the desired state.
+func (r *FeedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	var feed newsaggregatorv1.Feed
+	var err error
+
+	logger := log.FromContext(ctx)
+
+	err = r.Client.Get(ctx, req.NamespacedName, &feed)
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		logger.Info("the reconciliation of a feed will be skipped, seems it was removed")
+
+		return ctrl.Result{}, err
+	}
+
+	if feed.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !controllerutil.ContainsFinalizer(&feed, feedFinalizerName) {
+			controllerutil.AddFinalizer(&feed, feedFinalizerName)
+			logger.Info("Finalizer is added", feed.Name, feedFinalizerName)
+
+			err = r.Client.Update(ctx, &feed)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		if controllerutil.ContainsFinalizer(&feed, feedFinalizerName) {
+			logger.Info("Handling the delete event")
+			if err = r.handleDelete(&feed); err != nil {
+				return ctrl.Result{}, err
+			}
+
+			controllerutil.RemoveFinalizer(&feed, feedFinalizerName)
+			logger.Info("Remove Finalizer", feed.Name, feedFinalizerName)
+
+			err = r.Client.Update(ctx, &feed)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
+	}
+
+	isNew := feed.Status.Conditions[newsaggregatorv1.TypeFeedCreated] == newsaggregatorv1.FeedConditions{}
+
+	if isNew {
+		logger.Info("Handling the create event")
+		err = r.handleCreate(&feed)
+	} else {
+		logger.Info("Handling the update event")
+		err = r.handleUpdate(&feed)
+	}
+
+	if err != nil {
+		feed.SetFailedCondition(newsaggregatorv1.TypeFeedFailedToCreate, err.Error())
+		return ctrl.Result{}, err
+	}
+
+	if isNew {
+		feed.SetCreatedCondition("Feed was successfully created")
+	} else {
+		feed.SetUpdatedCondition("Feed was successfully updated")
+	}
+
+	err = r.Client.Status().Update(ctx, &feed)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *FeedReconciler) SetupWithManager(mgr ctrl.Manager, serverAddr string) error {
+	r.serverAddress = serverAddr
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&newsaggregatorv1.Feed{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Complete(r)
+}
+
+// sourceBody is a struct which will be used to generate body for request to the news aggregator.
+//
+// It contains few key fields which suits perfectly to create/update/delete sources in news aggregator.
+type sourceBody struct {
+	// Name field describes this source name
+	Name string `json:"name"`
+
+	// Endpoint is a link to this feeds endpoint, where we will go to parse articles.
+	Endpoint string `json:"endpoint"`
+}
+
+// handleCreate makes a request to the news-aggregator service to create a new feed when a new Feed object is instantiated.
+// It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a POST request with the JSON payload.
+// The function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
+// If the server responds with a status other than 201 Created, it attempts to decode and print the server's error message.
+func (r *FeedReconciler) handleCreate(feed *newsaggregatorv1.Feed) error {
+	source := sourceBody{
+		Name:     feed.Spec.Name,
+		Endpoint: feed.Spec.Link,
+	}
+
+	sourceData, err := json.Marshal(source)
+	if err != nil {
+		return errors.New(errMarshallingJSON + err.Error())
+	}
+	requestBody := bytes.NewBuffer(sourceData)
+
+	req, err := http.NewRequest(http.MethodPost, r.serverAddress, requestBody)
+	if err != nil {
+		return errors.New(errCreatingRequest + err.Error())
+	}
+
+	customTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	customClient := &http.Client{Transport: customTransport}
+
+	res, err := customClient.Do(req)
+	if err != nil {
+		return errors.New(errExecutingRequest + err.Error())
+	}
+	if res.StatusCode != http.StatusCreated {
+		serverError := &serverErr{}
+		err = json.NewDecoder(res.Body).Decode(&serverError)
+		if err != nil {
+			return errors.New(errDecodingResponse + err.Error())
+		}
+		return serverError
+	}
+
+	err = res.Body.Close()
+	if err != nil {
+		return errors.New(errClosingBody + err.Error())
+	}
+
+	return nil
+}
+
+// handleUpdate makes a request to the news-aggregator service to update an existing feed when the Feed object is modified.
+// It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a PUT request with the JSON payload.
+// This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
+// If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
+func (r *FeedReconciler) handleUpdate(feed *newsaggregatorv1.Feed) error {
+	source := sourceBody{
+		Name:     feed.Spec.Name,
+		Endpoint: feed.Spec.Link,
+	}
+
+	sourceData, err := json.Marshal(source)
+	if err != nil {
+		return errors.New(errMarshallingJSON + err.Error())
+	}
+
+	requestBody := bytes.NewBuffer(sourceData)
+
+	req, err := http.NewRequest(http.MethodPut, r.serverAddress, requestBody)
+	if err != nil {
+		return errors.New(errCreatingRequest + err.Error())
+	}
+
+	customTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	customClient := &http.Client{Transport: customTransport}
+
+	res, err := customClient.Do(req)
+	if err != nil {
+		return errors.New(errExecutingRequest + err.Error())
+	}
+
+	if res.StatusCode != http.StatusOK {
+		serverError := &serverErr{}
+		err = json.NewDecoder(res.Body).Decode(&serverError)
+		if err != nil {
+			return errors.New(errDecodingResponse + err.Error())
+		}
+		return serverError
+	}
+
+	err = res.Body.Close()
+	if err != nil {
+		return errors.New(errClosingBody + err.Error())
+	}
+
+	return nil
+}
+
+// handleDelete makes a request to the news-aggregator service to delete an existing feed based on the Feed object.
+// It constructs a Feed object from the Feed specifications, marshals it to JSON, and sends a DELETE request with the JSON payload.
+// This function handles potential errors in JSON marshalling, request creation, and the HTTP request itself.
+// If the server responds with a status other than 200 OK, it attempts to decode and print the server's error message.
+func (r *FeedReconciler) handleDelete(feed *newsaggregatorv1.Feed) error {
+	source := sourceBody{
+		Name:     feed.Spec.Name,
+		Endpoint: feed.Spec.Link,
+	}
+
+	sourceData, err := json.Marshal(source)
+	if err != nil {
+		return errors.New(errMarshallingJSON + err.Error())
+	}
+
+	requestBody := bytes.NewBuffer(sourceData)
+
+	req, err := http.NewRequest(http.MethodDelete, r.serverAddress, requestBody)
+	if err != nil {
+		return errors.New(errCreatingRequest + err.Error())
+	}
+
+	customTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	customClient := &http.Client{Transport: customTransport}
+
+	res, err := customClient.Do(req)
+	if err != nil {
+		return errors.New(errExecutingRequest + err.Error())
+	}
+
+	if res.StatusCode != http.StatusOK {
+		var serverError *serverErr
+		err = json.NewDecoder(res.Body).Decode(&serverError)
+		if err != nil {
+			return errors.New(errDecodingResponse + err.Error())
+		}
+		return serverError
+	}
+
+	err = res.Body.Close()
+	if err != nil {
+		return errors.New(errClosingBody + err.Error())
+	}
+
+	return nil
+}

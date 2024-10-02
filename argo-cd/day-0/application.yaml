@@ -9,12 +9,6 @@ spec:
     repoURL: 406477933661.dkr.ecr.us-east-2.amazonaws.com/qniw984
     targetRevision: 0.1.0
     chart: day-0
-    helm:
-      valuesObjects:
-        crds:
-          enabled: true
-        prometheus:
-          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: go-gator
@@ -24,4 +18,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-  ref: aws-sa

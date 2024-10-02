@@ -15,6 +15,30 @@ cronJob:
   schedule: "0 0 * * *"
   image: qniw984/news-fetching-job:1.1.0
 
+goGatorService:
+  name: go-gator-service
+  namespace: go-gator
+
+goGatorRoleBinding:
+  name: go-gator-service-binding
+  subjects:
+    - kind: ServiceAccount
+      name: go-gator-service
+      apiGroup: ""
+      namespace: go-gator
+
+cronJobRoleBinding:
+  name: cron-job-sa-binding
+  subjects:
+    - kind: ServiceAccount
+      name: cron-job-sa
+      apiGroup: ""
+      namespace: go-gator
+
+cronJobRole:
+  name: cron-job-role
+  namespace: go-gator
+
 serviceAccount:
   create: true
   automount: true
@@ -82,6 +106,12 @@ issuer:
 
 certSecret:
   name: cert-secret
+
+certificate:
+  name: go-gator-server-cert
+  privateKey:
+    algorithm: ECDSA
+    size: 256
 
 autoscaling:
   enabled: false

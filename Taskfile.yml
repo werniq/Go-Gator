@@ -168,5 +168,3 @@ tasks:
     cmds:
       - for: [ awsLogin, operator:docker-build, cronJob:publish, goGatorImageEcrPush, goGatorChartEcrPush, day0EcrPush ]
         task: '{{.ITEM}}'
-      - helm uninstall go-gator -n go-gator
-      - kubectl delete namespace go-gator

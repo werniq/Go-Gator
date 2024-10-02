@@ -59,7 +59,7 @@ func TestHotNewsHandler_UpdateHotNews(t *testing.T) {
 					},
 				},
 			).Build(),
-			inputObject: &v1.Pod{
+			inputObject: &newsaggregatorv1.Feed{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-pod",
 					Namespace: "default",
@@ -85,7 +85,7 @@ func TestHotNewsHandler_UpdateHotNews(t *testing.T) {
 			name:            "No HotNews in the namespace",
 			existingHotNews: []newsaggregatorv1.HotNews{},
 			client:          fake.NewClientBuilder().WithScheme(scheme).Build(),
-			inputObject: &v1.Pod{
+			inputObject: &newsaggregatorv1.Feed{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-pod",
 					Namespace: "default",
@@ -104,7 +104,7 @@ func TestHotNewsHandler_UpdateHotNews(t *testing.T) {
 					},
 				},
 			},
-			inputObject: &v1.Pod{
+			inputObject: &newsaggregatorv1.Feed{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-pod",
 					Namespace: "default",
@@ -134,6 +134,164 @@ func TestHotNewsHandler_UpdateHotNews(t *testing.T) {
 
 			ctx := context.Background()
 			requests := handler.UpdateHotNews(ctx, test.inputObject)
+
+			if test.expectedError {
+				assert.Nil(t, requests)
+			} else {
+				assert.Equal(t, test.expectedRequests, requests)
+			}
+		})
+	}
+}
+
+func TestConfigMapHandler_ValidateConfigMapFeeds(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = newsaggregatorv1.AddToScheme(scheme)
+	_ = v1.AddToScheme(scheme)
+
+	tests := []struct {
+		name             string
+		existingFeeds    []newsaggregatorv1.Feed
+		existingHotNews  []newsaggregatorv1.HotNews
+		configMapData    map[string]string
+		expectedRequests []reconcile.Request
+		expectedError    bool
+		client           client.Client
+	}{
+		{
+			name: "Successfully generate reconcile requests for all HotNews",
+			existingFeeds: []newsaggregatorv1.Feed{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "feed1",
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "feed2",
+					},
+				},
+			},
+			existingHotNews: []newsaggregatorv1.HotNews{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "hotnews1",
+						Namespace: "default",
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "hotnews2",
+						Namespace: "default",
+					},
+				},
+			},
+			configMapData: map[string]string{
+				"feeds": "feed1,feed2",
+			},
+			client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(
+				&newsaggregatorv1.Feed{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "feed1",
+					},
+				},
+				&newsaggregatorv1.Feed{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "feed2",
+					},
+				},
+				&newsaggregatorv1.HotNews{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "hotnews1",
+						Namespace: "default",
+					},
+				},
+				&newsaggregatorv1.HotNews{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "hotnews2",
+						Namespace: "default",
+					},
+				},
+			).Build(),
+			expectedRequests: []reconcile.Request{
+				{
+					NamespacedName: types.NamespacedName{
+						Namespace: "default",
+						Name:      "hotnews1",
+					},
+				},
+				{
+					NamespacedName: types.NamespacedName{
+						Namespace: "default",
+						Name:      "hotnews2",
+					},
+				},
+			},
+			expectedError: false,
+		},
+		{
+			name:          "Feeds not found in the cluster",
+			existingFeeds: []newsaggregatorv1.Feed{},
+			existingHotNews: []newsaggregatorv1.HotNews{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "hotnews1",
+						Namespace: "default",
+					},
+				},
+			},
+			configMapData: map[string]string{
+				"feeds": "nonexistent-feed",
+			},
+			client: fake.NewClientBuilder().WithScheme(scheme).WithObjects(
+				&newsaggregatorv1.HotNews{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "hotnews1",
+						Namespace: "default",
+					},
+				},
+			).Build(),
+			expectedRequests: nil,
+			expectedError:    true,
+		},
+		{
+			name: "Error while listing HotNews",
+			existingFeeds: []newsaggregatorv1.Feed{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "feed1",
+					},
+				},
+			},
+			configMapData: map[string]string{
+				"feeds": "feed1",
+			},
+			client: fake.NewClientBuilder().WithScheme(scheme).
+				WithInterceptorFuncs(interceptor.Funcs{
+					List: func(ctx context.Context, client client.WithWatch, list client.ObjectList, opts ...client.ListOption) error {
+						return errors.New("listing error")
+					},
+				}).Build(),
+			expectedRequests: nil,
+			expectedError:    true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			handler := &ConfigMapHandler{
+				Client: test.client,
+			}
+
+			ctx := context.Background()
+			configMap := &v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-configmap",
+					Namespace: "default",
+				},
+				Data: test.configMapData,
+			}
+			requests := handler.validateConfigMapFeeds(ctx, configMap)
 
 			if test.expectedError {
 				assert.Nil(t, requests)

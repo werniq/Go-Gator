@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: go-gator-apps
+  namespace: argocd
+spec:
+  destination:
+    name: ''
+    namespace: news-aggregator
+    server: https://kubernetes.default.svc
+  source:
+    repoURL: https://github.com/werniq/go-gator
+    path: argocd/apps
+    targetRevision: master
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

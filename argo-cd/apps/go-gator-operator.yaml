@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/werniq/go-gator
-    path: operator/config/
+    path: operator/config/default
     targetRevision: feature/argo-cd
   destination:
     server: https://kubernetes.default.svc

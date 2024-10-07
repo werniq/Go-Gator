@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://github.com/werniq/go-gator
     path: argocd/apps
-    targetRevision: argo-cd
+    targetRevision: feature/argo-cd
   project: default
   syncPolicy:
     automated:

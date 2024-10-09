@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.2.0](https://github.com/werniq/Go-Gator/compare/v1.1.0...v1.2.0) (2024-10-09)
+
+
+### Features
+
+* Added day-0 chart to argo-cd, which installs all our dependencies ([5d49724](https://github.com/werniq/Go-Gator/commit/5d49724568b70ceb0526473ee0d61a9493c93b35))
+* Merged all application into 1 repo, and implemented main app with git declaration ([0a3044c](https://github.com/werniq/Go-Gator/commit/0a3044cf11abe761f3bf3800038aff53d6f72154))
+
+
+### Bug Fixes
+
+* Corrected chart name and kustomziation ([f683172](https://github.com/werniq/Go-Gator/commit/f683172129306ba7a0c94933bc734d4feee2e49d))
+* Fixed CI by moving update dependency command to day-0 task ([deb5d2f](https://github.com/werniq/Go-Gator/commit/deb5d2f791d3e2816b826669bbb20109949cbf6f))
+* Removed commonLabels, since it is deprecated ([c9155eb](https://github.com/werniq/Go-Gator/commit/c9155eb8046a9ed8b68a032e30686d615ce81b8b))
+* removed redundant kustomization file, since argo-cd can be installed without it ([706a256](https://github.com/werniq/Go-Gator/commit/706a2564321d4f164a7ff2ea86dd52a2e648b733))
+* Removed wrong merge resolve conflict errors ([c133432](https://github.com/werniq/Go-Gator/commit/c133432e72544c5e7112fcac32951a044365f72d))
+* renamed branch in argo-cd/application.yaml ([a1c84d5](https://github.com/werniq/Go-Gator/commit/a1c84d52fe43dcc55c437e948ea4c05767d5621c))
+* renamed branch to feature/argo-cd ([7f6bc23](https://github.com/werniq/Go-Gator/commit/7f6bc23dcd6a55b25bffd6f786083950263e2602))
+
 ## [1.1.0](https://github.com/werniq/Go-Gator/compare/v1.0.0...v1.1.0) (2024-10-02)
 
 

@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: go-gator-operator
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/werniq/go-gator
+    path: operator/config/default
+    targetRevision: feature/argo-cd
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: go-gator
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true

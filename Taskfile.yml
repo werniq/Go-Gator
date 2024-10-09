@@ -130,16 +130,15 @@ tasks:
       - helm repo add vertical-pod-autoscaler https://stevehipwell.github.io/helm-charts/
 
   updateAndBuildChartDependencies:
-    desc: Update and build chart dependencies
+    desc: Update and build day-0 chart dependencies
     cmds:
-      - helm dependency update ./go-gator
-      - helm dependency build ./go-gator
+      - helm dependency build ./day-0
+      - helm dependency update ./day-0
 
   goGatorChartEcrBuild:
     desc: Build Helm chart for ECR
     deps:
       - addChartDependencies
-      - updateAndBuildChartDependencies
     cmds:
       - helm package go-gator
 
@@ -152,6 +151,8 @@ tasks:
 
   day0EcrBuild:
     desc: Build Helm chart for ECR
+    deps:
+      - updateAndBuildChartDependencies
     cmds:
       - helm package day-0
 
@@ -167,5 +168,3 @@ tasks:
     cmds:
       - for: [ awsLogin, operator:docker-build, cronJob:publish, goGatorImageEcrPush, goGatorChartEcrPush, day0EcrPush ]
         task: '{{.ITEM}}'
-      - helm uninstall go-gator -n go-gator
-      - kubectl delete namespace go-gator

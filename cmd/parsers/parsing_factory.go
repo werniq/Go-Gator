@@ -2,9 +2,9 @@ package parsers
 
 // FactoryInterface is an interface that defines methods for creating different types of parsers.
 type FactoryInterface interface {
-	XmlParser() Parser
-	JsonParser() Parser
-	HtmlParser() Parser
+	XmlParser(source string) Parser
+	JsonParser(source string) Parser
+	HtmlParser(source string) Parser
 }
 
 // ParsingFactory is a concrete implementation of the FactoryInterface interface.

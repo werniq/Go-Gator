@@ -47,5 +47,9 @@ func (jp JsonParser) Parse() ([]types.News, error) {
 		return nil, err
 	}
 
+	for i := 0; i <= len(news)-1; i++ {
+		news[i].Publisher = jp.Source
+	}
+
 	return news, nil
 }

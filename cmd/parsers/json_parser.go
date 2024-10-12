@@ -35,8 +35,6 @@ func (jp JsonParser) Parse() ([]types.News, error) {
 		return nil, err
 	}
 
-	var news []types.RSS
-
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err

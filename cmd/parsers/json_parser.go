@@ -30,7 +30,14 @@ var openFile getFileData = extractFileData
 func (jp JsonParser) Parse() ([]types.News, error) {
 	var news []types.News
 
-	data, err := openFile(jp.Source)
+	res, err := http.Get(sourceToEndpoint[jp.Source])
+	if err != nil {
+		return nil, err
+	}
+
+	var news []types.RSS
+
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}

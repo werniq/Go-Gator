@@ -3,6 +3,8 @@ package parsers
 import (
 	"encoding/json"
 	"gogator/cmd/types"
+	"io"
+	"net/http"
 )
 
 // JsonParser struct is used to parse articles data from Json files.

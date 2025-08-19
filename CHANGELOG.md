@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/werniq/Go-Gator/compare/v1.2.0...v1.2.1) (2025-08-19)
+
+
+### Bug Fixes
+
+* Added required imports to json parser ([18272cf](https://github.com/werniq/Go-Gator/commit/18272cf638f361aea78ba2af1472f34ea312311c))
+* Fixed duplicate news variable declaration ([4b6cad5](https://github.com/werniq/Go-Gator/commit/4b6cad5220de6e533deff368f451b7cc26d50f6c))
+
 ## [1.2.0](https://github.com/werniq/Go-Gator/compare/v1.1.0...v1.2.0) (2024-10-09)
 
 

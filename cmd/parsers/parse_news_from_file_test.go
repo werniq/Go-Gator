@@ -50,7 +50,7 @@ func TestFromFiles(t *testing.T) {
 		name      string
 		dateFrom  string
 		dateEnd   string
-		want      []types.News
+		want      []types.Article
 		setup     func(t *testing.T)
 		expectErr bool
 	}{
@@ -58,27 +58,27 @@ func TestFromFiles(t *testing.T) {
 			name:     "Valid date range with news",
 			dateFrom: "2024-07-19",
 			dateEnd:  "2024-07-21",
-			want: []types.News{
+			want: []types.Article{
 				{
-					Title: "News 1 on 2024-07-19",
+					Title: "Article 1 on 2024-07-19",
 				},
 				{
-					Title: "News 2 on 2024-07-20",
+					Title: "Article 2 on 2024-07-20",
 				},
 				{
-					Title: "News 3 on 2024-07-21",
+					Title: "Article 3 on 2024-07-21",
 				},
 			},
 			setup: func(t *testing.T) {
-				newsData := [][]types.News{
+				newsData := [][]types.Article{
 					{
-						{Title: "News 1 on 2024-07-19"},
+						{Title: "Article 1 on 2024-07-19"},
 					},
 					{
-						{Title: "News 2 on 2024-07-20"},
+						{Title: "Article 2 on 2024-07-20"},
 					},
 					{
-						{Title: "News 3 on 2024-07-21"},
+						{Title: "Article 3 on 2024-07-21"},
 					},
 				}
 				dates := []string{"2024-07-19", "2024-07-20", "2024-07-21"}
@@ -112,21 +112,21 @@ func TestFromFiles(t *testing.T) {
 			name:     "Single day range with news",
 			dateFrom: "2024-07-23",
 			dateEnd:  "2024-07-23",
-			want: []types.News{
+			want: []types.Article{
 				{
-					Title: "News 1 on 2024-07-23",
+					Title: "Article 1 on 2024-07-23",
 				},
 				{
-					Title: "News 2 on 2024-07-23",
+					Title: "Article 2 on 2024-07-23",
 				},
 			},
 			setup: func(t *testing.T) {
-				data := []types.News{
+				data := []types.Article{
 					{
-						Title: "News 1 on 2024-07-23",
+						Title: "Article 1 on 2024-07-23",
 					},
 					{
-						Title: "News 2 on 2024-07-23",
+						Title: "Article 2 on 2024-07-23",
 					},
 				}
 				filename := "2024-07-23.json"

@@ -11,7 +11,7 @@ type FactoryInterface interface {
 
 // Instruction will be applied to article and return bool if it matches given instruction
 type Instruction interface {
-	Apply(article types.News, params *types.FilteringParams) bool
+	Apply(article types.Article, params *types.FilteringParams) bool
 }
 
 type InstructionFactory struct{}

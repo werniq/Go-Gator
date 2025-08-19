@@ -13,20 +13,20 @@ func TestDestroySource(t *testing.T) {
 		name         string
 		argsDate     string
 		argsSource   string
-		prepData     []types.News
-		expectedData []types.News
+		prepData     []types.Article
+		expectedData []types.Article
 		expectErr    bool
 	}{
 		{
 			name:       "Successful deletion",
 			argsDate:   "2024-07-22",
 			argsSource: "bbc",
-			prepData: []types.News{
-				{Publisher: "bbc", Title: "News 1"},
-				{Publisher: "cnn", Title: "News 2"},
+			prepData: []types.Article{
+				{Publisher: "bbc", Title: "Article 1"},
+				{Publisher: "cnn", Title: "Article 2"},
 			},
-			expectedData: []types.News{
-				{Publisher: "cnn", Title: "News 2"},
+			expectedData: []types.Article{
+				{Publisher: "cnn", Title: "Article 2"},
 			},
 			expectErr: false,
 		},
@@ -52,13 +52,13 @@ func TestDestroySource(t *testing.T) {
 			name:       "No articles to delete (non-existent source)",
 			argsDate:   "2024-07-22",
 			argsSource: "new-source",
-			prepData: []types.News{
-				{Publisher: "bbc", Title: "News 1"},
-				{Publisher: "abc", Title: "News 2"},
+			prepData: []types.Article{
+				{Publisher: "bbc", Title: "Article 1"},
+				{Publisher: "abc", Title: "Article 2"},
 			},
-			expectedData: []types.News{
-				{Publisher: "bbc", Title: "News 1"},
-				{Publisher: "abc", Title: "News 2"},
+			expectedData: []types.Article{
+				{Publisher: "bbc", Title: "Article 1"},
+				{Publisher: "abc", Title: "Article 2"},
 			},
 			expectErr: false,
 		},
@@ -66,8 +66,8 @@ func TestDestroySource(t *testing.T) {
 			name:         "Run without any data",
 			argsDate:     "2024-07-22",
 			argsSource:   "bbc",
-			prepData:     []types.News{},
-			expectedData: []types.News{},
+			prepData:     []types.Article{},
+			expectedData: []types.Article{},
 			expectErr:    false,
 		},
 	}
@@ -91,7 +91,7 @@ func TestDestroySource(t *testing.T) {
 					fileData, err := os.ReadFile(tt.argsDate + JsonExtension)
 					assert.Nil(t, err)
 
-					var resultData []types.News
+					var resultData []types.Article
 					err = json.Unmarshal(fileData, &resultData)
 					assert.Nil(t, err)
 

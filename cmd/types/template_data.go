@@ -9,7 +9,7 @@ package types
 // /  4. Keywords   - Array of news. It will be used when user provided specific keywords to search articles for,
 // / and using this field we will highlight these keywords.
 type TemplateData struct {
-	NewsItems  []News
+	NewsItems  []Article
 	FilterInfo string
 	TotalItems int
 	Keywords   []string

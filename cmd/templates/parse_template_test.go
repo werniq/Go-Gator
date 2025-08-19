@@ -75,17 +75,17 @@ func TestPrintTemplate(t *testing.T) {
 		Name  string
 		Input struct {
 			Filters  *types.FilteringParams
-			Articles []types.News
+			Articles []types.Article
 		}
 	}{
 		{
 			Name: "Successful template execution",
 			Input: struct {
 				Filters  *types.FilteringParams
-				Articles []types.News
+				Articles []types.Article
 			}{
 				Filters: types.NewFilteringParams("", "", "", ""),
-				Articles: []types.News{
+				Articles: []types.Article{
 					{
 						Title:       "Article 1",
 						Description: "Description 1",

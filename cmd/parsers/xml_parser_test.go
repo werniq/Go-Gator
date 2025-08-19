@@ -18,7 +18,7 @@ func TestXmlParser_Parse(t *testing.T) {
 		name         string
 		setupMock    func()
 		expectError  bool
-		expectedNews []types.News
+		expectedNews []types.Article
 	}{
 		{
 			name: "Default parse",
@@ -31,7 +31,7 @@ func TestXmlParser_Parse(t *testing.T) {
 					<channel>
 						<title>Test Channel</title>
 						<item>
-							<title>Test News</title>
+							<title>Test Article</title>
 							<description>This is a test news.</description>
 							<pubDate>2024-07-23</pubDate>
 							<link>http://example.com</link>
@@ -43,9 +43,9 @@ func TestXmlParser_Parse(t *testing.T) {
 					httpmock.NewStringResponder(http.StatusOK, mockXML))
 			},
 			expectError: false,
-			expectedNews: []types.News{
+			expectedNews: []types.Article{
 				{
-					Title:       "Test News",
+					Title:       "Test Article",
 					Description: "This is a test news.",
 					PubDate:     "2024-07-23",
 					Publisher:   "abc",
@@ -100,7 +100,7 @@ func TestXmlParser_Parse(t *testing.T) {
 						`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Test Channel</title></channel></rss>`))
 			},
 			expectError:  true,
-			expectedNews: []types.News{},
+			expectedNews: []types.Article{},
 		},
 		{
 			name: "Empty XML document",
@@ -114,7 +114,7 @@ func TestXmlParser_Parse(t *testing.T) {
 						`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel></channel></rss>`))
 			},
 			expectError:  false,
-			expectedNews: []types.News{},
+			expectedNews: []types.Article{},
 		},
 	}
 

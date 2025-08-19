@@ -32,8 +32,8 @@ type HtmlParser struct {
 }
 
 // Parse function for HtmlParser struct
-func (hp HtmlParser) Parse() ([]types.News, error) {
-	var news []types.News
+func (hp HtmlParser) Parse() ([]types.Article, error) {
+	var news []types.Article
 
 	res, err := http.Get(sourceToEndpoint[hp.Source])
 	if err != nil {
@@ -56,7 +56,7 @@ func (hp HtmlParser) Parse() ([]types.News, error) {
 		link := strings.TrimSpace(selection.AttrOr(LinkAttribute, ""))
 		description := selection.Text()
 
-		news = append(news, types.News{
+		news = append(news, types.Article{
 			Title:       title,
 			Description: description,
 			PubDate:     timestamp,

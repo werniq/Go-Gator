@@ -29,8 +29,8 @@ type getFileData func(f string) ([]byte, error)
 var openFile getFileData = extractFileData
 
 // Parse function is required for JsonParser struct, in order to implement NewsParser interface, for data formatted in json
-func (jp JsonParser) Parse() ([]types.News, error) {
-	var news []types.News
+func (jp JsonParser) Parse() ([]types.Article, error) {
+	var news []types.Article
 
 	res, err := http.Get(sourceToEndpoint[jp.Source])
 	if err != nil {

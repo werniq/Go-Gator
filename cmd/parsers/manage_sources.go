@@ -56,8 +56,8 @@ func GetAllSources() map[string]string {
 }
 
 // GetSourceDetailed returns detailed information about source
-func GetSourceDetailed(source string) types.Source {
-	return types.Source{
+func GetSourceDetailed(source string) types.Feed {
+	return types.Feed{
 		Name:     source,
 		Format:   determineFormat(sourceToParser[source], source),
 		Endpoint: sourceToEndpoint[source],
@@ -121,7 +121,7 @@ func LoadSourcesFile() error {
 		return nil
 	}
 
-	var sources []types.Source
+	var sources []types.Feed
 	err = json.Unmarshal(sourcesFileData, &sources)
 	if err != nil {
 		return err
@@ -155,9 +155,9 @@ func UpdateSourceFile() error {
 		return err
 	}
 
-	var sources []types.Source
+	var sources []types.Feed
 	for key, val := range sourceToEndpoint {
-		sources = append(sources, types.Source{
+		sources = append(sources, types.Feed{
 			Name:     key,
 			Format:   determineFormat(sourceToParser[key], key),
 			Endpoint: val,

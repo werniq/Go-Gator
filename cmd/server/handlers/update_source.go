@@ -11,10 +11,10 @@ import (
 const (
 
 	// MsgSourceUpdated returns a successful message after changing source information
-	MsgSourceUpdated = "Source was successfully updated"
+	MsgSourceUpdated = "Feed was successfully updated"
 
 	// ErrSourceNotFound displays when we try to delete not-existent source
-	ErrSourceNotFound = "Source is not found in available sources. Please, check the name and try again."
+	ErrSourceNotFound = "Feed is not found in available sources. Please, check the name and try again."
 
 	// ErrUpdateSource is thrown whenever we encounter error while updating new source (Admin API)
 	ErrUpdateSource = "Failed to update source: "
@@ -25,7 +25,7 @@ const (
 // UpdateSource updates existent source with given parameters.
 // If not-existent source is going to be updated - throws an error.
 func UpdateSource(c *gin.Context) {
-	var reqBody types.Source
+	var reqBody types.Feed
 	var err error
 
 	if err = c.ShouldBindJSON(&reqBody); err != nil {

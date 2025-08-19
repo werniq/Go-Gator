@@ -15,7 +15,7 @@ import (
 // retrieve all data from it, and parse into an array of articles.
 // Returns an error, if file not exists, or error while decoding data.
 type Parser interface {
-	Parse() ([]types.News, error)
+	Parse() ([]types.Article, error)
 }
 
 const (
@@ -55,9 +55,9 @@ const (
 // If the source parameter is equal to "all", news will be retrieved from all sources specified in sourceToParser.
 //
 // The function returns a slice of news items and an error if any occurred during the parsing process.
-func ParseBySource(source string) ([]types.News, error) {
+func ParseBySource(source string) ([]types.Article, error) {
 	var (
-		news       []types.News
+		news       []types.Article
 		wg         sync.WaitGroup
 		mu         sync.Mutex
 		errChannel = make(chan error, 1)
@@ -97,7 +97,7 @@ func ParseBySource(source string) ([]types.News, error) {
 // / each goroutine would receive its own copy of the WaitGroup, which leads to incorrect synchronization:
 // / because the Add, Done, and Wait calls would affect separate WaitGroup instances,
 // / and most likely causing the Wait() function to never return or behave unpredictably.
-func fetchNews(p Parser, news *[]types.News, wg *sync.WaitGroup, mu *sync.Mutex, errChannel chan<- error) {
+func fetchNews(p Parser, news *[]types.Article, wg *sync.WaitGroup, mu *sync.Mutex, errChannel chan<- error) {
 	defer wg.Done()
 
 	parsedNews, err := p.Parse()

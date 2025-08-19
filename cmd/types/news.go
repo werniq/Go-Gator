@@ -7,7 +7,7 @@ package types
 // <rss version="2.0">
 //
 //	 <channel>
-//		  News fields...
+//		  Article fields...
 //	 </channel>
 //
 // </rss>
@@ -16,14 +16,14 @@ type RSS struct {
 }
 
 type Json struct {
-	Articles []News `json:"articles"`
+	Articles []Article `json:"articles"`
 }
 
 type Channel struct {
-	Items []News `xml:"item"`
+	Items []Article `xml:"item"`
 }
 
-// News is one of the main models in news aggregator.
+// Article is one of the main models in news aggregator.
 // It has few fields inside:
 // /   1. Title			- Headline of the article
 // /   2. Description 	- Description of the article
@@ -34,7 +34,7 @@ type Channel struct {
 // It will be used through the application for different operations, such as:
 //  1. Parsing
 //  2. Logging
-type News struct {
+type Article struct {
 	Title       string `json:"title" xml:"title"`
 	PubDate     string `json:"publishedAt" xml:"pubDate"`
 	Description string `json:"description" xml:"description"`

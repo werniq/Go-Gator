@@ -60,8 +60,8 @@ func DestroySource(source string, dateRange []string) error {
 }
 
 // removeNewsBySource removes all news items with the specified source
-func removeNewsBySource(news []types.News, source string) []types.News {
-	var filteredNews []types.News
+func removeNewsBySource(news []types.Article, source string) []types.Article {
+	var filteredNews []types.Article
 	for _, article := range news {
 		if article.Publisher != source {
 			filteredNews = append(filteredNews, article)

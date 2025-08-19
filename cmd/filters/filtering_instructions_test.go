@@ -9,17 +9,17 @@ import (
 func TestApplyKeywordsInstruction_Apply(t *testing.T) {
 	testCases := []struct {
 		Input struct {
-			Article types.News
+			Article types.Article
 			Params  *types.FilteringParams
 		}
 		ExpectedOutput bool
 	}{
 		{
 			Input: struct {
-				Article types.News
+				Article types.Article
 				Params  *types.FilteringParams
 			}{
-				Article: types.News{
+				Article: types.Article{
 					Title: "Ukraine is a great country",
 				},
 				Params: &types.FilteringParams{
@@ -30,10 +30,10 @@ func TestApplyKeywordsInstruction_Apply(t *testing.T) {
 		},
 		{
 			Input: struct {
-				Article types.News
+				Article types.Article
 				Params  *types.FilteringParams
 			}{
-				Article: types.News{
+				Article: types.Article{
 					Title: "Ukraine is a great country",
 				},
 				Params: &types.FilteringParams{
@@ -57,17 +57,17 @@ func TestApplyKeywordsInstruction_Apply(t *testing.T) {
 func TestApplyDateRangeInstruction_Apply(t *testing.T) {
 	testCases := []struct {
 		Input struct {
-			Article types.News
+			Article types.Article
 			Params  *types.FilteringParams
 		}
 		ExpectedOutput bool
 	}{
 		{
 			Input: struct {
-				Article types.News
+				Article types.Article
 				Params  *types.FilteringParams
 			}{
-				Article: types.News{
+				Article: types.Article{
 					PubDate: "2024-05-12",
 				},
 				Params: &types.FilteringParams{
@@ -78,10 +78,10 @@ func TestApplyDateRangeInstruction_Apply(t *testing.T) {
 		},
 		{
 			Input: struct {
-				Article types.News
+				Article types.Article
 				Params  *types.FilteringParams
 			}{
-				Article: types.News{
+				Article: types.Article{
 					PubDate: "2024-05-55",
 				},
 				Params: &types.FilteringParams{
@@ -92,10 +92,10 @@ func TestApplyDateRangeInstruction_Apply(t *testing.T) {
 		},
 		{
 			Input: struct {
-				Article types.News
+				Article types.Article
 				Params  *types.FilteringParams
 			}{
-				Article: types.News{
+				Article: types.Article{
 					PubDate: "2024-05-12",
 				},
 				Params: &types.FilteringParams{
@@ -106,10 +106,10 @@ func TestApplyDateRangeInstruction_Apply(t *testing.T) {
 		},
 		{
 			Input: struct {
-				Article types.News
+				Article types.Article
 				Params  *types.FilteringParams
 			}{
-				Article: types.News{
+				Article: types.Article{
 					PubDate: "2024-05-12",
 				},
 				Params: &types.FilteringParams{
@@ -120,10 +120,10 @@ func TestApplyDateRangeInstruction_Apply(t *testing.T) {
 		},
 		{
 			Input: struct {
-				Article types.News
+				Article types.Article
 				Params  *types.FilteringParams
 			}{
-				Article: types.News{
+				Article: types.Article{
 					PubDate: "2024-05-10",
 				},
 				Params: &types.FilteringParams{
@@ -134,10 +134,10 @@ func TestApplyDateRangeInstruction_Apply(t *testing.T) {
 		},
 		{
 			Input: struct {
-				Article types.News
+				Article types.Article
 				Params  *types.FilteringParams
 			}{
-				Article: types.News{
+				Article: types.Article{
 					PubDate: "2024-05-14",
 				},
 				Params: &types.FilteringParams{
@@ -148,10 +148,10 @@ func TestApplyDateRangeInstruction_Apply(t *testing.T) {
 		},
 		{
 			Input: struct {
-				Article types.News
+				Article types.Article
 				Params  *types.FilteringParams
 			}{
-				Article: types.News{
+				Article: types.Article{
 					PubDate: "2024-05-14",
 				},
 				Params: &types.FilteringParams{
@@ -163,10 +163,10 @@ func TestApplyDateRangeInstruction_Apply(t *testing.T) {
 		},
 		{
 			Input: struct {
-				Article types.News
+				Article types.Article
 				Params  *types.FilteringParams
 			}{
-				Article: types.News{
+				Article: types.Article{
 					PubDate: "2024-05-19",
 				},
 				Params: &types.FilteringParams{

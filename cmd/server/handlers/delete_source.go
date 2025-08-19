@@ -13,13 +13,13 @@ const (
 	ErrDeleteSource = "Failed to delete source: "
 
 	// MsgSourceDeleted displays informational message after source was removed
-	MsgSourceDeleted = "Source was successfully removed."
+	MsgSourceDeleted = "Feed was successfully removed."
 )
 
 // DeleteSource handler deletes existing source from registered sources.
 // If non-existent source is going to be deleted - throws an error.
 func DeleteSource(c *gin.Context) {
-	var reqBody types.Source
+	var reqBody types.Feed
 
 	err := c.ShouldBindJSON(&reqBody)
 	if err != nil {

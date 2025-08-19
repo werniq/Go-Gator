@@ -42,9 +42,9 @@ func GenerateDateRange(dateFrom, dateEnd string) ([]string, error) {
 // The function concurrently parses JSON files for each date in the range.
 // If an error occurs during the parsing of any file, the process is aborted and the error is returned.
 // The returned slice contains all successfully parsed news articles.
-func FromFiles(dateFrom, dateEnd string) ([]types.News, error) {
+func FromFiles(dateFrom, dateEnd string) ([]types.Article, error) {
 	var (
-		news       []types.News
+		news       []types.Article
 		wg         sync.WaitGroup
 		mu         sync.Mutex
 		errChannel = make(chan error)

@@ -9,7 +9,7 @@ import (
 type ApplyKeywordsInstruction struct{}
 
 // Apply is a method in ApplyKeywordsInstruction which is used to filter article by keyword
-func (a ApplyKeywordsInstruction) Apply(article types.News, params *types.FilteringParams) bool {
+func (a ApplyKeywordsInstruction) Apply(article types.Article, params *types.FilteringParams) bool {
 	keywords := strings.Split(params.Keywords, ",")
 	for _, keyword := range keywords {
 		if strings.Contains(article.Title, keyword) || strings.Contains(article.Description, keyword) {
@@ -23,7 +23,7 @@ func (a ApplyKeywordsInstruction) Apply(article types.News, params *types.Filter
 type ApplyDateRangeInstruction struct{}
 
 // Apply in ApplyDateRangeInstruction is a method which is used to filter article by data range
-func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.FilteringParams) bool {
+func (a ApplyDateRangeInstruction) Apply(article types.Article, params *types.FilteringParams) bool {
 
 	var publicationDate time.Time
 	var err error
@@ -61,7 +61,7 @@ func (a ApplyDateRangeInstruction) Apply(article types.News, params *types.Filte
 type ApplySourcesInstruction struct{}
 
 // Apply in ApplySourcesInstruction is a method which is used to filter articles by publisher
-func (a ApplySourcesInstruction) Apply(article types.News, params *types.FilteringParams) bool {
+func (a ApplySourcesInstruction) Apply(article types.Article, params *types.FilteringParams) bool {
 	if params.Sources == "" {
 		return true
 	}

@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// ByPubDate is a type alias for a slice of types.News, used for sorting purposes
-type ByPubDate []types.News
+// ByPubDate is a type alias for a slice of types.Article, used for sorting purposes
+type ByPubDate []types.Article
 
 // Len is part of the sort.Interface implementation for ByPubDate
 // It returns the number of elements in the slice
@@ -38,8 +38,8 @@ func (a ByPubDate) Less(i, j int) bool {
 	return t1.Before(t2)
 }
 
-// sortNewsByPubDate sorts a slice of types.News by their PubDate in ascending order
-func sortNewsByPubDate(news []types.News) {
+// sortNewsByPubDate sorts a slice of types.Article by their PubDate in ascending order
+func sortNewsByPubDate(news []types.Article) {
 	sort.Sort(ByPubDate(news))
 }
 

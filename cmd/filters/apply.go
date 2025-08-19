@@ -7,10 +7,10 @@ var (
 )
 
 // Apply filters news by provided FilteringParams
-func Apply(articles []types.News, params *types.FilteringParams) []types.News {
-	var filteredArticles []types.News
+func Apply(articles []types.Article, params *types.FilteringParams) []types.Article {
+	var filteredArticles []types.Article
 
-	filters := []func(article types.News, params *types.FilteringParams) bool{
+	filters := []func(article types.Article, params *types.FilteringParams) bool{
 		f.CreateSourcesInstruction().Apply,
 		f.CreateApplyDataRangeInstruction().Apply,
 		f.CreateApplyKeywordInstruction().Apply,

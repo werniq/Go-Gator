@@ -10,7 +10,7 @@ import (
 
 const (
 	// MsgSourceCreated displays informational message after source was created
-	MsgSourceCreated = "Source was successfully registered."
+	MsgSourceCreated = "Feed was successfully registered."
 
 	// ErrFailedToDecode displays when server failed to decode request body into struct
 	ErrFailedToDecode = "Error while decoding request body: "
@@ -25,7 +25,7 @@ const (
 // RegisterSource handler will be used in order to create new source from where
 // we can parse news
 func RegisterSource(c *gin.Context) {
-	var reqBody types.Source
+	var reqBody types.Feed
 
 	err := c.ShouldBindJSON(&reqBody)
 	if err != nil {

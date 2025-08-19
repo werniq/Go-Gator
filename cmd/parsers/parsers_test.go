@@ -30,7 +30,7 @@ func TestParseWithParams(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		var news []types.News
+		var news []types.Article
 		var err error
 
 		for _, source := range sources {
@@ -47,7 +47,7 @@ func Test_fetchNews(t *testing.T) {
 	tests := []struct {
 		name        string
 		p           Parser
-		news        *[]types.News
+		news        *[]types.Article
 		wg          *sync.WaitGroup
 		mu          *sync.Mutex
 		errChannel  chan error
@@ -56,7 +56,7 @@ func Test_fetchNews(t *testing.T) {
 		{
 			name:        "Successful execution",
 			p:           g.XmlParser(sourceToEndpoint[ABC]),
-			news:        new([]types.News),
+			news:        new([]types.Article),
 			wg:          &sync.WaitGroup{},
 			mu:          &sync.Mutex{},
 			errChannel:  make(chan error, 1),
@@ -65,7 +65,7 @@ func Test_fetchNews(t *testing.T) {
 		{
 			name:        "Incorrect endpoint (bad parser)",
 			p:           g.XmlParser(""),
-			news:        new([]types.News),
+			news:        new([]types.Article),
 			wg:          &sync.WaitGroup{},
 			mu:          &sync.Mutex{},
 			errChannel:  make(chan error, 1),

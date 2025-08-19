@@ -62,17 +62,17 @@ func TestSortNewsByPubDate(t *testing.T) {
 	// Define test cases
 	tests := []struct {
 		name     string
-		news     []types.News
-		expected []types.News
+		news     []types.Article
+		expected []types.Article
 	}{
 		{
 			name: "Simple case",
-			news: []types.News{
+			news: []types.Article{
 				{PubDate: "2023-05-01"},
 				{PubDate: "2022-04-01"},
 				{PubDate: "2023-01-01"},
 			},
-			expected: []types.News{
+			expected: []types.Article{
 				{PubDate: "2022-04-01"},
 				{PubDate: "2023-01-01"},
 				{PubDate: "2023-05-01"},
@@ -80,17 +80,17 @@ func TestSortNewsByPubDate(t *testing.T) {
 		},
 		{
 			name:     "Empty slice",
-			news:     []types.News{},
-			expected: []types.News{},
+			news:     []types.Article{},
+			expected: []types.Article{},
 		},
 		{
 			name: "Already sorted",
-			news: []types.News{
+			news: []types.Article{
 				{PubDate: "2022-01-01"},
 				{PubDate: "2022-02-01"},
 				{PubDate: "2022-03-01"},
 			},
-			expected: []types.News{
+			expected: []types.Article{
 				{PubDate: "2022-01-01"},
 				{PubDate: "2022-02-01"},
 				{PubDate: "2022-03-01"},
@@ -98,11 +98,11 @@ func TestSortNewsByPubDate(t *testing.T) {
 		},
 		{
 			name: "With parsing errors",
-			news: []types.News{
+			news: []types.Article{
 				{PubDate: "invalid-date"},
 				{PubDate: "2022-01-01"},
 			},
-			expected: []types.News{
+			expected: []types.Article{
 				{PubDate: "invalid-date"},
 				{PubDate: "2022-01-01"},
 			},

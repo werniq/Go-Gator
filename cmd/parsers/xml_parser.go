@@ -23,7 +23,7 @@ type XMLParser struct {
 // and assigns the source as the publisher for each article.
 //
 // Returns a slice of parsed news articles and an error, if any
-func (xp XMLParser) Parse() ([]types.News, error) {
+func (xp XMLParser) Parse() ([]types.Article, error) {
 	res, err := http.Get(sourceToEndpoint[xp.Source])
 	if err != nil {
 		return nil, err

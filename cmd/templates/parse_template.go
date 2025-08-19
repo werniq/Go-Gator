@@ -26,7 +26,7 @@ const (
 	BaseTemplate = "article.plain.tmpl"
 )
 
-func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
+func PrintTemplate(f *types.FilteringParams, articles []types.Article) error {
 	sortNewsByPubDate(articles)
 
 	cwdPath, err := os.Getwd()
@@ -42,7 +42,7 @@ func PrintTemplate(f *types.FilteringParams, articles []types.News) error {
 	tmpl := template.Must(template.New(BaseTemplate).Funcs(templateFuncs).ParseFiles(cwdPath))
 
 	for i := 0; i <= len(articles)-1; i++ {
-		articles[i] = types.News{
+		articles[i] = types.Article{
 			Title:       strings.TrimSpace(articles[i].Title),
 			Description: strings.TrimSpace(articles[i].Description),
 			PubDate:     articles[i].PubDate,

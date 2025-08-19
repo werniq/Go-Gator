@@ -17,7 +17,7 @@ func TestUpdateSource(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		body       *types.Source
+		body       *types.Feed
 		source     string
 		setup      func()
 		statusCode int
@@ -26,7 +26,7 @@ func TestUpdateSource(t *testing.T) {
 		{
 			name:   "Update non-existent source",
 			source: "source6",
-			body: &types.Source{
+			body: &types.Feed{
 				Name:     "source6",
 				Format:   "xml",
 				Endpoint: "https://source5.com",
@@ -40,7 +40,7 @@ func TestUpdateSource(t *testing.T) {
 		{
 			name:   "Empty source name",
 			source: "source6",
-			body: &types.Source{
+			body: &types.Feed{
 				Name:     "",
 				Format:   "",
 				Endpoint: "",
@@ -58,13 +58,13 @@ func TestUpdateSource(t *testing.T) {
 			setup:      func() {},
 			statusCode: http.StatusBadRequest,
 			response: gin.H{
-				"error": ErrFailedToDecode + "json: cannot unmarshal string into Go value of type types.Source",
+				"error": ErrFailedToDecode + "json: cannot unmarshal string into Go value of type types.Feed",
 			},
 		},
 		{
 			name:   "Update format in existent source",
 			source: "source5",
-			body: &types.Source{
+			body: &types.Feed{
 				Name:   "bbc",
 				Format: "html",
 			},
@@ -77,7 +77,7 @@ func TestUpdateSource(t *testing.T) {
 		{
 			name:   "Update endpoint in existent source",
 			source: "source5",
-			body: &types.Source{
+			body: &types.Feed{
 				Name:     "bbc",
 				Format:   "",
 				Endpoint: "https://bbc.com/",

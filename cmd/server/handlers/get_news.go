@@ -62,7 +62,7 @@ func GetNews(c *gin.Context) {
 
 	params := types.NewFilteringParams(keywords, dateFrom, dateEnd, sources)
 
-	var news []types.News
+	var news []types.Article
 	if dateFrom == "" {
 		dateFrom = FirstFetchedFileDate
 	}
